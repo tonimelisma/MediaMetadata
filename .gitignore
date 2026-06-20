@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+._*
+
+# Xcode
+*.xcuserstate
+*.xcuserdata
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+
+# Build output
+build/
+
+# Logs
+*.log
