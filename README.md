@@ -5,7 +5,84 @@ files — provenance-preserving timestamp, location, and camera-identity evidenc
 from container bytes, not from framework dictionaries.
 
 This document is the package contract: intent, public model principles, parser
-architecture, format roadmap, and engineering guardrails.
+architecture, and engineering guardrails.
+
+## Installation
+
+MediaMetadata is a Swift Package Manager library. Add it to an Xcode project via
+**File → Add Package Dependencies…** and paste the repository URL, or add it to a
+`Package.swift` manifest:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.1.0"),
+]
+```
+
+Then add `MediaMetadata` to your target's dependencies.
+
+### Platforms
+
+- macOS 13+
+- iOS 16+
+- tvOS 16+
+- watchOS 9+
+- visionOS 1+
+
+The package depends only on `Foundation` and contains no AppKit, UIKit, ImageIO,
+or AVFoundation references, so it compiles on every Apple platform and on Linux.
+
+## Usage
+
+Reading metadata is a single call returning a value type:
+
+```swift
+import MediaMetadata
+
+let result = MediaMetadataReader.read(url: url)
+
+// The detected container family, e.g. .tiff, .jpeg, .heif, .isoBMFF,
+// .riffWAV, .riffAVI, .id3, or .unknown.
+let family = result.identity.family
+
+// Every parsed tag, with its namespace, key, raw value, parser, container path,
+// and byte range when known. Never a flattened Apple-style dictionary.
+for finding in result.findings where finding.key == "DateTimeOriginal" {
+    print(finding.rawValue) // e.g. "2026:04:26 14:57:35"
+}
+
+// All capture-time candidates, preserving how each was expressed:
+//   .localWithOffset, .localWithoutOffset, or .absoluteInstant.
+// The package never picks one and discards the rest; the consumer decides
+// which candidate is authoritative.
+for candidate in result.timestamps {
+    print(candidate.role, candidate.rawTimestamp, candidate.instant ?? "no instant")
+    if let offset = candidate.offsetSeconds {
+        print("  offset seconds: \(offset)")
+    }
+}
+
+// GPS / capture locations, kept as separate candidates with their own evidence.
+for location in result.locations {
+    print(location.latitude, location.longitude, location.altitudeMeters ?? "no altitude")
+}
+
+// Camera identity (make, model, lens, orientation, dimensions) when present.
+if let camera = result.camera {
+    print(camera.make ?? "unknown make", camera.model ?? "unknown model")
+}
+
+// Non-fatal parse notes: truncated metadata, unsupported box, conflicting
+// timestamps, missing embedded AVI dates, etc. Parsers fail closed; partial
+// results carry diagnostics instead of throwing.
+for diagnostic in result.diagnostics {
+    print(diagnostic.code)
+}
+```
+
+Every file read returns a complete result — never a throw. When a container is
+truncated, malformed, or unsupported, the result carries partial findings plus
+diagnostics explaining what could not be parsed.
 
 ## Product Intent
 
