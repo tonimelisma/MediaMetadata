@@ -18,3 +18,10 @@ build/
 
 # Logs
 *.log
+
+# Local-only real-media fixtures mirrored from videometa. These files are
+# downloadable, over GitHub's normal file-size limit, or legacy local data.
+Tests/Fixtures/videometa/apple.mov
+Tests/Fixtures/videometa/dji_inspire3_car_4k120_rec709.mov
+Tests/Fixtures/videometa/dji_ronin4d_4k_prores4444_25fps.mov
+Tests/Fixtures/videometa/gopro_action.mp4

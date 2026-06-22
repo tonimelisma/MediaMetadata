@@ -1,0 +1,291 @@
+{
+  "sourceFile": "../testdata/with_gps.mp4",
+  "groups": [
+    {
+      "name": "QuickTime",
+      "tags": [
+        {
+          "tag": "MajorBrand",
+          "value": "isom"
+        },
+        {
+          "tag": "MinorVersion",
+          "value": "0.2.0"
+        },
+        {
+          "tag": "CompatibleBrands",
+          "value": "isom.iso2.avc1.mp41"
+        },
+        {
+          "tag": "MovieHeaderVersion",
+          "value": "0"
+        },
+        {
+          "tag": "CreateDate",
+          "value": "2024:06:15 10:30:00"
+        },
+        {
+          "tag": "ModifyDate",
+          "value": "2024:06:15 10:30:00"
+        },
+        {
+          "tag": "TimeScale",
+          "value": "1000"
+        },
+        {
+          "tag": "Duration",
+          "value": "1"
+        },
+        {
+          "tag": "PreferredRate",
+          "value": "1"
+        },
+        {
+          "tag": "PreferredVolume",
+          "value": "1"
+        },
+        {
+          "tag": "MatrixStructure",
+          "value": "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag": "PreviewTime",
+          "value": "0"
+        },
+        {
+          "tag": "PreviewDuration",
+          "value": "0"
+        },
+        {
+          "tag": "PosterTime",
+          "value": "0"
+        },
+        {
+          "tag": "SelectionTime",
+          "value": "0"
+        },
+        {
+          "tag": "SelectionDuration",
+          "value": "0"
+        },
+        {
+          "tag": "CurrentTime",
+          "value": "0"
+        },
+        {
+          "tag": "NextTrackID",
+          "value": "2"
+        },
+        {
+          "tag": "TrackHeaderVersion",
+          "value": "0"
+        },
+        {
+          "tag": "TrackCreateDate",
+          "value": "2024:06:15 10:30:00"
+        },
+        {
+          "tag": "TrackModifyDate",
+          "value": "2024:06:15 10:30:00"
+        },
+        {
+          "tag": "TrackID",
+          "value": "1"
+        },
+        {
+          "tag": "TrackDuration",
+          "value": "1"
+        },
+        {
+          "tag": "TrackLayer",
+          "value": "0"
+        },
+        {
+          "tag": "TrackVolume",
+          "value": "0"
+        },
+        {
+          "tag": "MatrixStructure",
+          "value": "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag": "ImageWidth",
+          "value": "320"
+        },
+        {
+          "tag": "ImageHeight",
+          "value": "240"
+        },
+        {
+          "tag": "MediaHeaderVersion",
+          "value": "0"
+        },
+        {
+          "tag": "MediaCreateDate",
+          "value": "2024:06:15 10:30:00"
+        },
+        {
+          "tag": "MediaModifyDate",
+          "value": "2024:06:15 10:30:00"
+        },
+        {
+          "tag": "MediaTimeScale",
+          "value": "12800"
+        },
+        {
+          "tag": "MediaDuration",
+          "value": "1"
+        },
+        {
+          "tag": "MediaLanguageCode",
+          "value": "und"
+        },
+        {
+          "tag": "HandlerType",
+          "value": "vide"
+        },
+        {
+          "tag": "HandlerDescription",
+          "value": "VideoHandler"
+        },
+        {
+          "tag": "GraphicsMode",
+          "value": "0"
+        },
+        {
+          "tag": "OpColor",
+          "value": "0 0 0"
+        },
+        {
+          "tag": "CompressorID",
+          "value": "avc1"
+        },
+        {
+          "tag": "SourceImageWidth",
+          "value": "320"
+        },
+        {
+          "tag": "SourceImageHeight",
+          "value": "240"
+        },
+        {
+          "tag": "XResolution",
+          "value": "72"
+        },
+        {
+          "tag": "YResolution",
+          "value": "72"
+        },
+        {
+          "tag": "CompressorName",
+          "value": "Lavc62.11.100 libx264"
+        },
+        {
+          "tag": "BitDepth",
+          "value": "24"
+        },
+        {
+          "tag": "PixelAspectRatio",
+          "value": "1:1"
+        },
+        {
+          "tag": "BufferSize",
+          "value": "0"
+        },
+        {
+          "tag": "MaxBitrate",
+          "value": "9160"
+        },
+        {
+          "tag": "AverageBitrate",
+          "value": "0"
+        },
+        {
+          "tag": "VideoFrameRate",
+          "value": "25"
+        },
+        {
+          "tag": "HandlerType",
+          "value": "mdir"
+        },
+        {
+          "tag": "HandlerVendorID",
+          "value": "appl"
+        },
+        {
+          "tag": "Encoder",
+          "value": "Lavf62.3.100"
+        },
+        {
+          "tag": "HandlerType",
+          "value": "mdta"
+        },
+        {
+          "tag": "CreationDate",
+          "value": "2024:06:15 10:30:00-07:00"
+        },
+        {
+          "tag": "GPSCoordinates",
+          "value": "34.0592 -118.446 42.938"
+        },
+        {
+          "tag": "Make",
+          "value": "TestCamera"
+        },
+        {
+          "tag": "Model",
+          "value": "TestModel"
+        },
+        {
+          "tag": "MediaDataSize",
+          "value": "1145"
+        },
+        {
+          "tag": "MediaDataOffset",
+          "value": "1552"
+        }
+      ]
+    },
+    {
+      "name": "Composite",
+      "tags": [
+        {
+          "tag": "ImageSize",
+          "value": "320 240"
+        },
+        {
+          "tag": "Megapixels",
+          "value": "0.0768"
+        },
+        {
+          "tag": "AvgBitrate",
+          "value": "9160"
+        },
+        {
+          "tag": "GPSAltitude",
+          "value": "42.938"
+        },
+        {
+          "tag": "GPSAltitudeRef",
+          "value": "0"
+        },
+        {
+          "tag": "GPSLatitude",
+          "value": "34.0592"
+        },
+        {
+          "tag": "GPSLongitude",
+          "value": "-118.446"
+        },
+        {
+          "tag": "Rotation",
+          "value": "0"
+        },
+        {
+          "tag": "GPSPosition",
+          "value": "34.0592 -118.446"
+        }
+      ]
+    }
+  ]
+}
