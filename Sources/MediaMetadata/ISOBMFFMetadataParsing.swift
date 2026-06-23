@@ -33,6 +33,9 @@ extension ISOBMFFMetadataParser {
     struct SonyNRTMMetadata {
         let creationTimestamp: String?
         let timeZone: String?
+        let manufacturer: String?
+        let model: String?
+        let serialNumber: String?
         let latitudeRef: String?
         let latitude: String?
         let longitudeRef: String?
@@ -52,6 +55,9 @@ extension ISOBMFFMetadataParser {
             creationTimestamp: firstMatch(in: xml, pattern: #"<CreationDate\s+value="([^"]+)""#, group: 1)
                 ?? firstMatch(in: xml, pattern: #"<CreationDateValue>([^<]+)"#, group: 1),
             timeZone: firstSonyItem(named: "TimeZone", in: xml),
+            manufacturer: firstMatch(in: xml, pattern: #"<Device[^>]*\bmanufacturer="([^"]+)""#, group: 1),
+            model: firstMatch(in: xml, pattern: #"<Device[^>]*\bmodelName="([^"]+)""#, group: 1),
+            serialNumber: firstMatch(in: xml, pattern: #"<Device[^>]*\bserialNo="([^"]+)""#, group: 1),
             latitudeRef: firstSonyItem(named: "LatitudeRef", in: xml),
             latitude: firstSonyItem(named: "Latitude", in: xml),
             longitudeRef: firstSonyItem(named: "LongitudeRef", in: xml),

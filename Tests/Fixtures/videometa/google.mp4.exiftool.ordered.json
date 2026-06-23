@@ -1,423 +1,461 @@
 {
-  "sourceFile": "../testdata/google.mp4",
-  "groups": [
+  "arguments" : [
+    "-a",
+    "-n",
+    "-G1",
+    "-S",
+    "-sep",
+    "U+001F",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion" : "13.55",
+  "fixture" : "videometa/google.mp4",
+  "groups" : [
     {
-      "name": "QuickTime",
-      "tags": [
+      "name" : "QuickTime",
+      "tags" : [
         {
-          "tag": "MajorBrand",
-          "value": "isom"
+          "tag" : "MajorBrand",
+          "value" : "isom"
         },
         {
-          "tag": "MinorVersion",
-          "value": "2.0.0"
+          "tag" : "MinorVersion",
+          "value" : "2.0.0"
         },
         {
-          "tag": "CompatibleBrands",
-          "value": "isom.iso2.mp41"
+          "tag" : "CompatibleBrands",
+          "value" : "isom.iso2.mp41"
         },
         {
-          "tag": "MediaDataSize",
-          "value": "38129666"
+          "tag" : "MediaDataSize",
+          "value" : "38129666"
         },
         {
-          "tag": "MediaDataOffset",
-          "value": "44"
+          "tag" : "MediaDataOffset",
+          "value" : "44"
         },
         {
-          "tag": "MovieHeaderVersion",
-          "value": "0"
+          "tag" : "MovieHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "CreateDate",
-          "value": "2025:09:15 22:23:05"
+          "tag" : "CreateDate",
+          "value" : "2025:09:15 22:23:05"
         },
         {
-          "tag": "ModifyDate",
-          "value": "2025:09:15 22:23:05"
+          "tag" : "ModifyDate",
+          "value" : "2025:09:15 22:23:05"
         },
         {
-          "tag": "TimeScale",
-          "value": "10000"
+          "tag" : "TimeScale",
+          "value" : "10000"
         },
         {
-          "tag": "Duration",
-          "value": "7.0468"
+          "tag" : "Duration",
+          "value" : "7.0468"
         },
         {
-          "tag": "PreferredRate",
-          "value": "1"
+          "tag" : "PreferredRate",
+          "value" : "1"
         },
         {
-          "tag": "PreferredVolume",
-          "value": "1"
+          "tag" : "PreferredVolume",
+          "value" : "1"
         },
         {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
         },
         {
-          "tag": "PreviewTime",
-          "value": "0"
+          "tag" : "PreviewTime",
+          "value" : "0"
         },
         {
-          "tag": "PreviewDuration",
-          "value": "0"
+          "tag" : "PreviewDuration",
+          "value" : "0"
         },
         {
-          "tag": "PosterTime",
-          "value": "0"
+          "tag" : "PosterTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionTime",
-          "value": "0"
+          "tag" : "SelectionTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionDuration",
-          "value": "0"
+          "tag" : "SelectionDuration",
+          "value" : "0"
         },
         {
-          "tag": "CurrentTime",
-          "value": "0"
+          "tag" : "CurrentTime",
+          "value" : "0"
         },
         {
-          "tag": "NextTrackID",
-          "value": "4"
+          "tag" : "NextTrackID",
+          "value" : "4"
         },
         {
-          "tag": "GPSCoordinates",
-          "value": "37.903 -122.0561"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "mdta"
-        },
-        {
-          "tag": "SpecialTypeID",
-          "value": "com.google.android.apps.camera.gallery.specialtype.SpecialType-AMETHYST"
-        },
-        {
-          "tag": "AndroidModel",
-          "value": "Pixel 9 Pro"
-        },
-        {
-          "tag": "AndroidCaptureFPS",
-          "value": "30"
-        },
-        {
-          "tag": "AndroidMake",
-          "value": "Google"
-        },
-        {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "TrackCreateDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "TrackModifyDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "TrackID",
-          "value": "1"
-        },
-        {
-          "tag": "TrackDuration",
-          "value": "7.0468"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "0"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "90000"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "7.04678888888889"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "meta"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "MetaHandle"
-        },
-        {
-          "tag": "MetaFormat",
-          "value": "mett"
-        },
-        {
-          "tag": "MetaType",
-          "value": "application/meta"
-        },
-        {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "TrackCreateDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "TrackModifyDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "TrackID",
-          "value": "2"
-        },
-        {
-          "tag": "TrackDuration",
-          "value": "7.021"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "1"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "48000"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "7.02097916666667"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "soun"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "SoundHandle"
-        },
-        {
-          "tag": "Balance",
-          "value": "0"
-        },
-        {
-          "tag": "AudioFormat",
-          "value": "mp4a"
-        },
-        {
-          "tag": "AudioChannels",
-          "value": "2"
-        },
-        {
-          "tag": "AudioBitsPerSample",
-          "value": "16"
-        },
-        {
-          "tag": "AudioSampleRate",
-          "value": "48000"
-        },
-        {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "TrackCreateDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "TrackModifyDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "TrackID",
-          "value": "3"
-        },
-        {
-          "tag": "TrackDuration",
-          "value": "7.0468"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "0"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "ImageWidth",
-          "value": "3840"
-        },
-        {
-          "tag": "ImageHeight",
-          "value": "2160"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "2025:09:15 22:23:05"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "90000"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "7.04678888888889"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "vide"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "VideoHandle"
-        },
-        {
-          "tag": "GraphicsMode",
-          "value": "0"
-        },
-        {
-          "tag": "OpColor",
-          "value": "0 0 0"
-        },
-        {
-          "tag": "CompressorID",
-          "value": "hvc1"
-        },
-        {
-          "tag": "SourceImageWidth",
-          "value": "3840"
-        },
-        {
-          "tag": "SourceImageHeight",
-          "value": "2160"
-        },
-        {
-          "tag": "XResolution",
-          "value": "72"
-        },
-        {
-          "tag": "YResolution",
-          "value": "72"
-        },
-        {
-          "tag": "BitDepth",
-          "value": "24"
-        },
-        {
-          "tag": "PixelAspectRatio",
-          "value": "65536:65536"
-        },
-        {
-          "tag": "ColorProfiles",
-          "value": "nclx"
-        },
-        {
-          "tag": "ColorPrimaries",
-          "value": "9"
-        },
-        {
-          "tag": "TransferCharacteristics",
-          "value": "18"
-        },
-        {
-          "tag": "MatrixCoefficients",
-          "value": "9"
-        },
-        {
-          "tag": "VideoFullRangeFlag",
-          "value": "0"
-        },
-        {
-          "tag": "VideoFrameRate",
-          "value": "30.0846248330603"
+          "tag" : "HandlerType",
+          "value" : "mdta"
         }
       ]
     },
     {
-      "name": "Composite",
-      "tags": [
+      "name" : "UserData",
+      "tags" : [
         {
-          "tag": "ImageSize",
-          "value": "3840 2160"
+          "tag" : "GPSCoordinates",
+          "value" : "37.903 -122.0561"
+        }
+      ]
+    },
+    {
+      "name" : "Keys",
+      "tags" : [
+        {
+          "tag" : "SpecialTypeID",
+          "value" : "com.google.android.apps.camera.gallery.specialtype.SpecialType-AMETHYST"
         },
         {
-          "tag": "Megapixels",
-          "value": "8.2944"
+          "tag" : "AndroidModel",
+          "value" : "Pixel 9 Pro"
         },
         {
-          "tag": "AvgBitrate",
-          "value": "43287354"
+          "tag" : "AndroidCaptureFPS",
+          "value" : "30"
         },
         {
-          "tag": "GPSLatitude",
-          "value": "37.903"
+          "tag" : "AndroidMake",
+          "value" : "Google"
+        }
+      ]
+    },
+    {
+      "name" : "Track1",
+      "tags" : [
+        {
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "GPSLongitude",
-          "value": "-122.0561"
+          "tag" : "TrackCreateDate",
+          "value" : "2025:09:15 22:23:05"
         },
         {
-          "tag": "Rotation",
-          "value": "0"
+          "tag" : "TrackModifyDate",
+          "value" : "2025:09:15 22:23:05"
         },
         {
-          "tag": "GPSPosition",
-          "value": "37.903 -122.0561"
+          "tag" : "TrackID",
+          "value" : "1"
+        },
+        {
+          "tag" : "TrackDuration",
+          "value" : "7.0468"
+        },
+        {
+          "tag" : "TrackLayer",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackVolume",
+          "value" : "0"
+        },
+        {
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "90000"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "7.04678888888889"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "meta"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "MetaHandle"
+        },
+        {
+          "tag" : "MetaFormat",
+          "value" : "mett"
+        },
+        {
+          "tag" : "MetaType",
+          "value" : "application/meta"
+        }
+      ]
+    },
+    {
+      "name" : "Track2",
+      "tags" : [
+        {
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackCreateDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "TrackModifyDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "TrackID",
+          "value" : "2"
+        },
+        {
+          "tag" : "TrackDuration",
+          "value" : "7.021"
+        },
+        {
+          "tag" : "TrackLayer",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackVolume",
+          "value" : "1"
+        },
+        {
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "48000"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "7.02097916666667"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "soun"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "SoundHandle"
+        },
+        {
+          "tag" : "Balance",
+          "value" : "0"
+        },
+        {
+          "tag" : "AudioFormat",
+          "value" : "mp4a"
+        },
+        {
+          "tag" : "AudioChannels",
+          "value" : "2"
+        },
+        {
+          "tag" : "AudioBitsPerSample",
+          "value" : "16"
+        },
+        {
+          "tag" : "AudioSampleRate",
+          "value" : "48000"
+        }
+      ]
+    },
+    {
+      "name" : "Track3",
+      "tags" : [
+        {
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackCreateDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "TrackModifyDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "TrackID",
+          "value" : "3"
+        },
+        {
+          "tag" : "TrackDuration",
+          "value" : "7.0468"
+        },
+        {
+          "tag" : "TrackLayer",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackVolume",
+          "value" : "0"
+        },
+        {
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "ImageWidth",
+          "value" : "3840"
+        },
+        {
+          "tag" : "ImageHeight",
+          "value" : "2160"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "2025:09:15 22:23:05"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "90000"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "7.04678888888889"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "vide"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "VideoHandle"
+        },
+        {
+          "tag" : "GraphicsMode",
+          "value" : "0"
+        },
+        {
+          "tag" : "OpColor",
+          "value" : "0 0 0"
+        },
+        {
+          "tag" : "CompressorID",
+          "value" : "hvc1"
+        },
+        {
+          "tag" : "SourceImageWidth",
+          "value" : "3840"
+        },
+        {
+          "tag" : "SourceImageHeight",
+          "value" : "2160"
+        },
+        {
+          "tag" : "XResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "YResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "BitDepth",
+          "value" : "24"
+        },
+        {
+          "tag" : "PixelAspectRatio",
+          "value" : "65536:65536"
+        },
+        {
+          "tag" : "ColorProfiles",
+          "value" : "nclx"
+        },
+        {
+          "tag" : "ColorPrimaries",
+          "value" : "9"
+        },
+        {
+          "tag" : "TransferCharacteristics",
+          "value" : "18"
+        },
+        {
+          "tag" : "MatrixCoefficients",
+          "value" : "9"
+        },
+        {
+          "tag" : "VideoFullRangeFlag",
+          "value" : "0"
+        },
+        {
+          "tag" : "VideoFrameRate",
+          "value" : "30.0846248330603"
+        }
+      ]
+    },
+    {
+      "name" : "Composite",
+      "tags" : [
+        {
+          "tag" : "ImageSize",
+          "value" : "3840 2160"
+        },
+        {
+          "tag" : "Megapixels",
+          "value" : "8.2944"
+        },
+        {
+          "tag" : "AvgBitrate",
+          "value" : "43287354"
+        },
+        {
+          "tag" : "GPSLatitude",
+          "value" : "37.903"
+        },
+        {
+          "tag" : "GPSLongitude",
+          "value" : "-122.0561"
+        },
+        {
+          "tag" : "Rotation",
+          "value" : "0"
+        },
+        {
+          "tag" : "GPSPosition",
+          "value" : "37.903 -122.0561"
         }
       ]
     }
-  ]
+  ],
+  "schemaVersion" : 1
 }

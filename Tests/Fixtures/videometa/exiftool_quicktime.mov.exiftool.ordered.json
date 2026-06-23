@@ -1,483 +1,566 @@
 {
-  "sourceFile": "../testdata/exiftool_quicktime.mov",
-  "groups": [
+  "arguments" : [
+    "-a",
+    "-n",
+    "-G1",
+    "-S",
+    "-sep",
+    "U+001F",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion" : "13.55",
+  "fixture" : "videometa/exiftool_quicktime.mov",
+  "groups" : [
     {
-      "name": "QuickTime",
-      "tags": [
+      "name" : "QuickTime",
+      "tags" : [
         {
-          "tag": "MovieHeaderVersion",
-          "value": "0"
+          "tag" : "MovieHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "CreateDate",
-          "value": "2005:08:11 14:03:54"
+          "tag" : "CreateDate",
+          "value" : "2005:08:11 14:03:54"
         },
         {
-          "tag": "ModifyDate",
-          "value": "2010:07:30 15:43:59"
+          "tag" : "ModifyDate",
+          "value" : "2010:07:30 15:43:59"
         },
         {
-          "tag": "TimeScale",
-          "value": "600"
+          "tag" : "TimeScale",
+          "value" : "600"
         },
         {
-          "tag": "Duration",
-          "value": "4.96666666666667"
+          "tag" : "Duration",
+          "value" : "4.96666666666667"
         },
         {
-          "tag": "PreferredRate",
-          "value": "1"
+          "tag" : "PreferredRate",
+          "value" : "1"
         },
         {
-          "tag": "PreferredVolume",
-          "value": "0.99609375"
+          "tag" : "PreferredVolume",
+          "value" : "0.99609375"
         },
         {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
         },
         {
-          "tag": "PreviewTime",
-          "value": "0"
+          "tag" : "PreviewTime",
+          "value" : "0"
         },
         {
-          "tag": "PreviewDuration",
-          "value": "0"
+          "tag" : "PreviewDuration",
+          "value" : "0"
         },
         {
-          "tag": "PosterTime",
-          "value": "0"
+          "tag" : "PosterTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionTime",
-          "value": "0"
+          "tag" : "SelectionTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionDuration",
-          "value": "0"
+          "tag" : "SelectionDuration",
+          "value" : "0"
         },
         {
-          "tag": "CurrentTime",
-          "value": "0"
+          "tag" : "CurrentTime",
+          "value" : "0"
         },
         {
-          "tag": "NextTrackID",
-          "value": "3"
+          "tag" : "NextTrackID",
+          "value" : "3"
         },
         {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
+          "tag" : "HandlerType",
+          "value" : "mdta"
         },
         {
-          "tag": "TrackCreateDate",
-          "value": "2005:08:11 14:03:54"
+          "tag" : "HandlerType",
+          "value" : "mdir"
         },
         {
-          "tag": "TrackModifyDate",
-          "value": "2005:08:11 14:03:54"
+          "tag" : "HandlerVendorID",
+          "value" : "appl"
         },
         {
-          "tag": "TrackID",
-          "value": "1"
+          "tag" : "MediaDataSize",
+          "value" : "0"
         },
         {
-          "tag": "TrackDuration",
-          "value": "4.96666666666667"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "0"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "ImageWidth",
-          "value": "320"
-        },
-        {
-          "tag": "ImageHeight",
-          "value": "240"
-        },
-        {
-          "tag": "CleanApertureDimensions",
-          "value": "320 240"
-        },
-        {
-          "tag": "ProductionApertureDimensions",
-          "value": "320 240"
-        },
-        {
-          "tag": "EncodedPixelsDimensions",
-          "value": "320 240"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "2005:08:11 14:03:54"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "2005:08:11 14:03:54"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "600"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "4.96666666666667"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "mhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "vide"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "pent"
-        },
-        {
-          "tag": "GraphicsMode",
-          "value": "64"
-        },
-        {
-          "tag": "OpColor",
-          "value": "32768 32768 32768"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "dhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "alis"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "pent"
-        },
-        {
-          "tag": "CompressorID",
-          "value": "jpeg"
-        },
-        {
-          "tag": "VendorID",
-          "value": "pent"
-        },
-        {
-          "tag": "SourceImageWidth",
-          "value": "320"
-        },
-        {
-          "tag": "SourceImageHeight",
-          "value": "240"
-        },
-        {
-          "tag": "XResolution",
-          "value": "72"
-        },
-        {
-          "tag": "YResolution",
-          "value": "72"
-        },
-        {
-          "tag": "CompressorName",
-          "value": "Photo - JPEG"
-        },
-        {
-          "tag": "BitDepth",
-          "value": "24"
-        },
-        {
-          "tag": "VideoFrameRate",
-          "value": "30"
-        },
-        {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "TrackCreateDate",
-          "value": "2005:08:11 14:03:54"
-        },
-        {
-          "tag": "TrackModifyDate",
-          "value": "2005:08:11 14:03:54"
-        },
-        {
-          "tag": "TrackID",
-          "value": "2"
-        },
-        {
-          "tag": "TrackDuration",
-          "value": "4.965"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "1"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "2005:08:11 14:03:54"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "2005:08:11 14:03:54"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "7875"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "4.96660317460317"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "mhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "soun"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "pent"
-        },
-        {
-          "tag": "Balance",
-          "value": "0"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "dhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "alis"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "pent"
-        },
-        {
-          "tag": "AudioFormat",
-          "value": "raw"
-        },
-        {
-          "tag": "AudioChannels",
-          "value": "1"
-        },
-        {
-          "tag": "AudioBitsPerSample",
-          "value": "8"
-        },
-        {
-          "tag": "AudioSampleRate",
-          "value": "7875"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "mdta"
-        },
-        {
-          "tag": "Album",
-          "value": "ålbum"
-        },
-        {
-          "tag": "Artist",
-          "value": "årtist"
-        },
-        {
-          "tag": "Comment",
-          "value": "çømménts"
-        },
-        {
-          "tag": "Format",
-          "value": "Digital Camera"
-        },
-        {
-          "tag": "Information",
-          "value": "PENTAX DIGITAL CAMERA"
-        },
-        {
-          "tag": "Album",
-          "value": "ålbum"
-        },
-        {
-          "tag": "Artist",
-          "value": "årtist"
-        },
-        {
-          "tag": "Comment",
-          "value": "çømménts"
-        },
-        {
-          "tag": "Composer",
-          "value": "cømpøsér"
-        },
-        {
-          "tag": "Genre",
-          "value": "Genré"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "mdir"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "appl"
-        },
-        {
-          "tag": "Lyrics",
-          "value": "These are lyrics"
-        },
-        {
-          "tag": "CoverArt",
-          "value": "(Binary data 251 bytes, use -b option to extract)"
-        },
-        {
-          "tag": "Artist",
-          "value": "årtist"
-        },
-        {
-          "tag": "AlbumArtist",
-          "value": "ålbüm årtîst"
-        },
-        {
-          "tag": "Composer",
-          "value": "cømpøsér"
-        },
-        {
-          "tag": "Album",
-          "value": "ålbum"
-        },
-        {
-          "tag": "Grouping",
-          "value": "grøuping"
-        },
-        {
-          "tag": "Genre",
-          "value": "Genré"
-        },
-        {
-          "tag": "TrackNumber",
-          "value": "1 of 2"
-        },
-        {
-          "tag": "DiskNumber",
-          "value": "3 of 4"
-        },
-        {
-          "tag": "ContentCreateDate",
-          "value": "2010"
-        },
-        {
-          "tag": "Comment",
-          "value": "çømménts"
-        },
-        {
-          "tag": "BeatsPerMinute",
-          "value": "128"
-        },
-        {
-          "tag": "MediaDataSize",
-          "value": "0"
-        },
-        {
-          "tag": "MediaDataOffset",
-          "value": "3871"
-        },
-        {
-          "tag": "Make",
-          "value": "PENTAX DIGITAL CAMERA"
-        },
-        {
-          "tag": "ExposureTime",
-          "value": "0.0260416666666667"
-        },
-        {
-          "tag": "FNumber",
-          "value": "4"
-        },
-        {
-          "tag": "ExposureCompensation",
-          "value": "0"
-        },
-        {
-          "tag": "WhiteBalance",
-          "value": "0"
-        },
-        {
-          "tag": "FocalLength",
-          "value": "18.9"
-        },
-        {
-          "tag": "ISO",
-          "value": "50"
+          "tag" : "MediaDataOffset",
+          "value" : "3871"
         }
       ]
     },
     {
-      "name": "Composite",
-      "tags": [
+      "name" : "Track1",
+      "tags" : [
         {
-          "tag": "Aperture",
-          "value": "4"
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "ImageSize",
-          "value": "320 240"
+          "tag" : "TrackCreateDate",
+          "value" : "2005:08:11 14:03:54"
         },
         {
-          "tag": "Megapixels",
-          "value": "0.0768"
+          "tag" : "TrackModifyDate",
+          "value" : "2005:08:11 14:03:54"
         },
         {
-          "tag": "ShutterSpeed",
-          "value": "0.0260416666666667"
+          "tag" : "TrackID",
+          "value" : "1"
         },
         {
-          "tag": "AvgBitrate",
-          "value": "0"
+          "tag" : "TrackDuration",
+          "value" : "4.96666666666667"
         },
         {
-          "tag": "Rotation",
-          "value": "0"
+          "tag" : "TrackLayer",
+          "value" : "0"
         },
         {
-          "tag": "FocalLength35efl",
-          "value": "18.9"
+          "tag" : "TrackVolume",
+          "value" : "0"
         },
         {
-          "tag": "LightValue",
-          "value": "10.2630344058338"
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "ImageWidth",
+          "value" : "320"
+        },
+        {
+          "tag" : "ImageHeight",
+          "value" : "240"
+        },
+        {
+          "tag" : "CleanApertureDimensions",
+          "value" : "320 240"
+        },
+        {
+          "tag" : "ProductionApertureDimensions",
+          "value" : "320 240"
+        },
+        {
+          "tag" : "EncodedPixelsDimensions",
+          "value" : "320 240"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "2005:08:11 14:03:54"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "2005:08:11 14:03:54"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "600"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "4.96666666666667"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "mhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "vide"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "pent"
+        },
+        {
+          "tag" : "GraphicsMode",
+          "value" : "64"
+        },
+        {
+          "tag" : "OpColor",
+          "value" : "32768 32768 32768"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "dhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "alis"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "pent"
+        },
+        {
+          "tag" : "CompressorID",
+          "value" : "jpeg"
+        },
+        {
+          "tag" : "VendorID",
+          "value" : "pent"
+        },
+        {
+          "tag" : "SourceImageWidth",
+          "value" : "320"
+        },
+        {
+          "tag" : "SourceImageHeight",
+          "value" : "240"
+        },
+        {
+          "tag" : "XResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "YResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "CompressorName",
+          "value" : "Photo - JPEG"
+        },
+        {
+          "tag" : "BitDepth",
+          "value" : "24"
+        },
+        {
+          "tag" : "VideoFrameRate",
+          "value" : "30"
+        }
+      ]
+    },
+    {
+      "name" : "Track2",
+      "tags" : [
+        {
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackCreateDate",
+          "value" : "2005:08:11 14:03:54"
+        },
+        {
+          "tag" : "TrackModifyDate",
+          "value" : "2005:08:11 14:03:54"
+        },
+        {
+          "tag" : "TrackID",
+          "value" : "2"
+        },
+        {
+          "tag" : "TrackDuration",
+          "value" : "4.965"
+        },
+        {
+          "tag" : "TrackLayer",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackVolume",
+          "value" : "1"
+        },
+        {
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "2005:08:11 14:03:54"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "2005:08:11 14:03:54"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "7875"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "4.96660317460317"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "mhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "soun"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "pent"
+        },
+        {
+          "tag" : "Balance",
+          "value" : "0"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "dhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "alis"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "pent"
+        },
+        {
+          "tag" : "AudioFormat",
+          "value" : "raw"
+        },
+        {
+          "tag" : "AudioChannels",
+          "value" : "1"
+        },
+        {
+          "tag" : "AudioBitsPerSample",
+          "value" : "8"
+        },
+        {
+          "tag" : "AudioSampleRate",
+          "value" : "7875"
+        }
+      ]
+    },
+    {
+      "name" : "Keys",
+      "tags" : [
+        {
+          "tag" : "Album",
+          "value" : "ålbum"
+        },
+        {
+          "tag" : "Artist",
+          "value" : "årtist"
+        },
+        {
+          "tag" : "Comment",
+          "value" : "çømménts"
+        }
+      ]
+    },
+    {
+      "name" : "UserData",
+      "tags" : [
+        {
+          "tag" : "Format",
+          "value" : "Digital Camera"
+        },
+        {
+          "tag" : "Information",
+          "value" : "PENTAX DIGITAL CAMERA"
+        },
+        {
+          "tag" : "Album",
+          "value" : "ålbum"
+        },
+        {
+          "tag" : "Artist",
+          "value" : "årtist"
+        },
+        {
+          "tag" : "Comment",
+          "value" : "çømménts"
+        },
+        {
+          "tag" : "Composer",
+          "value" : "cømpøsér"
+        },
+        {
+          "tag" : "Genre",
+          "value" : "Genré"
+        }
+      ]
+    },
+    {
+      "name" : "Pentax",
+      "tags" : [
+        {
+          "tag" : "Make",
+          "value" : "PENTAX DIGITAL CAMERA"
+        },
+        {
+          "tag" : "ExposureTime",
+          "value" : "0.0260416666666667"
+        },
+        {
+          "tag" : "FNumber",
+          "value" : "4"
+        },
+        {
+          "tag" : "ExposureCompensation",
+          "value" : "0"
+        },
+        {
+          "tag" : "WhiteBalance",
+          "value" : "0"
+        },
+        {
+          "tag" : "FocalLength",
+          "value" : "18.9"
+        },
+        {
+          "tag" : "ISO",
+          "value" : "50"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-x",
+      "tags" : [
+        {
+          "tag" : "XMPToolkit",
+          "value" : "Adobe XMP Core 4.1-c036 46.277092, Fri Feb 23 2007 14:16:18"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-xmpDM",
+      "tags" : [
+        {
+          "tag" : "AltTapeName",
+          "value" : "An Alternate Scene Name"
+        },
+        {
+          "tag" : "Album",
+          "value" : "No Album"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-xmp",
+      "tags" : [
+        {
+          "tag" : "MetadataDate",
+          "value" : "2008:09:12 11:17:39-04:00"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-dc",
+      "tags" : [
+        {
+          "tag" : "Creator",
+          "value" : "Phil Harvey"
+        }
+      ]
+    },
+    {
+      "name" : "ItemList",
+      "tags" : [
+        {
+          "tag" : "Lyrics",
+          "value" : "These are lyrics"
+        },
+        {
+          "tag" : "CoverArt",
+          "value" : "(Binary data 251 bytes, use -b option to extract)"
+        },
+        {
+          "tag" : "Artist",
+          "value" : "årtist"
+        },
+        {
+          "tag" : "AlbumArtist",
+          "value" : "ålbüm årtîst"
+        },
+        {
+          "tag" : "Composer",
+          "value" : "cømpøsér"
+        },
+        {
+          "tag" : "Album",
+          "value" : "ålbum"
+        },
+        {
+          "tag" : "Grouping",
+          "value" : "grøuping"
+        },
+        {
+          "tag" : "Genre",
+          "value" : "Genré"
+        },
+        {
+          "tag" : "TrackNumber",
+          "value" : "1 of 2"
+        },
+        {
+          "tag" : "DiskNumber",
+          "value" : "3 of 4"
+        },
+        {
+          "tag" : "ContentCreateDate",
+          "value" : "2010"
+        },
+        {
+          "tag" : "Comment",
+          "value" : "çømménts"
+        },
+        {
+          "tag" : "BeatsPerMinute",
+          "value" : "128"
+        }
+      ]
+    },
+    {
+      "name" : "Composite",
+      "tags" : [
+        {
+          "tag" : "Aperture",
+          "value" : "4"
+        },
+        {
+          "tag" : "ImageSize",
+          "value" : "320 240"
+        },
+        {
+          "tag" : "Megapixels",
+          "value" : "0.0768"
+        },
+        {
+          "tag" : "ShutterSpeed",
+          "value" : "0.0260416666666667"
+        },
+        {
+          "tag" : "AvgBitrate",
+          "value" : "0"
+        },
+        {
+          "tag" : "Rotation",
+          "value" : "0"
+        },
+        {
+          "tag" : "FocalLength35efl",
+          "value" : "18.9"
+        },
+        {
+          "tag" : "LightValue",
+          "value" : "10.2630344058338"
         }
       ]
     }
-  ]
+  ],
+  "schemaVersion" : 1
 }

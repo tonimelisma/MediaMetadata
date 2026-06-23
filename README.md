@@ -87,9 +87,9 @@ diagnostics explaining what could not be parsed.
 
 | Format | Detection | Timestamps | Location | Camera | Notes |
 |---|---|---|---|---|---|
-| TIFF / RAW | ✅ | ✅ | — | — | EXIF `DateTimeOriginal`, `OffsetTimeOriginal` |
-| JPEG (EXIF) | ✅ | ✅ | — | — | APP1 EXIF segment |
-| HEIF / ISO BMFF | ✅ | ✅ | ✅ | — | QuickTime `moov.udta.meta`, Sony USMT/NRTM |
+| TIFF / RAW | ✅ | ✅ | ✅ | ✅ | EXIF date, GPS, camera, lens, orientation, dimensions |
+| JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | APP1 EXIF segment |
+| HEIF / ISO BMFF | ✅ | ✅ | ✅ | ✅ | Embedded EXIF, QuickTime metadata, GoPro GPMF, Sony NRTM |
 | RIFF AVI | ✅ | ✅ | — | — | `LIST.INFO` `ICRD` / `IDIT` |
 | RIFF WAV | ✅ | ✅ | — | — | `LIST.INFO` `ICRD`, Broadcast Wave `bext` origination date |
 | ID3v2 | ✅ | ✅ | — | — | `TDRC`, `TDOR`, legacy `TYER`/`TDAT`/`TIME` |
@@ -112,12 +112,17 @@ engineering guardrails, see [ARCHITECTURE.md](ARCHITECTURE.md).
 ## Development
 
 ```sh
+Scripts/check-local-fixtures.sh
 swift build
 swift test
 ```
 
-Tests use synthetic fixtures to exercise parsers, malformed inputs, read
-metrics, and partial-success behavior.
+Tests use synthetic fixtures for malformed inputs and parser edge cases, plus a
+required 16-file local corpus for ExifTool-backed semantic golden coverage. The
+fixture check downloads three public samples when absent and requires the
+rights-reviewed local `apple.mov`; it is intentionally a local prerequisite,
+not a CI bootstrap step. See [Tests/Fixtures/README.md](Tests/Fixtures/README.md)
+for provenance, privacy notes, and golden regeneration instructions.
 
 ## Contributing
 
