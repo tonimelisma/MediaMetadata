@@ -1,0 +1,404 @@
+{
+  "arguments" : [
+    "-a",
+    "-n",
+    "-G1",
+    "-S",
+    "-sep",
+    "U+001F",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion" : "13.55",
+  "fixture" : "otos-catalog-state-robustness/Media/jpeg-exif-offset-date.jpg",
+  "groups" : [
+    {
+      "name" : "IFD0",
+      "tags" : [
+        {
+          "tag" : "Make",
+          "value" : "SONY"
+        },
+        {
+          "tag" : "Model",
+          "value" : "ILCE-6700"
+        },
+        {
+          "tag" : "Orientation",
+          "value" : "1"
+        },
+        {
+          "tag" : "XResolution",
+          "value" : "350"
+        },
+        {
+          "tag" : "YResolution",
+          "value" : "350"
+        },
+        {
+          "tag" : "ResolutionUnit",
+          "value" : "2"
+        },
+        {
+          "tag" : "Software",
+          "value" : "ILCE-6700 v1.03"
+        },
+        {
+          "tag" : "ModifyDate",
+          "value" : "2025:06:12 16:48:36"
+        },
+        {
+          "tag" : "YCbCrPositioning",
+          "value" : "1"
+        }
+      ]
+    },
+    {
+      "name" : "ExifIFD",
+      "tags" : [
+        {
+          "tag" : "ExposureTime",
+          "value" : "0.008"
+        },
+        {
+          "tag" : "FNumber",
+          "value" : "6.3"
+        },
+        {
+          "tag" : "ExposureProgram",
+          "value" : "2"
+        },
+        {
+          "tag" : "ISO",
+          "value" : "400"
+        },
+        {
+          "tag" : "SensitivityType",
+          "value" : "2"
+        },
+        {
+          "tag" : "RecommendedExposureIndex",
+          "value" : "400"
+        },
+        {
+          "tag" : "ExifVersion",
+          "value" : "0232"
+        },
+        {
+          "tag" : "DateTimeOriginal",
+          "value" : "2025:06:12 16:48:36"
+        },
+        {
+          "tag" : "CreateDate",
+          "value" : "2025:06:12 16:48:36"
+        },
+        {
+          "tag" : "OffsetTime",
+          "value" : "-08:00"
+        },
+        {
+          "tag" : "OffsetTimeOriginal",
+          "value" : "-08:00"
+        },
+        {
+          "tag" : "OffsetTimeDigitized",
+          "value" : "-08:00"
+        },
+        {
+          "tag" : "ComponentsConfiguration",
+          "value" : "1 2 3 0"
+        },
+        {
+          "tag" : "CompressedBitsPerPixel",
+          "value" : "2"
+        },
+        {
+          "tag" : "BrightnessValue",
+          "value" : "5.57578125"
+        },
+        {
+          "tag" : "ExposureCompensation",
+          "value" : "0"
+        },
+        {
+          "tag" : "MaxApertureValue",
+          "value" : "2.79795934507662"
+        },
+        {
+          "tag" : "MeteringMode",
+          "value" : "5"
+        },
+        {
+          "tag" : "LightSource",
+          "value" : "0"
+        },
+        {
+          "tag" : "Flash",
+          "value" : "16"
+        },
+        {
+          "tag" : "FocalLength",
+          "value" : "18"
+        },
+        {
+          "tag" : "SubSecTime",
+          "value" : "603"
+        },
+        {
+          "tag" : "SubSecTimeOriginal",
+          "value" : "603"
+        },
+        {
+          "tag" : "SubSecTimeDigitized",
+          "value" : "603"
+        },
+        {
+          "tag" : "FlashpixVersion",
+          "value" : "0100"
+        },
+        {
+          "tag" : "ColorSpace",
+          "value" : "1"
+        },
+        {
+          "tag" : "ExifImageWidth",
+          "value" : "6192"
+        },
+        {
+          "tag" : "ExifImageHeight",
+          "value" : "4128"
+        },
+        {
+          "tag" : "FileSource",
+          "value" : "3"
+        },
+        {
+          "tag" : "SceneType",
+          "value" : "1"
+        },
+        {
+          "tag" : "CustomRendered",
+          "value" : "0"
+        },
+        {
+          "tag" : "ExposureMode",
+          "value" : "0"
+        },
+        {
+          "tag" : "WhiteBalance",
+          "value" : "0"
+        },
+        {
+          "tag" : "DigitalZoomRatio",
+          "value" : "1"
+        },
+        {
+          "tag" : "FocalLengthIn35mmFormat",
+          "value" : "27"
+        },
+        {
+          "tag" : "SceneCaptureType",
+          "value" : "0"
+        },
+        {
+          "tag" : "Contrast",
+          "value" : "0"
+        },
+        {
+          "tag" : "Saturation",
+          "value" : "0"
+        },
+        {
+          "tag" : "Sharpness",
+          "value" : "1"
+        },
+        {
+          "tag" : "LensInfo",
+          "value" : "18 50 2.8 2.8"
+        },
+        {
+          "tag" : "LensModel",
+          "value" : "18-50mm F2.8 DC DN | Contemporary 021"
+        },
+        {
+          "tag" : "CompositeImage",
+          "value" : "0"
+        }
+      ]
+    },
+    {
+      "name" : "IFD1",
+      "tags" : [
+        {
+          "tag" : "Compression",
+          "value" : "6"
+        },
+        {
+          "tag" : "XResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "YResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "ResolutionUnit",
+          "value" : "2"
+        },
+        {
+          "tag" : "ThumbnailOffset",
+          "value" : "1016"
+        },
+        {
+          "tag" : "ThumbnailLength",
+          "value" : "9134"
+        },
+        {
+          "tag" : "ThumbnailImage",
+          "value" : "(Binary data 9134 bytes, use -b option to extract)"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-x",
+      "tags" : [
+        {
+          "tag" : "XMPToolkit",
+          "value" : "XMP Core 6.0.0"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-aux",
+      "tags" : [
+        {
+          "tag" : "FlashCompensation",
+          "value" : "0"
+        },
+        {
+          "tag" : "Lens",
+          "value" : "Sony E 18-50mm F2.8"
+        },
+        {
+          "tag" : "LensID",
+          "value" : "65535"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-xmp",
+      "tags" : [
+        {
+          "tag" : "Rating",
+          "value" : "0"
+        },
+        {
+          "tag" : "CreateDate",
+          "value" : "2025:06:12 16:48:36"
+        },
+        {
+          "tag" : "ModifyDate",
+          "value" : "2025:06:12 16:48:36"
+        },
+        {
+          "tag" : "CreatorTool",
+          "value" : "ILCE-6700 v1.03"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-photoshop",
+      "tags" : [
+        {
+          "tag" : "DateCreated",
+          "value" : "2025:06:12 16:48:36"
+        }
+      ]
+    },
+    {
+      "name" : "AROT",
+      "tags" : [
+        {
+          "tag" : "HDRGainCurveSize",
+          "value" : "257"
+        },
+        {
+          "tag" : "HDRGainCurve",
+          "value" : "(Binary data 2008 bytes, use -b option to extract)"
+        }
+      ]
+    },
+    {
+      "name" : "Photoshop",
+      "tags" : [
+        {
+          "tag" : "IPTCDigest",
+          "value" : "d41d8cd98f00b204e9800998ecf8427e"
+        }
+      ]
+    },
+    {
+      "name" : "Composite",
+      "tags" : [
+        {
+          "tag" : "Aperture",
+          "value" : "6.3"
+        },
+        {
+          "tag" : "ImageSize",
+          "value" : "6192 4128"
+        },
+        {
+          "tag" : "Megapixels",
+          "value" : "25.560576"
+        },
+        {
+          "tag" : "ScaleFactor35efl",
+          "value" : "1.5"
+        },
+        {
+          "tag" : "ShutterSpeed",
+          "value" : "0.008"
+        },
+        {
+          "tag" : "SubSecCreateDate",
+          "value" : "2025:06:12 16:48:36.603-08:00"
+        },
+        {
+          "tag" : "SubSecDateTimeOriginal",
+          "value" : "2025:06:12 16:48:36.603-08:00"
+        },
+        {
+          "tag" : "SubSecModifyDate",
+          "value" : "2025:06:12 16:48:36.603-08:00"
+        },
+        {
+          "tag" : "CircleOfConfusion",
+          "value" : "0.0200308404192444"
+        },
+        {
+          "tag" : "FOV",
+          "value" : "67.3801919655729"
+        },
+        {
+          "tag" : "FocalLength35efl",
+          "value" : "27"
+        },
+        {
+          "tag" : "HyperfocalDistance",
+          "value" : "2.56746947967106"
+        },
+        {
+          "tag" : "LightValue",
+          "value" : "10.2764879418872"
+        },
+        {
+          "tag" : "LensID",
+          "value" : "65535"
+        }
+      ]
+    }
+  ],
+  "schemaVersion" : 1
+}

@@ -11,7 +11,7 @@
     "--ExifTool:all"
   ],
   "exifToolVersion" : "13.55",
-  "fixture" : "videometa/IMG_5179.MOV",
+  "fixture" : "videometa/apple.mov",
   "groups" : [
     {
       "name" : "QuickTime",
@@ -30,7 +30,7 @@
         },
         {
           "tag" : "MediaDataSize",
-          "value" : "5642056"
+          "value" : "109996386"
         },
         {
           "tag" : "MediaDataOffset",
@@ -42,11 +42,11 @@
         },
         {
           "tag" : "CreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "ModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TimeScale",
@@ -54,7 +54,7 @@
         },
         {
           "tag" : "Duration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "PreferredRate",
@@ -111,11 +111,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TrackID",
@@ -123,7 +123,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "TrackLayer",
@@ -163,11 +163,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "MediaTimeScale",
@@ -175,7 +175,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.245"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -251,7 +251,7 @@
         },
         {
           "tag" : "VideoFrameRate",
-          "value" : "60"
+          "value" : "59.9471498678747"
         },
         {
           "tag" : "HandlerType",
@@ -264,35 +264,35 @@
       "tags" : [
         {
           "tag" : "LensModel-eng-US",
-          "value" : "iPhone 15 Pro back camera 9mm f/2.8"
+          "value" : "iPhone 15 Pro back camera 6.765mm f/1.78"
         },
         {
           "tag" : "FocalLengthIn35mmFormat-eng-US",
-          "value" : "78"
+          "value" : "24"
         },
         {
           "tag" : "CameraLensIrisfnumber-eng-US",
-          "value" : "F2.80"
+          "value" : "F1.78"
         },
         {
           "tag" : "Apple-maker-note74",
-          "value" : "3"
+          "value" : "2"
         },
         {
           "tag" : "Apple-maker-note97",
-          "value" : "77"
+          "value" : "24"
         },
         {
           "tag" : "LensModel",
-          "value" : "iPhone 15 Pro back camera 9mm f/2.8"
+          "value" : "iPhone 15 Pro back camera 6.765mm f/1.78"
         },
         {
           "tag" : "FocalLengthIn35mmFormat",
-          "value" : "78"
+          "value" : "24"
         },
         {
           "tag" : "CameraLensIrisfnumber",
-          "value" : "F2.80"
+          "value" : "F1.78"
         }
       ]
     },
@@ -305,11 +305,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TrackID",
@@ -317,7 +317,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "TrackLayer",
@@ -337,11 +337,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "MediaTimeScale",
@@ -349,7 +349,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "0.832"
+          "value" : "13.2906666666667"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -422,11 +422,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TrackID",
@@ -434,7 +434,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "TrackLayer",
@@ -458,11 +458,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "MediaTimeScale",
@@ -470,7 +470,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.245"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -543,11 +543,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TrackID",
@@ -555,7 +555,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "TrackLayer",
@@ -579,11 +579,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "MediaTimeScale",
@@ -591,7 +591,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.245"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -664,11 +664,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TrackID",
@@ -676,7 +676,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "TrackLayer",
@@ -700,11 +700,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "MediaTimeScale",
@@ -712,7 +712,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.245"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -785,11 +785,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TrackID",
@@ -797,7 +797,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "TrackLayer",
@@ -817,11 +817,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "MediaTimeScale",
@@ -829,7 +829,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "0.7839"
+          "value" : "13.2453"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -902,11 +902,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "TrackID",
@@ -914,7 +914,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.2433333333333"
         },
         {
           "tag" : "TrackLayer",
@@ -934,11 +934,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:04:08 18:18:02"
+          "value" : "2026:03:18 01:11:09"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:04:08 18:18:04"
+          "value" : "2026:03:18 01:11:23"
         },
         {
           "tag" : "MediaTimeScale",
@@ -946,7 +946,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "0.783333333333333"
+          "value" : "13.245"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -1015,7 +1015,7 @@
       "tags" : [
         {
           "tag" : "LocationAccuracyHorizontal",
-          "value" : "14.868696"
+          "value" : "4.946966"
         },
         {
           "tag" : "FullFrameRatePlaybackIntent",
@@ -1023,7 +1023,7 @@
         },
         {
           "tag" : "GPSCoordinates",
-          "value" : "37.903 -122.056 38.313"
+          "value" : "31.0397 -104.8308 1233.381"
         },
         {
           "tag" : "Make",
@@ -1039,7 +1039,7 @@
         },
         {
           "tag" : "CreationDate",
-          "value" : "2026:04:08 11:18:02-07:00"
+          "value" : "2026:03:17 20:11:08-05:00"
         }
       ]
     },
@@ -1056,11 +1056,11 @@
         },
         {
           "tag" : "AvgBitrate",
-          "value" : "57620997"
+          "value" : "66446344"
         },
         {
           "tag" : "GPSAltitude",
-          "value" : "38.313"
+          "value" : "1233.381"
         },
         {
           "tag" : "GPSAltitudeRef",
@@ -1068,11 +1068,11 @@
         },
         {
           "tag" : "GPSLatitude",
-          "value" : "37.903"
+          "value" : "31.0397"
         },
         {
           "tag" : "GPSLongitude",
-          "value" : "-122.056"
+          "value" : "-104.8308"
         },
         {
           "tag" : "Rotation",
@@ -1080,11 +1080,11 @@
         },
         {
           "tag" : "GPSPosition",
-          "value" : "37.903 -122.056"
+          "value" : "31.0397 -104.8308"
         },
         {
           "tag" : "LensID",
-          "value" : "iPhone 15 Pro back camera 9mm f/2.8"
+          "value" : "iPhone 15 Pro back camera 6.765mm f/1.78"
         }
       ]
     }

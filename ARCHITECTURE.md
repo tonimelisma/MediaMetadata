@@ -142,6 +142,21 @@ For each real fixture:
 - Keep fixture provenance: source device, app/camera model, acquisition date,
   privacy review, and why the fixture exists.
 
+The canonical local corpus contains 16 media files. Byte-identical imports are
+deduplicated before test wiring. Twelve files are committed; three public
+DJI/GoPro samples are downloaded from recorded sources and verified by size and
+SHA-256; one legacy `apple.mov` fixture remains a manual rights-reviewed local
+prerequisite. Local golden runs require the full corpus and fail when it is
+incomplete. CI must not acquire the corpus implicitly.
+
+ExifTool evidence is stored in both grouped numeric JSON and ordered group/tag
+form. Generation fixes locale and timezone, records the tool version and exact
+arguments, and must be deterministic. A separate reviewed semantic manifest
+maps only relevant evidence into `FormatIdentity`, findings, timestamp and
+location candidates, `CameraMetadata`, diagnostics, provenance, and bounded
+read expectations. Regenerating raw ExifTool output never silently rewrites the
+semantic contract.
+
 Synthetic fixtures cover malformed data, edge offsets, conflicting tags, and
 small examples that would be hard to obtain from real cameras.
 

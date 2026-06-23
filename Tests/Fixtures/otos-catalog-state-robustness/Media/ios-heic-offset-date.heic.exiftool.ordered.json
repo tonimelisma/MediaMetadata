@@ -1,0 +1,845 @@
+{
+  "arguments" : [
+    "-a",
+    "-n",
+    "-G1",
+    "-S",
+    "-sep",
+    "U+001F",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion" : "13.55",
+  "fixture" : "otos-catalog-state-robustness/Media/ios-heic-offset-date.heic",
+  "groups" : [
+    {
+      "name" : "QuickTime",
+      "tags" : [
+        {
+          "tag" : "MajorBrand",
+          "value" : "heic"
+        },
+        {
+          "tag" : "MinorVersion",
+          "value" : "0.0.0"
+        },
+        {
+          "tag" : "CompatibleBrands",
+          "value" : "mif1.MiHE.MiPr.miaf.MiHB.heic"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "pict"
+        },
+        {
+          "tag" : "HEVCConfigurationVersion",
+          "value" : "1"
+        },
+        {
+          "tag" : "GeneralProfileSpace",
+          "value" : "0"
+        },
+        {
+          "tag" : "GeneralTierFlag",
+          "value" : "0"
+        },
+        {
+          "tag" : "GeneralProfileIDC",
+          "value" : "3"
+        },
+        {
+          "tag" : "GenProfileCompatibilityFlags",
+          "value" : "1879048192"
+        },
+        {
+          "tag" : "ConstraintIndicatorFlags",
+          "value" : "176 0 0 0 0 0"
+        },
+        {
+          "tag" : "GeneralLevelIDC",
+          "value" : "90"
+        },
+        {
+          "tag" : "MinSpatialSegmentationIDC",
+          "value" : "0"
+        },
+        {
+          "tag" : "ParallelismType",
+          "value" : "0"
+        },
+        {
+          "tag" : "ChromaFormat",
+          "value" : "1"
+        },
+        {
+          "tag" : "BitDepthLuma",
+          "value" : "8"
+        },
+        {
+          "tag" : "BitDepthChroma",
+          "value" : "8"
+        },
+        {
+          "tag" : "AverageFrameRate",
+          "value" : "0"
+        },
+        {
+          "tag" : "ConstantFrameRate",
+          "value" : "0"
+        },
+        {
+          "tag" : "NumTemporalLayers",
+          "value" : "1"
+        },
+        {
+          "tag" : "TemporalIDNested",
+          "value" : "0"
+        },
+        {
+          "tag" : "ImageSpatialExtent",
+          "value" : "512 512"
+        },
+        {
+          "tag" : "ImageSpatialExtent",
+          "value" : "4032 3024"
+        },
+        {
+          "tag" : "Rotation",
+          "value" : "3"
+        },
+        {
+          "tag" : "ImagePixelDepth",
+          "value" : "8 8 8"
+        },
+        {
+          "tag" : "HEVCConfigurationVersion",
+          "value" : "1"
+        },
+        {
+          "tag" : "GeneralProfileSpace",
+          "value" : "0"
+        },
+        {
+          "tag" : "GeneralTierFlag",
+          "value" : "0"
+        },
+        {
+          "tag" : "GeneralProfileIDC",
+          "value" : "3"
+        },
+        {
+          "tag" : "GenProfileCompatibilityFlags",
+          "value" : "1879048192"
+        },
+        {
+          "tag" : "ConstraintIndicatorFlags",
+          "value" : "176 0 0 0 0 0"
+        },
+        {
+          "tag" : "GeneralLevelIDC",
+          "value" : "60"
+        },
+        {
+          "tag" : "MinSpatialSegmentationIDC",
+          "value" : "0"
+        },
+        {
+          "tag" : "ParallelismType",
+          "value" : "0"
+        },
+        {
+          "tag" : "ChromaFormat",
+          "value" : "1"
+        },
+        {
+          "tag" : "BitDepthLuma",
+          "value" : "8"
+        },
+        {
+          "tag" : "BitDepthChroma",
+          "value" : "8"
+        },
+        {
+          "tag" : "AverageFrameRate",
+          "value" : "0"
+        },
+        {
+          "tag" : "ConstantFrameRate",
+          "value" : "0"
+        },
+        {
+          "tag" : "NumTemporalLayers",
+          "value" : "1"
+        },
+        {
+          "tag" : "TemporalIDNested",
+          "value" : "0"
+        },
+        {
+          "tag" : "ImageSpatialExtent",
+          "value" : "320 240"
+        },
+        {
+          "tag" : "HEVCConfigurationVersion",
+          "value" : "1"
+        },
+        {
+          "tag" : "GeneralProfileSpace",
+          "value" : "0"
+        },
+        {
+          "tag" : "GeneralTierFlag",
+          "value" : "0"
+        },
+        {
+          "tag" : "GeneralProfileIDC",
+          "value" : "4"
+        },
+        {
+          "tag" : "GenProfileCompatibilityFlags",
+          "value" : "134217728"
+        },
+        {
+          "tag" : "ConstraintIndicatorFlags",
+          "value" : "191 200 0 0 0 0"
+        },
+        {
+          "tag" : "GeneralLevelIDC",
+          "value" : "150"
+        },
+        {
+          "tag" : "MinSpatialSegmentationIDC",
+          "value" : "0"
+        },
+        {
+          "tag" : "ParallelismType",
+          "value" : "0"
+        },
+        {
+          "tag" : "ChromaFormat",
+          "value" : "0"
+        },
+        {
+          "tag" : "BitDepthLuma",
+          "value" : "8"
+        },
+        {
+          "tag" : "BitDepthChroma",
+          "value" : "8"
+        },
+        {
+          "tag" : "AverageFrameRate",
+          "value" : "0"
+        },
+        {
+          "tag" : "ConstantFrameRate",
+          "value" : "0"
+        },
+        {
+          "tag" : "NumTemporalLayers",
+          "value" : "1"
+        },
+        {
+          "tag" : "TemporalIDNested",
+          "value" : "0"
+        },
+        {
+          "tag" : "ImageSpatialExtent",
+          "value" : "2016 1512"
+        },
+        {
+          "tag" : "ImagePixelDepth",
+          "value" : "8"
+        },
+        {
+          "tag" : "AuxiliaryImageType",
+          "value" : "urn:com:apple:photo:2020:aux:hdrgainmap"
+        },
+        {
+          "tag" : "MediaDataSize",
+          "value" : "2948514"
+        },
+        {
+          "tag" : "MediaDataOffset",
+          "value" : "3752"
+        }
+      ]
+    },
+    {
+      "name" : "Meta",
+      "tags" : [
+        {
+          "tag" : "PrimaryItemReference",
+          "value" : "49"
+        },
+        {
+          "tag" : "MetaImageSize",
+          "value" : "0 1287 4032 3024"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-x",
+      "tags" : [
+        {
+          "tag" : "XMPToolkit",
+          "value" : "XMP Core 6.0.0"
+        }
+      ]
+    },
+    {
+      "name" : "XMP-HDRGainMap",
+      "tags" : [
+        {
+          "tag" : "HDRGainMapVersion",
+          "value" : "65536"
+        }
+      ]
+    },
+    {
+      "name" : "IFD0",
+      "tags" : [
+        {
+          "tag" : "Make",
+          "value" : "Apple"
+        },
+        {
+          "tag" : "Model",
+          "value" : "iPhone 12 Pro"
+        },
+        {
+          "tag" : "Orientation",
+          "value" : "6"
+        },
+        {
+          "tag" : "XResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "YResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "ResolutionUnit",
+          "value" : "2"
+        },
+        {
+          "tag" : "Software",
+          "value" : "17.4.1"
+        },
+        {
+          "tag" : "ModifyDate",
+          "value" : "2024:04:25 14:51:34"
+        },
+        {
+          "tag" : "HostComputer",
+          "value" : "iPhone 12 Pro"
+        }
+      ]
+    },
+    {
+      "name" : "ExifIFD",
+      "tags" : [
+        {
+          "tag" : "ExposureTime",
+          "value" : "0.002898550725"
+        },
+        {
+          "tag" : "FNumber",
+          "value" : "2"
+        },
+        {
+          "tag" : "ExposureProgram",
+          "value" : "2"
+        },
+        {
+          "tag" : "ISO",
+          "value" : "25"
+        },
+        {
+          "tag" : "ExifVersion",
+          "value" : "0232"
+        },
+        {
+          "tag" : "DateTimeOriginal",
+          "value" : "2024:04:25 14:51:34"
+        },
+        {
+          "tag" : "CreateDate",
+          "value" : "2024:04:25 14:51:34"
+        },
+        {
+          "tag" : "OffsetTime",
+          "value" : "-07:00"
+        },
+        {
+          "tag" : "OffsetTimeOriginal",
+          "value" : "-07:00"
+        },
+        {
+          "tag" : "OffsetTimeDigitized",
+          "value" : "-07:00"
+        },
+        {
+          "tag" : "ShutterSpeedValue",
+          "value" : "0.00289799999752371"
+        },
+        {
+          "tag" : "ApertureValue",
+          "value" : "2"
+        },
+        {
+          "tag" : "BrightnessValue",
+          "value" : "7.485081329"
+        },
+        {
+          "tag" : "ExposureCompensation",
+          "value" : "0"
+        },
+        {
+          "tag" : "MeteringMode",
+          "value" : "5"
+        },
+        {
+          "tag" : "Flash",
+          "value" : "16"
+        },
+        {
+          "tag" : "FocalLength",
+          "value" : "6"
+        },
+        {
+          "tag" : "SubjectArea",
+          "value" : "2004 1514 2318 1393"
+        },
+        {
+          "tag" : "SubSecTimeOriginal",
+          "value" : "877"
+        },
+        {
+          "tag" : "SubSecTimeDigitized",
+          "value" : "877"
+        },
+        {
+          "tag" : "ColorSpace",
+          "value" : "65535"
+        },
+        {
+          "tag" : "ExifImageWidth",
+          "value" : "4032"
+        },
+        {
+          "tag" : "ExifImageHeight",
+          "value" : "3024"
+        },
+        {
+          "tag" : "SensingMethod",
+          "value" : "2"
+        },
+        {
+          "tag" : "SceneType",
+          "value" : "1"
+        },
+        {
+          "tag" : "ExposureMode",
+          "value" : "0"
+        },
+        {
+          "tag" : "WhiteBalance",
+          "value" : "0"
+        },
+        {
+          "tag" : "FocalLengthIn35mmFormat",
+          "value" : "52"
+        },
+        {
+          "tag" : "LensInfo",
+          "value" : "1.539999962 6 1.6 2.4"
+        },
+        {
+          "tag" : "LensMake",
+          "value" : "Apple"
+        },
+        {
+          "tag" : "LensModel",
+          "value" : "iPhone 12 Pro back triple camera 6mm f/2"
+        },
+        {
+          "tag" : "CompositeImage",
+          "value" : "2"
+        }
+      ]
+    },
+    {
+      "name" : "Apple",
+      "tags" : [
+        {
+          "tag" : "MakerNoteVersion",
+          "value" : "14"
+        },
+        {
+          "tag" : "RunTimeFlags",
+          "value" : "1"
+        },
+        {
+          "tag" : "RunTimeValue",
+          "value" : "1957878586476333"
+        },
+        {
+          "tag" : "RunTimeScale",
+          "value" : "1000000000"
+        },
+        {
+          "tag" : "RunTimeEpoch",
+          "value" : "0"
+        },
+        {
+          "tag" : "AEStable",
+          "value" : "1"
+        },
+        {
+          "tag" : "AETarget",
+          "value" : "152"
+        },
+        {
+          "tag" : "AEAverage",
+          "value" : "167"
+        },
+        {
+          "tag" : "AFStable",
+          "value" : "1"
+        },
+        {
+          "tag" : "AccelerationVector",
+          "value" : "0.02726415919 -0.9938955303 -0.1056743636"
+        },
+        {
+          "tag" : "FocusDistanceRange",
+          "value" : "0.30859375 0.5234375"
+        },
+        {
+          "tag" : "ContentIdentifier",
+          "value" : "C307819A-6E67-4D17-8A03-AB773274D015"
+        },
+        {
+          "tag" : "ImageCaptureType",
+          "value" : "12"
+        },
+        {
+          "tag" : "LivePhotoVideoIndex",
+          "value" : "1112547328"
+        },
+        {
+          "tag" : "PhotosAppFeatureFlags",
+          "value" : "0"
+        },
+        {
+          "tag" : "HDRHeadroom",
+          "value" : "1.30073905"
+        },
+        {
+          "tag" : "AFPerformance",
+          "value" : "186 268435481"
+        },
+        {
+          "tag" : "SignalToNoiseRatio",
+          "value" : "45.98026653"
+        },
+        {
+          "tag" : "PhotoIdentifier",
+          "value" : "3A76C61C-DE68-43FA-AEEA-32359B10D1E7"
+        },
+        {
+          "tag" : "ColorTemperature",
+          "value" : "5440"
+        },
+        {
+          "tag" : "CameraType",
+          "value" : "1"
+        },
+        {
+          "tag" : "FocusPosition",
+          "value" : "69"
+        },
+        {
+          "tag" : "HDRGain",
+          "value" : "0"
+        },
+        {
+          "tag" : "AFMeasuredDepth",
+          "value" : "260"
+        },
+        {
+          "tag" : "AFConfidence",
+          "value" : "20"
+        }
+      ]
+    },
+    {
+      "name" : "GPS",
+      "tags" : [
+        {
+          "tag" : "GPSLatitudeRef",
+          "value" : "N"
+        },
+        {
+          "tag" : "GPSLatitude",
+          "value" : "38.5145638888889"
+        },
+        {
+          "tag" : "GPSLongitudeRef",
+          "value" : "W"
+        },
+        {
+          "tag" : "GPSLongitude",
+          "value" : "123.243386111111"
+        },
+        {
+          "tag" : "GPSAltitudeRef",
+          "value" : "0"
+        },
+        {
+          "tag" : "GPSAltitude",
+          "value" : "41.22965578"
+        },
+        {
+          "tag" : "GPSTimeStamp",
+          "value" : "21:51:33.99"
+        },
+        {
+          "tag" : "GPSSpeedRef",
+          "value" : "K"
+        },
+        {
+          "tag" : "GPSSpeed",
+          "value" : "0.09453631469"
+        },
+        {
+          "tag" : "GPSImgDirectionRef",
+          "value" : "M"
+        },
+        {
+          "tag" : "GPSImgDirection",
+          "value" : "219.2615662"
+        },
+        {
+          "tag" : "GPSDestBearingRef",
+          "value" : "M"
+        },
+        {
+          "tag" : "GPSDestBearing",
+          "value" : "219.2615662"
+        },
+        {
+          "tag" : "GPSDateStamp",
+          "value" : "2024:04:25"
+        },
+        {
+          "tag" : "GPSHPositioningError",
+          "value" : "5.066951495"
+        }
+      ]
+    },
+    {
+      "name" : "ICC-header",
+      "tags" : [
+        {
+          "tag" : "ProfileCMMType",
+          "value" : "appl"
+        },
+        {
+          "tag" : "ProfileVersion",
+          "value" : "1024"
+        },
+        {
+          "tag" : "ProfileClass",
+          "value" : "mntr"
+        },
+        {
+          "tag" : "ColorSpaceData",
+          "value" : "RGB"
+        },
+        {
+          "tag" : "ProfileConnectionSpace",
+          "value" : "XYZ"
+        },
+        {
+          "tag" : "ProfileDateTime",
+          "value" : "2022:01:01 00:00:00"
+        },
+        {
+          "tag" : "ProfileFileSignature",
+          "value" : "acsp"
+        },
+        {
+          "tag" : "PrimaryPlatform",
+          "value" : "APPL"
+        },
+        {
+          "tag" : "CMMFlags",
+          "value" : "0"
+        },
+        {
+          "tag" : "DeviceManufacturer",
+          "value" : "APPL"
+        },
+        {
+          "tag" : "DeviceModel",
+          "value" : ""
+        },
+        {
+          "tag" : "DeviceAttributes",
+          "value" : "0 0"
+        },
+        {
+          "tag" : "RenderingIntent",
+          "value" : "0"
+        },
+        {
+          "tag" : "ConnectionSpaceIlluminant",
+          "value" : "0.9642 1 0.82491"
+        },
+        {
+          "tag" : "ProfileCreator",
+          "value" : "appl"
+        },
+        {
+          "tag" : "ProfileID",
+          "value" : "236 253 163 142 56 133 71 195 109 180 189 79 122 218 24 47"
+        }
+      ]
+    },
+    {
+      "name" : "ICC_Profile",
+      "tags" : [
+        {
+          "tag" : "ProfileDescription",
+          "value" : "Display P3"
+        },
+        {
+          "tag" : "ProfileCopyright",
+          "value" : "Copyright Apple Inc., 2022"
+        },
+        {
+          "tag" : "MediaWhitePoint",
+          "value" : "0.96419 1 0.82489"
+        },
+        {
+          "tag" : "RedMatrixColumn",
+          "value" : "0.51512 0.2412 -0.00105"
+        },
+        {
+          "tag" : "GreenMatrixColumn",
+          "value" : "0.29198 0.69225 0.04189"
+        },
+        {
+          "tag" : "BlueMatrixColumn",
+          "value" : "0.1571 0.06657 0.78407"
+        },
+        {
+          "tag" : "RedTRC",
+          "value" : "(Binary data 32 bytes, use -b option to extract)"
+        },
+        {
+          "tag" : "ChromaticAdaptation",
+          "value" : "1.04788 0.02292 -0.0502 0.02959 0.99048 -0.01706 -0.00923 0.01508 0.75168"
+        },
+        {
+          "tag" : "BlueTRC",
+          "value" : "(Binary data 32 bytes, use -b option to extract)"
+        },
+        {
+          "tag" : "GreenTRC",
+          "value" : "(Binary data 32 bytes, use -b option to extract)"
+        }
+      ]
+    },
+    {
+      "name" : "Composite",
+      "tags" : [
+        {
+          "tag" : "RunTimeSincePowerUp",
+          "value" : "1957878.58647633"
+        },
+        {
+          "tag" : "Aperture",
+          "value" : "2"
+        },
+        {
+          "tag" : "ImageSize",
+          "value" : "4032 3024"
+        },
+        {
+          "tag" : "Megapixels",
+          "value" : "12.192768"
+        },
+        {
+          "tag" : "ScaleFactor35efl",
+          "value" : "8.66666666666667"
+        },
+        {
+          "tag" : "ShutterSpeed",
+          "value" : "0.002898550725"
+        },
+        {
+          "tag" : "SubSecCreateDate",
+          "value" : "2024:04:25 14:51:34.877-07:00"
+        },
+        {
+          "tag" : "SubSecDateTimeOriginal",
+          "value" : "2024:04:25 14:51:34.877-07:00"
+        },
+        {
+          "tag" : "SubSecModifyDate",
+          "value" : "2024:04:25 14:51:34-07:00"
+        },
+        {
+          "tag" : "GPSAltitude",
+          "value" : "41.22965578"
+        },
+        {
+          "tag" : "GPSDateTime",
+          "value" : "2024:04:25 21:51:33.99Z"
+        },
+        {
+          "tag" : "GPSLatitude",
+          "value" : "38.5145638888889"
+        },
+        {
+          "tag" : "GPSLongitude",
+          "value" : "-123.243386111111"
+        },
+        {
+          "tag" : "CircleOfConfusion",
+          "value" : "0.00346687622640768"
+        },
+        {
+          "tag" : "FOV",
+          "value" : "38.187016256164"
+        },
+        {
+          "tag" : "FocalLength35efl",
+          "value" : "52"
+        },
+        {
+          "tag" : "GPSPosition",
+          "value" : "38.5145638888889 -123.243386111111"
+        },
+        {
+          "tag" : "HyperfocalDistance",
+          "value" : "5.19199383666815"
+        },
+        {
+          "tag" : "LightValue",
+          "value" : "12.4304525514852"
+        },
+        {
+          "tag" : "LensID",
+          "value" : "iPhone 12 Pro back triple camera 6mm f/2"
+        }
+      ]
+    }
+  ],
+  "schemaVersion" : 1
+}

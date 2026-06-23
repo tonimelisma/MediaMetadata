@@ -2,9 +2,14 @@ import Foundation
 
 private let isoParserName = "MediaMetadata.ISOBMFFMetadataParser"
 private let mdtaMetadataKeysOfInterest: Set<String> = [
+    "com.android.manufacturer",
+    "com.android.model",
+    "com.apple.quicktime.camera.lens_model",
     "com.apple.quicktime.creationdate",
     "com.apple.quicktime.location.date",
     "com.apple.quicktime.location.ISO6709",
+    "com.apple.quicktime.make",
+    "com.apple.quicktime.model",
     "samsung.android.utc_offset",
 ]
 
@@ -42,6 +47,20 @@ struct ISOBMFFMetadataParser {
     private struct ItemExtent {
         let offset: UInt64
         let length: UInt64
+    }
+
+    private struct GoProMetadata {
+        var creationEpoch: UInt64?
+        var timeZoneMinutes: Int?
+        var model: String?
+        var serialNumber: String?
+    }
+
+    private enum CameraField {
+        case make
+        case model
+        case lensModel
+        case serialNumber
     }
 
     private let source: FileByteSource
@@ -103,8 +122,11 @@ struct ISOBMFFMetadataParser {
             parseUserData(box, path: path)
         case "meta":
             parseMeta(box, path: path)
-        case "mvhd", "tkhd", "mdhd":
+        case "mvhd", "mdhd":
             recordQuickTimeContainerCreationDate(box, path: path)
+        case "tkhd":
+            recordQuickTimeContainerCreationDate(box, path: path)
+            parseTrackDimensions(box, path: path)
         case "uuid":
             parseUUID(box, path: path)
         default:
@@ -135,6 +157,10 @@ struct ISOBMFFMetadataParser {
                         recordTimestamp(rawValue, role: .quickTimeContentCreateDate, namespace: "quicktime.udta", key: "contentCreateDate", sourcePath: "\(path).contentCreateDate")
                     }
                 }
+            } else if child.type == "TAGS" {
+                parsePentaxTags(child, path: "\(path).TAGS")
+            } else if child.type == "GPMF" {
+                parseGoProGPMF(child, path: "\(path).GPMF")
             }
             guard child.end > cursor else {
                 break
@@ -205,6 +231,9 @@ struct ISOBMFFMetadataParser {
         }
 
         var keys = Array(repeating: "", count: Int(entryCount) + 1)
+        guard entryCount > 0 else {
+            return keys
+        }
         var cursor = box.payloadStart + 8
         for index in 1...Int(entryCount) {
             guard cursor + 8 <= box.end,
@@ -267,6 +296,18 @@ struct ISOBMFFMetadataParser {
 
     private mutating func applyMdtaValue(_ value: MetadataValue, key: String, path: String) {
         switch key {
+        case "com.android.manufacturer", "com.apple.quicktime.make":
+            if case let .string(rawValue) = value {
+                recordCameraValue(rawValue, field: .make, namespace: "quicktime.mdta", key: key, sourcePath: path)
+            }
+        case "com.android.model", "com.apple.quicktime.model":
+            if case let .string(rawValue) = value {
+                recordCameraValue(rawValue, field: .model, namespace: "quicktime.mdta", key: key, sourcePath: path)
+            }
+        case "com.apple.quicktime.camera.lens_model":
+            if case let .string(rawValue) = value {
+                recordCameraValue(rawValue, field: .lensModel, namespace: "quicktime.mdta", key: key, sourcePath: path)
+            }
         case "com.apple.quicktime.creationdate":
             if case let .string(rawValue) = value {
                 recordTimestamp(rawValue, role: .quickTimeCreationDate, namespace: "quicktime.mdta", key: key, sourcePath: path)
@@ -310,6 +351,194 @@ struct ISOBMFFMetadataParser {
             text = Self.decodeString(data) ?? ""
         }
         recordLocation(text, namespace: "quicktime.udta", key: "gpsCoordinates", sourcePath: path)
+    }
+
+    private mutating func parseTrackDimensions(_ box: Box, path: String) {
+        guard let version = readUInt8(offset: box.payloadStart) else {
+            return
+        }
+        let relativeOffset: UInt64
+        switch version {
+        case 0:
+            relativeOffset = 76
+        case 1:
+            relativeOffset = 88
+        default:
+            return
+        }
+        let dimensionOffset = box.payloadStart + relativeOffset
+        guard dimensionOffset + 8 <= box.end,
+              let widthFixed = readUInt32(offset: dimensionOffset),
+              let heightFixed = readUInt32(offset: dimensionOffset + 4) else {
+            return
+        }
+        let width = Int(widthFixed >> 16)
+        let height = Int(heightFixed >> 16)
+        guard width > 0, height > 0,
+              camera?.pixelWidth == nil,
+              camera?.pixelHeight == nil else {
+            return
+        }
+        appendFinding(
+            namespace: "quicktime.track",
+            key: "ImageWidth",
+            value: String(width),
+            sourcePath: "\(path).ImageWidth",
+            byteRange: dimensionOffset..<(dimensionOffset + 4)
+        )
+        appendFinding(
+            namespace: "quicktime.track",
+            key: "ImageHeight",
+            value: String(height),
+            sourcePath: "\(path).ImageHeight",
+            byteRange: (dimensionOffset + 4)..<(dimensionOffset + 8)
+        )
+        mergeCamera(CameraMetadata(pixelWidth: width, pixelHeight: height))
+    }
+
+    private mutating func parsePentaxTags(_ box: Box, path: String) {
+        guard box.payloadLength >= 24,
+              let data = readData(offset: box.payloadStart, length: 24) else {
+            return
+        }
+        let bytes = data.prefix { $0 != 0 }
+        guard let value = String(data: Data(bytes), encoding: .ascii)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+            !value.isEmpty else {
+            return
+        }
+        recordCameraValue(value, field: .make, namespace: "pentax.tags", key: "Make", sourcePath: "\(path).Make")
+    }
+
+    private mutating func parseGoProGPMF(_ box: Box, path: String) {
+        guard box.payloadLength > 0,
+              box.payloadLength <= UInt64(Self.maxMetadataPayloadLength),
+              let data = readData(offset: box.payloadStart, length: box.payloadLength) else {
+            return
+        }
+        var metadata = GoProMetadata()
+        var recordCount = 0
+        guard Self.parseGoProGPMFContainer(data, depth: 0, recordCount: &recordCount, metadata: &metadata) else {
+            appendDiagnostic(code: "goproGPMFMalformed", message: "GoPro GPMF metadata is malformed or exceeds safety limits.", byteRange: box.start..<box.end)
+            return
+        }
+
+        if let epoch = metadata.creationEpoch,
+           epoch <= UInt64(Int64.max) {
+            let findingID = appendFinding(
+                namespace: "gopro.gpmf",
+                key: "CreationDate",
+                value: String(epoch),
+                sourcePath: "\(path).CreationDate",
+                byteRange: nil
+            )
+            let date = Date(timeIntervalSince1970: TimeInterval(epoch))
+            timestamps.append(
+                CaptureTimestampCandidate(
+                    role: .quickTimeCreationDate,
+                    rawTimestamp: String(epoch),
+                    dateComponents: CaptureDateComponents.utcComponents(from: date),
+                    instant: date,
+                    offsetSeconds: 0,
+                    authority: .absoluteInstant,
+                    evidenceIDs: [findingID]
+                )
+            )
+        }
+        if let minutes = metadata.timeZoneMinutes {
+            appendFinding(
+                namespace: "gopro.gpmf",
+                key: "TimeZone",
+                value: String(minutes),
+                sourcePath: "\(path).TimeZone",
+                byteRange: nil
+            )
+        }
+        if let model = metadata.model {
+            recordCameraValue(model, field: .model, namespace: "gopro.gpmf", key: "Model", sourcePath: "\(path).Model")
+        }
+        if let serialNumber = metadata.serialNumber {
+            recordCameraValue(serialNumber, field: .serialNumber, namespace: "gopro.gpmf", key: "CameraSerialNumber", sourcePath: "\(path).CameraSerialNumber")
+        }
+    }
+
+    private static func parseGoProGPMFContainer(
+        _ data: Data,
+        depth: Int,
+        recordCount: inout Int,
+        metadata: inout GoProMetadata
+    ) -> Bool {
+        guard depth <= 16 else {
+            return false
+        }
+        var offset = 0
+        while offset + 8 <= data.count {
+            recordCount += 1
+            guard recordCount <= 10_000 else {
+                return false
+            }
+            let tag = String(data: data.subdata(in: offset..<(offset + 4)), encoding: .ascii) ?? ""
+            let type = data[offset + 4]
+            let size = Int(data[offset + 5])
+            let count = Int(readUInt16(from: data, offset: offset + 6))
+            let (payloadLength, payloadOverflow) = size.multipliedReportingOverflow(by: count)
+            guard !payloadOverflow else {
+                return false
+            }
+            let (paddedBase, paddingOverflow) = payloadLength.addingReportingOverflow(3)
+            guard !paddingOverflow else {
+                return false
+            }
+            let paddedLength = paddedBase & ~3
+            let (recordLength, recordOverflow) = 8.addingReportingOverflow(paddedLength)
+            guard !recordOverflow,
+                  payloadLength <= data.count - offset - 8,
+                  recordLength <= data.count - offset else {
+                return false
+            }
+            let payloadStart = offset + 8
+            let payload = data.subdata(in: payloadStart..<(payloadStart + payloadLength))
+
+            if type == 0 {
+                guard parseGoProGPMFContainer(payload, depth: depth + 1, recordCount: &recordCount, metadata: &metadata) else {
+                    return false
+                }
+            } else {
+                applyGoProRecord(tag: tag, payload: payload, metadata: &metadata)
+            }
+            offset += recordLength
+        }
+        return data[offset...].allSatisfy { $0 == 0 }
+    }
+
+    private static func applyGoProRecord(tag: String, payload: Data, metadata: inout GoProMetadata) {
+        switch tag {
+        case "CASN":
+            metadata.serialNumber = metadata.serialNumber ?? decodedGoProString(payload)
+        case "MINF":
+            metadata.model = metadata.model ?? decodedGoProString(payload)
+        case "CDAT":
+            if metadata.creationEpoch == nil, payload.count >= 8 {
+                metadata.creationEpoch = readUInt64(from: payload, offset: 0)
+            }
+        case "TZON":
+            if metadata.timeZoneMinutes == nil, payload.count >= 2 {
+                let raw = readUInt16(from: payload, offset: 0)
+                metadata.timeZoneMinutes = Int(Int16(bitPattern: raw))
+            }
+        default:
+            break
+        }
+    }
+
+    private static func decodedGoProString(_ data: Data) -> String? {
+        let bytes = data.prefix { $0 != 0 }
+        guard let value = String(data: Data(bytes), encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+            !value.isEmpty else {
+            return nil
+        }
+        return value
     }
 
     private func parseDataValues(_ atom: Box) -> [MetadataValue] {
@@ -363,6 +592,15 @@ struct ISOBMFFMetadataParser {
         }
         if let timeZone = metadata.timeZone {
             appendFinding(namespace: "sony.nrtm", key: "TimeZone", value: timeZone, sourcePath: "\(path).TimeZone", byteRange: nil)
+        }
+        if let manufacturer = metadata.manufacturer {
+            recordCameraValue(manufacturer, field: .make, namespace: "sony.nrtm", key: "Make", sourcePath: "\(path).Make")
+        }
+        if let model = metadata.model {
+            recordCameraValue(model, field: .model, namespace: "sony.nrtm", key: "Model", sourcePath: "\(path).Model")
+        }
+        if let serialNumber = metadata.serialNumber {
+            recordCameraValue(serialNumber, field: .serialNumber, namespace: "sony.nrtm", key: "DeviceSerialNo", sourcePath: "\(path).DeviceSerialNo")
         }
         if let latitude = metadata.latitude,
            let latitudeRef = metadata.latitudeRef,
@@ -715,9 +953,18 @@ struct ISOBMFFMetadataParser {
                 )
             }
         )
-        locations.append(contentsOf: result.locations)
-        if camera == nil {
-            camera = result.camera
+        locations.append(contentsOf: result.locations.map { location in
+            CaptureLocationCandidate(
+                latitude: location.latitude,
+                longitude: location.longitude,
+                altitudeMeters: location.altitudeMeters,
+                rawValue: location.rawValue,
+                source: location.source,
+                evidenceIDs: location.evidenceIDs.map { idOffset + $0 }
+            )
+        })
+        if let embeddedCamera = result.camera {
+            mergeCamera(embeddedCamera, preferIncoming: true)
         }
         diagnostics.append(contentsOf: result.diagnostics)
     }
@@ -811,6 +1058,46 @@ struct ISOBMFFMetadataParser {
                 source: sourcePath,
                 evidenceIDs: [findingID]
             )
+        )
+    }
+
+    private mutating func recordCameraValue(
+        _ rawValue: String,
+        field: CameraField,
+        namespace: String,
+        key: String,
+        sourcePath: String
+    ) {
+        let value = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            return
+        }
+        appendFinding(namespace: namespace, key: key, value: value, sourcePath: sourcePath, byteRange: nil)
+        switch field {
+        case .make:
+            mergeCamera(CameraMetadata(make: value))
+        case .model:
+            mergeCamera(CameraMetadata(model: value))
+        case .lensModel:
+            mergeCamera(CameraMetadata(lensModel: value))
+        case .serialNumber:
+            mergeCamera(CameraMetadata(serialNumber: value))
+        }
+    }
+
+    private mutating func mergeCamera(_ incoming: CameraMetadata, preferIncoming: Bool = false) {
+        guard let current = camera else {
+            camera = incoming
+            return
+        }
+        camera = CameraMetadata(
+            make: preferIncoming ? incoming.make ?? current.make : current.make ?? incoming.make,
+            model: preferIncoming ? incoming.model ?? current.model : current.model ?? incoming.model,
+            lensModel: preferIncoming ? incoming.lensModel ?? current.lensModel : current.lensModel ?? incoming.lensModel,
+            serialNumber: preferIncoming ? incoming.serialNumber ?? current.serialNumber : current.serialNumber ?? incoming.serialNumber,
+            orientation: preferIncoming ? incoming.orientation ?? current.orientation : current.orientation ?? incoming.orientation,
+            pixelWidth: preferIncoming ? incoming.pixelWidth ?? current.pixelWidth : current.pixelWidth ?? incoming.pixelWidth,
+            pixelHeight: preferIncoming ? incoming.pixelHeight ?? current.pixelHeight : current.pixelHeight ?? incoming.pixelHeight
         )
     }
 

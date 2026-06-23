@@ -1,415 +1,443 @@
 {
-  "sourceFile": "../testdata/dji_ronin4d_4k_prores4444_25fps.mov",
-  "groups": [
+  "arguments" : [
+    "-a",
+    "-n",
+    "-G1",
+    "-S",
+    "-sep",
+    "U+001F",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion" : "13.55",
+  "fixture" : "videometa/dji_ronin4d_4k_prores4444_25fps.mov",
+  "groups" : [
     {
-      "name": "QuickTime",
-      "tags": [
+      "name" : "QuickTime",
+      "tags" : [
         {
-          "tag": "MajorBrand",
-          "value": "qt"
+          "tag" : "MajorBrand",
+          "value" : "qt"
         },
         {
-          "tag": "MinorVersion",
-          "value": "0.0.0"
+          "tag" : "MinorVersion",
+          "value" : "0.0.0"
         },
         {
-          "tag": "CompatibleBrands",
-          "value": "qt"
+          "tag" : "CompatibleBrands",
+          "value" : "qt"
         },
         {
-          "tag": "MediaDataSize",
-          "value": "1191507396"
+          "tag" : "MediaDataSize",
+          "value" : "1191507396"
         },
         {
-          "tag": "MediaDataOffset",
-          "value": "36"
+          "tag" : "MediaDataOffset",
+          "value" : "36"
         },
         {
-          "tag": "MovieHeaderVersion",
-          "value": "0"
+          "tag" : "MovieHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "CreateDate",
-          "value": "2021:12:17 03:59:55"
+          "tag" : "CreateDate",
+          "value" : "2021:12:17 03:59:55"
         },
         {
-          "tag": "ModifyDate",
-          "value": "2021:12:17 04:00:07"
+          "tag" : "ModifyDate",
+          "value" : "2021:12:17 04:00:07"
         },
         {
-          "tag": "TimeScale",
-          "value": "25000"
+          "tag" : "TimeScale",
+          "value" : "25000"
         },
         {
-          "tag": "Duration",
-          "value": "10"
+          "tag" : "Duration",
+          "value" : "10"
         },
         {
-          "tag": "PreferredRate",
-          "value": "1"
+          "tag" : "PreferredRate",
+          "value" : "1"
         },
         {
-          "tag": "PreferredVolume",
-          "value": "1"
+          "tag" : "PreferredVolume",
+          "value" : "1"
         },
         {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
         },
         {
-          "tag": "PreviewTime",
-          "value": "0"
+          "tag" : "PreviewTime",
+          "value" : "0"
         },
         {
-          "tag": "PreviewDuration",
-          "value": "0"
+          "tag" : "PreviewDuration",
+          "value" : "0"
         },
         {
-          "tag": "PosterTime",
-          "value": "0"
+          "tag" : "PosterTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionTime",
-          "value": "0"
+          "tag" : "SelectionTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionDuration",
-          "value": "0"
+          "tag" : "SelectionDuration",
+          "value" : "0"
         },
         {
-          "tag": "CurrentTime",
-          "value": "0"
+          "tag" : "CurrentTime",
+          "value" : "0"
         },
         {
-          "tag": "NextTrackID",
-          "value": "3"
+          "tag" : "NextTrackID",
+          "value" : "3"
         },
         {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "TrackCreateDate",
-          "value": "2021:12:17 03:59:55"
-        },
-        {
-          "tag": "TrackModifyDate",
-          "value": "2021:12:17 04:00:07"
-        },
-        {
-          "tag": "TrackID",
-          "value": "1"
-        },
-        {
-          "tag": "TrackDuration",
-          "value": "10"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "0"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "ImageWidth",
-          "value": "4096"
-        },
-        {
-          "tag": "ImageHeight",
-          "value": "1712"
-        },
-        {
-          "tag": "CleanApertureDimensions",
-          "value": "4096 1712"
-        },
-        {
-          "tag": "ProductionApertureDimensions",
-          "value": "4096 1712"
-        },
-        {
-          "tag": "EncodedPixelsDimensions",
-          "value": "4096 1712"
-        },
-        {
-          "tag": "TimecodeTrack",
-          "value": "2"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "2021:12:17 03:59:55"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "2021:12:17 04:00:07"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "25000"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "10"
-        },
-        {
-          "tag": "MediaLanguageCode",
-          "value": "und"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "mhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "vide"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "appl"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "Core Media Video"
-        },
-        {
-          "tag": "GraphicsMode",
-          "value": "64"
-        },
-        {
-          "tag": "OpColor",
-          "value": "32768 32768 32768"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "dhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "alis"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "appl"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "Core Media Data Handler"
-        },
-        {
-          "tag": "CompressorID",
-          "value": "ap4h"
-        },
-        {
-          "tag": "VendorID",
-          "value": "appl"
-        },
-        {
-          "tag": "SourceImageWidth",
-          "value": "4096"
-        },
-        {
-          "tag": "SourceImageHeight",
-          "value": "1712"
-        },
-        {
-          "tag": "XResolution",
-          "value": "72"
-        },
-        {
-          "tag": "YResolution",
-          "value": "72"
-        },
-        {
-          "tag": "CompressorName",
-          "value": "Apple ProRes 4444"
-        },
-        {
-          "tag": "BitDepth",
-          "value": "24"
-        },
-        {
-          "tag": "VideoFrameRate",
-          "value": "25"
-        },
-        {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "TrackCreateDate",
-          "value": "2021:12:17 03:59:55"
-        },
-        {
-          "tag": "TrackModifyDate",
-          "value": "2021:12:17 04:00:07"
-        },
-        {
-          "tag": "TrackID",
-          "value": "2"
-        },
-        {
-          "tag": "TrackDuration",
-          "value": "10"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "0"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "2021:12:17 03:59:55"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "2021:12:17 04:00:07"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "25000"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "10"
-        },
-        {
-          "tag": "MediaLanguageCode",
-          "value": "und"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "mhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "tmcd"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "appl"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "Core Media Time Code"
-        },
-        {
-          "tag": "GenMediaVersion",
-          "value": "0"
-        },
-        {
-          "tag": "GenFlags",
-          "value": "0 0 0"
-        },
-        {
-          "tag": "GenGraphicsMode",
-          "value": "64"
-        },
-        {
-          "tag": "GenOpColor",
-          "value": "32768 32768 32768"
-        },
-        {
-          "tag": "GenBalance",
-          "value": "0"
-        },
-        {
-          "tag": "TextFont",
-          "value": "22"
-        },
-        {
-          "tag": "TextFace",
-          "value": "0"
-        },
-        {
-          "tag": "TextSize",
-          "value": "12"
-        },
-        {
-          "tag": "TextColor",
-          "value": "0 0 0"
-        },
-        {
-          "tag": "BackgroundColor",
-          "value": "65535 65535 65535"
-        },
-        {
-          "tag": "FontName",
-          "value": "Courier"
-        },
-        {
-          "tag": "HandlerClass",
-          "value": "dhlr"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "alis"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "appl"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "Core Media Data Handler"
-        },
-        {
-          "tag": "OtherFormat",
-          "value": "tmcd"
-        },
-        {
-          "tag": "PlaybackFrameRate",
-          "value": "25"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "mdir"
-        },
-        {
-          "tag": "CoverArt",
-          "value": "(Binary data 811322 bytes, use -b option to extract)"
+          "tag" : "HandlerType",
+          "value" : "mdir"
         }
       ]
     },
     {
-      "name": "Composite",
-      "tags": [
+      "name" : "Track1",
+      "tags" : [
         {
-          "tag": "ImageSize",
-          "value": "4096 1712"
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "Megapixels",
-          "value": "7.012352"
+          "tag" : "TrackCreateDate",
+          "value" : "2021:12:17 03:59:55"
         },
         {
-          "tag": "AvgBitrate",
-          "value": "953205917"
+          "tag" : "TrackModifyDate",
+          "value" : "2021:12:17 04:00:07"
         },
         {
-          "tag": "Rotation",
-          "value": "0"
+          "tag" : "TrackID",
+          "value" : "1"
+        },
+        {
+          "tag" : "TrackDuration",
+          "value" : "10"
+        },
+        {
+          "tag" : "TrackLayer",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackVolume",
+          "value" : "0"
+        },
+        {
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "ImageWidth",
+          "value" : "4096"
+        },
+        {
+          "tag" : "ImageHeight",
+          "value" : "1712"
+        },
+        {
+          "tag" : "CleanApertureDimensions",
+          "value" : "4096 1712"
+        },
+        {
+          "tag" : "ProductionApertureDimensions",
+          "value" : "4096 1712"
+        },
+        {
+          "tag" : "EncodedPixelsDimensions",
+          "value" : "4096 1712"
+        },
+        {
+          "tag" : "TimecodeTrack",
+          "value" : "2"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "2021:12:17 03:59:55"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "2021:12:17 04:00:07"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "25000"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "10"
+        },
+        {
+          "tag" : "MediaLanguageCode",
+          "value" : "und"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "mhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "vide"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "appl"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "Core Media Video"
+        },
+        {
+          "tag" : "GraphicsMode",
+          "value" : "64"
+        },
+        {
+          "tag" : "OpColor",
+          "value" : "32768 32768 32768"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "dhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "alis"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "appl"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "Core Media Data Handler"
+        },
+        {
+          "tag" : "CompressorID",
+          "value" : "ap4h"
+        },
+        {
+          "tag" : "VendorID",
+          "value" : "appl"
+        },
+        {
+          "tag" : "SourceImageWidth",
+          "value" : "4096"
+        },
+        {
+          "tag" : "SourceImageHeight",
+          "value" : "1712"
+        },
+        {
+          "tag" : "XResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "YResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "CompressorName",
+          "value" : "Apple ProRes 4444"
+        },
+        {
+          "tag" : "BitDepth",
+          "value" : "24"
+        },
+        {
+          "tag" : "VideoFrameRate",
+          "value" : "25"
+        }
+      ]
+    },
+    {
+      "name" : "Track2",
+      "tags" : [
+        {
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackCreateDate",
+          "value" : "2021:12:17 03:59:55"
+        },
+        {
+          "tag" : "TrackModifyDate",
+          "value" : "2021:12:17 04:00:07"
+        },
+        {
+          "tag" : "TrackID",
+          "value" : "2"
+        },
+        {
+          "tag" : "TrackDuration",
+          "value" : "10"
+        },
+        {
+          "tag" : "TrackLayer",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackVolume",
+          "value" : "0"
+        },
+        {
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "2021:12:17 03:59:55"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "2021:12:17 04:00:07"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "25000"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "10"
+        },
+        {
+          "tag" : "MediaLanguageCode",
+          "value" : "und"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "mhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "tmcd"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "appl"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "Core Media Time Code"
+        },
+        {
+          "tag" : "GenMediaVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "GenFlags",
+          "value" : "0 0 0"
+        },
+        {
+          "tag" : "GenGraphicsMode",
+          "value" : "64"
+        },
+        {
+          "tag" : "GenOpColor",
+          "value" : "32768 32768 32768"
+        },
+        {
+          "tag" : "GenBalance",
+          "value" : "0"
+        },
+        {
+          "tag" : "TextFont",
+          "value" : "22"
+        },
+        {
+          "tag" : "TextFace",
+          "value" : "0"
+        },
+        {
+          "tag" : "TextSize",
+          "value" : "12"
+        },
+        {
+          "tag" : "TextColor",
+          "value" : "0 0 0"
+        },
+        {
+          "tag" : "BackgroundColor",
+          "value" : "65535 65535 65535"
+        },
+        {
+          "tag" : "FontName",
+          "value" : "Courier"
+        },
+        {
+          "tag" : "HandlerClass",
+          "value" : "dhlr"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "alis"
+        },
+        {
+          "tag" : "HandlerVendorID",
+          "value" : "appl"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "Core Media Data Handler"
+        },
+        {
+          "tag" : "OtherFormat",
+          "value" : "tmcd"
+        },
+        {
+          "tag" : "PlaybackFrameRate",
+          "value" : "25"
+        }
+      ]
+    },
+    {
+      "name" : "ItemList",
+      "tags" : [
+        {
+          "tag" : "CoverArt",
+          "value" : "(Binary data 811322 bytes, use -b option to extract)"
+        }
+      ]
+    },
+    {
+      "name" : "Composite",
+      "tags" : [
+        {
+          "tag" : "ImageSize",
+          "value" : "4096 1712"
+        },
+        {
+          "tag" : "Megapixels",
+          "value" : "7.012352"
+        },
+        {
+          "tag" : "AvgBitrate",
+          "value" : "953205917"
+        },
+        {
+          "tag" : "Rotation",
+          "value" : "0"
         }
       ]
     }
-  ]
+  ],
+  "schemaVersion" : 1
 }

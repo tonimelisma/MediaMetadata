@@ -1,8 +1,8 @@
 # Real-Media Fixtures
 
-This directory mirrors existing fixtures from three user-owned repositories.
-The source-specific subdirectories are retained so duplicated fixtures and
-their provenance remain explicit.
+This directory consolidates fixtures from three user-owned repositories. The
+source-specific subdirectories preserve provenance, while byte-identical copies
+are stored only once.
 
 These are development and test inputs only. They are not SwiftPM resources and
 are not included in the `MediaMetadata` runtime target.
@@ -35,10 +35,10 @@ camera or lens serial fields. These values already exist in the source fixture
 repository and are preserved so the records remain valid comparison evidence.
 Do not treat these fixtures as anonymized media.
 
-The four local-only media files are copied into a developer checkout when
-available but ignored by Git here, matching their source repository policy.
-Their ExifTool records remain committed when the source repository commits
-them.
+The four local-only media files are ignored by Git here, matching their source
+repository policy. The DJI and GoPro files have public download records in
+`Scripts/fixture-bootstrap.tsv`; `apple.mov` is a manual local prerequisite
+because its source is not documented well enough for redistribution.
 
 ### `gomediaimport/`
 
@@ -48,8 +48,8 @@ them.
 - Contents: the three small video fixtures used by that command's tests.
 
 These files duplicate the corresponding `videometa/` fixtures byte-for-byte.
-They remain in a separate directory to preserve their source layout and make
-future test migration auditable.
+The duplicate copies are intentionally omitted; the canonical files live under
+`videometa/`.
 
 ### `otos-catalog-state-robustness/`
 
@@ -75,3 +75,44 @@ review was performed during this mechanical import.
 Before adding another real-media fixture, document its source device or app,
 acquisition date or source link, rights to redistribute it, privacy review, and
 the parser behavior it is intended to cover.
+
+## Local Corpus Requirement
+
+Real-fixture and golden tests require all 16 canonical media files. Prepare a
+developer checkout with:
+
+```sh
+Scripts/check-local-fixtures.sh
+```
+
+That command verifies the 12 committed fixtures, downloads and SHA-256 verifies
+the three public DJI/GoPro fixtures when absent, and fails with instructions if
+the manual `videometa/apple.mov` prerequisite is missing. Tests do not skip an
+incomplete corpus. CI must not download or bootstrap these files implicitly.
+
+Use `Scripts/bootstrap-fixtures.sh --list` to inspect the public download set.
+
+## Golden Records
+
+Every canonical fixture has two ExifTool evidence records:
+
+- `*.exiftool.json`: grouped numeric JSON, retaining duplicate tags.
+- `*.exiftool.ordered.json`: group and tag order, including repeated fields.
+
+`metadata-golden.json` is the reviewed semantic contract for the public
+`MediaMetadataResult` model. Tests compare identity, selected findings,
+timestamp authorities, locations, camera metadata, diagnostics, provenance,
+and bounded-read metrics. They intentionally do not require parity with every
+ExifTool field.
+
+Regenerate the raw evidence records with ExifTool installed:
+
+```sh
+Scripts/check-local-fixtures.sh
+Scripts/generate-fixture-goldens.swift
+```
+
+The generator fixes locale and timezone, records the ExifTool version and exact
+arguments, and emits stable sorted JSON. Review `metadata-golden.json` by hand
+when deliberately promoting newly parsed evidence; it is not overwritten by
+the generator.

@@ -1,251 +1,274 @@
 {
-  "sourceFile": "../testdata/nonfaststart.mp4",
-  "groups": [
+  "arguments" : [
+    "-a",
+    "-n",
+    "-G1",
+    "-S",
+    "-sep",
+    "U+001F",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion" : "13.55",
+  "fixture" : "videometa/nonfaststart.mp4",
+  "groups" : [
     {
-      "name": "QuickTime",
-      "tags": [
+      "name" : "QuickTime",
+      "tags" : [
         {
-          "tag": "MajorBrand",
-          "value": "isom"
+          "tag" : "MajorBrand",
+          "value" : "isom"
         },
         {
-          "tag": "MinorVersion",
-          "value": "0.2.0"
+          "tag" : "MinorVersion",
+          "value" : "0.2.0"
         },
         {
-          "tag": "CompatibleBrands",
-          "value": "isom.iso2.avc1.mp41"
+          "tag" : "CompatibleBrands",
+          "value" : "isom.iso2.avc1.mp41"
         },
         {
-          "tag": "MediaDataSize",
-          "value": "2820"
+          "tag" : "MediaDataSize",
+          "value" : "2820"
         },
         {
-          "tag": "MediaDataOffset",
-          "value": "48"
+          "tag" : "MediaDataOffset",
+          "value" : "48"
         },
         {
-          "tag": "MovieHeaderVersion",
-          "value": "0"
+          "tag" : "MovieHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "CreateDate",
-          "value": "0000:00:00 00:00:00"
+          "tag" : "CreateDate",
+          "value" : "0000:00:00 00:00:00"
         },
         {
-          "tag": "ModifyDate",
-          "value": "0000:00:00 00:00:00"
+          "tag" : "ModifyDate",
+          "value" : "0000:00:00 00:00:00"
         },
         {
-          "tag": "TimeScale",
-          "value": "1000"
+          "tag" : "TimeScale",
+          "value" : "1000"
         },
         {
-          "tag": "Duration",
-          "value": "5"
+          "tag" : "Duration",
+          "value" : "5"
         },
         {
-          "tag": "PreferredRate",
-          "value": "1"
+          "tag" : "PreferredRate",
+          "value" : "1"
         },
         {
-          "tag": "PreferredVolume",
-          "value": "1"
+          "tag" : "PreferredVolume",
+          "value" : "1"
         },
         {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
         },
         {
-          "tag": "PreviewTime",
-          "value": "0"
+          "tag" : "PreviewTime",
+          "value" : "0"
         },
         {
-          "tag": "PreviewDuration",
-          "value": "0"
+          "tag" : "PreviewDuration",
+          "value" : "0"
         },
         {
-          "tag": "PosterTime",
-          "value": "0"
+          "tag" : "PosterTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionTime",
-          "value": "0"
+          "tag" : "SelectionTime",
+          "value" : "0"
         },
         {
-          "tag": "SelectionDuration",
-          "value": "0"
+          "tag" : "SelectionDuration",
+          "value" : "0"
         },
         {
-          "tag": "CurrentTime",
-          "value": "0"
+          "tag" : "CurrentTime",
+          "value" : "0"
         },
         {
-          "tag": "NextTrackID",
-          "value": "2"
+          "tag" : "NextTrackID",
+          "value" : "2"
         },
         {
-          "tag": "TrackHeaderVersion",
-          "value": "0"
+          "tag" : "HandlerType",
+          "value" : "mdir"
         },
         {
-          "tag": "TrackCreateDate",
-          "value": "0000:00:00 00:00:00"
-        },
-        {
-          "tag": "TrackModifyDate",
-          "value": "0000:00:00 00:00:00"
-        },
-        {
-          "tag": "TrackID",
-          "value": "1"
-        },
-        {
-          "tag": "TrackDuration",
-          "value": "5"
-        },
-        {
-          "tag": "TrackLayer",
-          "value": "0"
-        },
-        {
-          "tag": "TrackVolume",
-          "value": "0"
-        },
-        {
-          "tag": "MatrixStructure",
-          "value": "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag": "ImageWidth",
-          "value": "320"
-        },
-        {
-          "tag": "ImageHeight",
-          "value": "240"
-        },
-        {
-          "tag": "MediaHeaderVersion",
-          "value": "0"
-        },
-        {
-          "tag": "MediaCreateDate",
-          "value": "0000:00:00 00:00:00"
-        },
-        {
-          "tag": "MediaModifyDate",
-          "value": "0000:00:00 00:00:00"
-        },
-        {
-          "tag": "MediaTimeScale",
-          "value": "12800"
-        },
-        {
-          "tag": "MediaDuration",
-          "value": "5"
-        },
-        {
-          "tag": "MediaLanguageCode",
-          "value": "und"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "vide"
-        },
-        {
-          "tag": "HandlerDescription",
-          "value": "VideoHandler"
-        },
-        {
-          "tag": "GraphicsMode",
-          "value": "0"
-        },
-        {
-          "tag": "OpColor",
-          "value": "0 0 0"
-        },
-        {
-          "tag": "CompressorID",
-          "value": "avc1"
-        },
-        {
-          "tag": "SourceImageWidth",
-          "value": "320"
-        },
-        {
-          "tag": "SourceImageHeight",
-          "value": "240"
-        },
-        {
-          "tag": "XResolution",
-          "value": "72"
-        },
-        {
-          "tag": "YResolution",
-          "value": "72"
-        },
-        {
-          "tag": "CompressorName",
-          "value": "Lavc62.11.100 libx264"
-        },
-        {
-          "tag": "BitDepth",
-          "value": "24"
-        },
-        {
-          "tag": "PixelAspectRatio",
-          "value": "1:1"
-        },
-        {
-          "tag": "BufferSize",
-          "value": "0"
-        },
-        {
-          "tag": "MaxBitrate",
-          "value": "4512"
-        },
-        {
-          "tag": "AverageBitrate",
-          "value": "0"
-        },
-        {
-          "tag": "VideoFrameRate",
-          "value": "25"
-        },
-        {
-          "tag": "HandlerType",
-          "value": "mdir"
-        },
-        {
-          "tag": "HandlerVendorID",
-          "value": "appl"
-        },
-        {
-          "tag": "Encoder",
-          "value": "Lavf62.3.100"
+          "tag" : "HandlerVendorID",
+          "value" : "appl"
         }
       ]
     },
     {
-      "name": "Composite",
-      "tags": [
+      "name" : "Track1",
+      "tags" : [
         {
-          "tag": "ImageSize",
-          "value": "320 240"
+          "tag" : "TrackHeaderVersion",
+          "value" : "0"
         },
         {
-          "tag": "Megapixels",
-          "value": "0.0768"
+          "tag" : "TrackCreateDate",
+          "value" : "0000:00:00 00:00:00"
         },
         {
-          "tag": "AvgBitrate",
-          "value": "4512"
+          "tag" : "TrackModifyDate",
+          "value" : "0000:00:00 00:00:00"
         },
         {
-          "tag": "Rotation",
-          "value": "0"
+          "tag" : "TrackID",
+          "value" : "1"
+        },
+        {
+          "tag" : "TrackDuration",
+          "value" : "5"
+        },
+        {
+          "tag" : "TrackLayer",
+          "value" : "0"
+        },
+        {
+          "tag" : "TrackVolume",
+          "value" : "0"
+        },
+        {
+          "tag" : "MatrixStructure",
+          "value" : "1 0 0 0 1 0 0 0 1"
+        },
+        {
+          "tag" : "ImageWidth",
+          "value" : "320"
+        },
+        {
+          "tag" : "ImageHeight",
+          "value" : "240"
+        },
+        {
+          "tag" : "MediaHeaderVersion",
+          "value" : "0"
+        },
+        {
+          "tag" : "MediaCreateDate",
+          "value" : "0000:00:00 00:00:00"
+        },
+        {
+          "tag" : "MediaModifyDate",
+          "value" : "0000:00:00 00:00:00"
+        },
+        {
+          "tag" : "MediaTimeScale",
+          "value" : "12800"
+        },
+        {
+          "tag" : "MediaDuration",
+          "value" : "5"
+        },
+        {
+          "tag" : "MediaLanguageCode",
+          "value" : "und"
+        },
+        {
+          "tag" : "HandlerType",
+          "value" : "vide"
+        },
+        {
+          "tag" : "HandlerDescription",
+          "value" : "VideoHandler"
+        },
+        {
+          "tag" : "GraphicsMode",
+          "value" : "0"
+        },
+        {
+          "tag" : "OpColor",
+          "value" : "0 0 0"
+        },
+        {
+          "tag" : "CompressorID",
+          "value" : "avc1"
+        },
+        {
+          "tag" : "SourceImageWidth",
+          "value" : "320"
+        },
+        {
+          "tag" : "SourceImageHeight",
+          "value" : "240"
+        },
+        {
+          "tag" : "XResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "YResolution",
+          "value" : "72"
+        },
+        {
+          "tag" : "CompressorName",
+          "value" : "Lavc62.11.100 libx264"
+        },
+        {
+          "tag" : "BitDepth",
+          "value" : "24"
+        },
+        {
+          "tag" : "PixelAspectRatio",
+          "value" : "1:1"
+        },
+        {
+          "tag" : "BufferSize",
+          "value" : "0"
+        },
+        {
+          "tag" : "MaxBitrate",
+          "value" : "4512"
+        },
+        {
+          "tag" : "AverageBitrate",
+          "value" : "0"
+        },
+        {
+          "tag" : "VideoFrameRate",
+          "value" : "25"
+        }
+      ]
+    },
+    {
+      "name" : "ItemList",
+      "tags" : [
+        {
+          "tag" : "Encoder",
+          "value" : "Lavf62.3.100"
+        }
+      ]
+    },
+    {
+      "name" : "Composite",
+      "tags" : [
+        {
+          "tag" : "ImageSize",
+          "value" : "320 240"
+        },
+        {
+          "tag" : "Megapixels",
+          "value" : "0.0768"
+        },
+        {
+          "tag" : "AvgBitrate",
+          "value" : "4512"
+        },
+        {
+          "tag" : "Rotation",
+          "value" : "0"
         }
       ]
     }
-  ]
+  ],
+  "schemaVersion" : 1
 }

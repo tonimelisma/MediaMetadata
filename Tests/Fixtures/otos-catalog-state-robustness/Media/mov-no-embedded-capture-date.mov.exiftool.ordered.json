@@ -11,7 +11,7 @@
     "--ExifTool:all"
   ],
   "exifToolVersion" : "13.55",
-  "fixture" : "videometa/dji_inspire3_car_4k120_rec709.mov",
+  "fixture" : "otos-catalog-state-robustness/Media/mov-no-embedded-capture-date.mov",
   "groups" : [
     {
       "name" : "QuickTime",
@@ -29,32 +29,24 @@
           "value" : "qt"
         },
         {
-          "tag" : "MediaDataSize",
-          "value" : "561363654"
-        },
-        {
-          "tag" : "MediaDataOffset",
-          "value" : "36"
-        },
-        {
           "tag" : "MovieHeaderVersion",
           "value" : "0"
         },
         {
           "tag" : "CreateDate",
-          "value" : "2023:04:07 19:47:18"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "ModifyDate",
-          "value" : "2023:04:07 19:47:18"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "TimeScale",
-          "value" : "12800"
+          "value" : "1000"
         },
         {
           "tag" : "Duration",
-          "value" : "5.68"
+          "value" : "1.5"
         },
         {
           "tag" : "PreferredRate",
@@ -94,11 +86,15 @@
         },
         {
           "tag" : "NextTrackID",
-          "value" : "3"
+          "value" : "2"
         },
         {
-          "tag" : "HandlerType",
-          "value" : "mdta"
+          "tag" : "MediaDataSize",
+          "value" : "2412829"
+        },
+        {
+          "tag" : "MediaDataOffset",
+          "value" : "1930"
         }
       ]
     },
@@ -111,11 +107,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2023:04:07 19:47:18"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2023:04:07 19:47:18"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "TrackID",
@@ -123,7 +119,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "5.68"
+          "value" : "1.5"
         },
         {
           "tag" : "TrackLayer",
@@ -139,15 +135,11 @@
         },
         {
           "tag" : "ImageWidth",
-          "value" : "4096"
+          "value" : "960"
         },
         {
           "tag" : "ImageHeight",
-          "value" : "2160"
-        },
-        {
-          "tag" : "TimecodeTrack",
-          "value" : "2"
+          "value" : "1280"
         },
         {
           "tag" : "MediaHeaderVersion",
@@ -155,19 +147,19 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2023:04:07 19:47:18"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2023:04:07 19:47:18"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "MediaTimeScale",
-          "value" : "12800"
+          "value" : "15360"
         },
         {
           "tag" : "MediaDuration",
-          "value" : "5.68"
+          "value" : "1.5"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -182,12 +174,8 @@
           "value" : "vide"
         },
         {
-          "tag" : "HandlerVendorID",
-          "value" : "appl"
-        },
-        {
           "tag" : "HandlerDescription",
-          "value" : "VideoHandler"
+          "value" : "Core Media Video"
         },
         {
           "tag" : "GraphicsMode",
@@ -203,27 +191,27 @@
         },
         {
           "tag" : "HandlerType",
-          "value" : "alis"
+          "value" : "url"
         },
         {
           "tag" : "HandlerDescription",
-          "value" : "Core Media Data Handler"
+          "value" : "DataHandler"
         },
         {
           "tag" : "CompressorID",
-          "value" : "apch"
+          "value" : "avc1"
         },
         {
           "tag" : "VendorID",
-          "value" : "appl"
+          "value" : "FFMP"
         },
         {
           "tag" : "SourceImageWidth",
-          "value" : "4096"
+          "value" : "960"
         },
         {
           "tag" : "SourceImageHeight",
-          "value" : "2160"
+          "value" : "1280"
         },
         {
           "tag" : "XResolution",
@@ -235,15 +223,11 @@
         },
         {
           "tag" : "CompressorName",
-          "value" : "Apple ProRes 422 HQ"
+          "value" : "Lavc62.28.100 libx264"
         },
         {
           "tag" : "BitDepth",
           "value" : "24"
-        },
-        {
-          "tag" : "VideoFieldOrder",
-          "value" : "1 0"
         },
         {
           "tag" : "ColorProfiles",
@@ -251,156 +235,19 @@
         },
         {
           "tag" : "ColorPrimaries",
-          "value" : "1"
+          "value" : "9"
         },
         {
           "tag" : "TransferCharacteristics",
-          "value" : "1"
+          "value" : "18"
         },
         {
           "tag" : "MatrixCoefficients",
-          "value" : "1"
-        },
-        {
-          "tag" : "PixelAspectRatio",
-          "value" : "1:1"
+          "value" : "9"
         },
         {
           "tag" : "VideoFrameRate",
-          "value" : "25"
-        }
-      ]
-    },
-    {
-      "name" : "Track2",
-      "tags" : [
-        {
-          "tag" : "TrackHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackCreateDate",
-          "value" : "2023:04:07 19:47:18"
-        },
-        {
-          "tag" : "TrackModifyDate",
-          "value" : "2023:04:07 19:47:18"
-        },
-        {
-          "tag" : "TrackID",
-          "value" : "2"
-        },
-        {
-          "tag" : "TrackDuration",
-          "value" : "5.68"
-        },
-        {
-          "tag" : "TrackLayer",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackVolume",
-          "value" : "0"
-        },
-        {
-          "tag" : "MatrixStructure",
-          "value" : "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag" : "MediaHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "MediaCreateDate",
-          "value" : "2023:04:07 19:47:18"
-        },
-        {
-          "tag" : "MediaModifyDate",
-          "value" : "2023:04:07 19:47:18"
-        },
-        {
-          "tag" : "MediaTimeScale",
-          "value" : "12800"
-        },
-        {
-          "tag" : "MediaDuration",
-          "value" : "5.68"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "mhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "tmcd"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "TimeCodeHandler"
-        },
-        {
-          "tag" : "GenMediaVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "GenFlags",
-          "value" : "0 0 0"
-        },
-        {
-          "tag" : "GenGraphicsMode",
-          "value" : "64"
-        },
-        {
-          "tag" : "GenOpColor",
-          "value" : "32768 32768 32768"
-        },
-        {
-          "tag" : "GenBalance",
-          "value" : "0"
-        },
-        {
-          "tag" : "TextFont",
-          "value" : "0"
-        },
-        {
-          "tag" : "TextFace",
-          "value" : "0"
-        },
-        {
-          "tag" : "TextSize",
-          "value" : "12"
-        },
-        {
-          "tag" : "TextColor",
-          "value" : "0 0 0"
-        },
-        {
-          "tag" : "BackgroundColor",
-          "value" : "65535 65535 65535"
-        },
-        {
-          "tag" : "FontName",
-          "value" : "Lucida Grande"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "dhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "alis"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "Core Media Data Handler"
-        },
-        {
-          "tag" : "OtherFormat",
-          "value" : "tmcd"
-        },
-        {
-          "tag" : "PlaybackFrameRate",
-          "value" : "25"
+          "value" : "60"
         }
       ]
     },
@@ -409,7 +256,7 @@
       "tags" : [
         {
           "tag" : "SoftwareVersion",
-          "value" : "Blackmagic Design DaVinci Resolve Studio"
+          "value" : "Lavf62.12.100"
         }
       ]
     },
@@ -418,15 +265,15 @@
       "tags" : [
         {
           "tag" : "ImageSize",
-          "value" : "4096 2160"
+          "value" : "960 1280"
         },
         {
           "tag" : "Megapixels",
-          "value" : "8.84736"
+          "value" : "1.2288"
         },
         {
           "tag" : "AvgBitrate",
-          "value" : "790653034"
+          "value" : "12868421"
         },
         {
           "tag" : "Rotation",

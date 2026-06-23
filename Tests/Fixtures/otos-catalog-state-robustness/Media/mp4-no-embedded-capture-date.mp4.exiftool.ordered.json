@@ -11,7 +11,7 @@
     "--ExifTool:all"
   ],
   "exifToolVersion" : "13.55",
-  "fixture" : "videometa/minimal.mp4",
+  "fixture" : "otos-catalog-state-robustness/Media/mp4-no-embedded-capture-date.mp4",
   "groups" : [
     {
       "name" : "QuickTime",
@@ -34,11 +34,11 @@
         },
         {
           "tag" : "CreateDate",
-          "value" : "2024:06:15 10:30:00"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "ModifyDate",
-          "value" : "2024:06:15 10:30:00"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "TimeScale",
@@ -46,7 +46,7 @@
         },
         {
           "tag" : "Duration",
-          "value" : "1"
+          "value" : "1.502"
         },
         {
           "tag" : "PreferredRate",
@@ -98,11 +98,11 @@
         },
         {
           "tag" : "MediaDataSize",
-          "value" : "1145"
+          "value" : "835502"
         },
         {
           "tag" : "MediaDataOffset",
-          "value" : "1174"
+          "value" : "1989"
         }
       ]
     },
@@ -115,11 +115,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2024:06:15 10:30:00"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2024:06:15 10:30:00"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "TrackID",
@@ -127,7 +127,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "1"
+          "value" : "1.502"
         },
         {
           "tag" : "TrackLayer",
@@ -143,11 +143,11 @@
         },
         {
           "tag" : "ImageWidth",
-          "value" : "320"
+          "value" : "959"
         },
         {
           "tag" : "ImageHeight",
-          "value" : "240"
+          "value" : "1706"
         },
         {
           "tag" : "MediaHeaderVersion",
@@ -155,19 +155,19 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2024:06:15 10:30:00"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2024:06:15 10:30:00"
+          "value" : "0000:00:00 00:00:00"
         },
         {
           "tag" : "MediaTimeScale",
-          "value" : "12800"
+          "value" : "60000"
         },
         {
           "tag" : "MediaDuration",
-          "value" : "1"
+          "value" : "1.5015"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -179,7 +179,7 @@
         },
         {
           "tag" : "HandlerDescription",
-          "value" : "VideoHandler"
+          "value" : "Video Media Handler"
         },
         {
           "tag" : "GraphicsMode",
@@ -195,11 +195,11 @@
         },
         {
           "tag" : "SourceImageWidth",
-          "value" : "320"
+          "value" : "960"
         },
         {
           "tag" : "SourceImageHeight",
-          "value" : "240"
+          "value" : "1706"
         },
         {
           "tag" : "XResolution",
@@ -211,15 +211,35 @@
         },
         {
           "tag" : "CompressorName",
-          "value" : "Lavc62.11.100 libx264"
+          "value" : "Lavc62.28.100 libx264"
         },
         {
           "tag" : "BitDepth",
           "value" : "24"
         },
         {
+          "tag" : "ColorProfiles",
+          "value" : "nclx"
+        },
+        {
+          "tag" : "ColorPrimaries",
+          "value" : "9"
+        },
+        {
+          "tag" : "TransferCharacteristics",
+          "value" : "18"
+        },
+        {
+          "tag" : "MatrixCoefficients",
+          "value" : "9"
+        },
+        {
+          "tag" : "VideoFullRangeFlag",
+          "value" : "0"
+        },
+        {
           "tag" : "PixelAspectRatio",
-          "value" : "1:1"
+          "value" : "2559:2560"
         },
         {
           "tag" : "BufferSize",
@@ -227,7 +247,7 @@
         },
         {
           "tag" : "MaxBitrate",
-          "value" : "9160"
+          "value" : "4451559"
         },
         {
           "tag" : "AverageBitrate",
@@ -235,7 +255,7 @@
         },
         {
           "tag" : "VideoFrameRate",
-          "value" : "25"
+          "value" : "59.9400599400599"
         }
       ]
     },
@@ -244,7 +264,7 @@
       "tags" : [
         {
           "tag" : "Encoder",
-          "value" : "Lavf62.3.100"
+          "value" : "Lavf62.12.100"
         }
       ]
     },
@@ -253,15 +273,15 @@
       "tags" : [
         {
           "tag" : "ImageSize",
-          "value" : "320 240"
+          "value" : "959 1706"
         },
         {
           "tag" : "Megapixels",
-          "value" : "0.0768"
+          "value" : "1.636054"
         },
         {
           "tag" : "AvgBitrate",
-          "value" : "9160"
+          "value" : "4450077"
         },
         {
           "tag" : "Rotation",
