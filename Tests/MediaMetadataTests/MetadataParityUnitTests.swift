@@ -22,7 +22,7 @@ final class MetadataParityUnitTests: XCTestCase {
             box("ilst", payload: Data()),
         ]))
 
-        let result = MediaMetadataReader.read(url: try write(fixture, extension: "mov"))
+        let result = MediaMetadataReader.extract(url: try write(fixture, extension: "mov"))
 
         XCTAssertEqual(result.identity.family, .isoBMFF)
         XCTAssertTrue(result.diagnostics.isEmpty)
@@ -38,7 +38,7 @@ final class MetadataParityUnitTests: XCTestCase {
         track.append(metadata)
         let fixture = box("moov", payload: box("trak", payload: track))
 
-        let result = MediaMetadataReader.read(url: try write(fixture, extension: "mov"))
+        let result = MediaMetadataReader.extract(url: try write(fixture, extension: "mov"))
 
         XCTAssertEqual(result.camera?.make, "Example Camera Co.")
         XCTAssertEqual(result.camera?.model, "Example One")
@@ -48,7 +48,7 @@ final class MetadataParityUnitTests: XCTestCase {
     }
 
     func testRead_ParsesTIFFCameraGPSAndFractionalGPSTimestamp() throws {
-        let result = MediaMetadataReader.read(url: try write(tiffCameraGPSFixture(), extension: "tiff"))
+        let result = MediaMetadataReader.extract(url: try write(tiffCameraGPSFixture(), extension: "tiff"))
 
         XCTAssertEqual(result.camera?.make, "Example")
         XCTAssertEqual(result.camera?.model, "Camera One")
@@ -75,7 +75,7 @@ final class MetadataParityUnitTests: XCTestCase {
         malformed.append(bigEndianUInt64(1_693_400_431))
         let fixture = box("moov", payload: box("udta", payload: box("GPMF", payload: malformed)))
 
-        let result = MediaMetadataReader.read(url: try write(fixture, extension: "mp4"))
+        let result = MediaMetadataReader.extract(url: try write(fixture, extension: "mp4"))
 
         XCTAssertEqual(result.diagnostics.first?.code, "goproGPMFMalformed")
         XCTAssertTrue(result.timestamps.isEmpty)

@@ -14,11 +14,11 @@ struct ID3MetadataParser {
         self.url = url
     }
 
-    mutating func parse() -> MediaMetadataResult {
+    mutating func parse() -> ParsedMetadata {
         guard let header = try? source.data(offset: 0, length: 10),
               header.count == 10,
               Data(header[0..<3]) == Data("ID3".utf8) else {
-            return MediaMetadataResult(
+            return ParsedMetadata(
                 identity: FormatIdentity(
                     family: .unknown,
                     observedExtension: url.pathExtension.lowercased(),
@@ -60,8 +60,8 @@ struct ID3MetadataParser {
         return result(majorVersion: majorVersion, timestamps: timestampCandidates())
     }
 
-    private func result(majorVersion: UInt8, timestamps: [CaptureTimestampCandidate]) -> MediaMetadataResult {
-        MediaMetadataResult(
+    private func result(majorVersion: UInt8, timestamps: [CaptureTimestampCandidate]) -> ParsedMetadata {
+        ParsedMetadata(
             identity: FormatIdentity(
                 family: .id3,
                 observedExtension: url.pathExtension.lowercased(),

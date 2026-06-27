@@ -73,16 +73,27 @@ struct ISOBMFFMetadataParser {
     private var diagnostics: [MetadataDiagnostic] = []
     private var exifItemIDs = Set<UInt32>()
     private var itemExtents: [UInt32: [ItemExtent]] = [:]
+    private var rawVideo = RawVideoInfo()
+    private var currentTrack = TrackScratch()
+
+    /// Per-track scratch gathered while walking a `trak`, finalized in ``finalizeTrack()``.
+    private struct TrackScratch {
+        var handler: String?
+        var mediaTimescale: UInt32?
+        var mediaDurationUnits: UInt64?
+        var sampleCount: UInt64?
+        var codecFourCC: String?
+    }
 
     init(source: FileByteSource, url: URL) {
         self.source = source
         self.url = url
     }
 
-    mutating func parse() -> MediaMetadataResult {
+    mutating func parse() -> ParsedMetadata {
         walkChildren(start: 0, end: source.size, path: "iso")
         parseHEIFEXIFItems()
-        return MediaMetadataResult(
+        return ParsedMetadata(
             identity: FormatIdentity(
                 family: inferredFamily(),
                 observedExtension: url.pathExtension.lowercased(),
@@ -96,7 +107,8 @@ struct ISOBMFFMetadataParser {
             diagnostics: diagnostics,
             provenance: [
                 ParserProvenance(parser: isoParserName, status: .parsed)
-            ]
+            ],
+            video: rawVideo.isEmpty ? nil : rawVideo
         )
     }
 
@@ -116,14 +128,26 @@ struct ISOBMFFMetadataParser {
         switch box.type {
         case "ftyp":
             parseFileType(box, path: path)
-        case "moov", "trak", "mdia", "minf", "dinf", "stbl", "edts", "iprp", "ipco", "ipma":
+        case "trak":
+            parseTrack(box, path: path)
+        case "moov", "mdia", "minf", "dinf", "stbl", "edts", "iprp", "ipco", "ipma":
             walkChildren(start: box.payloadStart, end: box.end, path: path)
         case "udta":
             parseUserData(box, path: path)
         case "meta":
             parseMeta(box, path: path)
-        case "mvhd", "mdhd":
+        case "mvhd":
             recordQuickTimeContainerCreationDate(box, path: path)
+            parseMovieDuration(box)
+        case "mdhd":
+            recordQuickTimeContainerCreationDate(box, path: path)
+            parseMediaHeader(box)
+        case "hdlr":
+            parseTrackHandler(box)
+        case "stsd":
+            parseSampleDescription(box)
+        case "stts":
+            parseTimeToSample(box)
         case "tkhd":
             recordQuickTimeContainerCreationDate(box, path: path)
             parseTrackDimensions(box, path: path)
@@ -132,6 +156,140 @@ struct ISOBMFFMetadataParser {
         default:
             break
         }
+    }
+
+    private mutating func parseTrack(_ box: Box, path: String) {
+        currentTrack = TrackScratch()
+        walkChildren(start: box.payloadStart, end: box.end, path: path)
+        finalizeTrack()
+    }
+
+    /// Adopts the first video track's codec and frame rate once its boxes are walked.
+    private mutating func finalizeTrack() {
+        guard currentTrack.handler == "vide" else {
+            return
+        }
+        if rawVideo.codecFourCC == nil {
+            rawVideo.codecFourCC = currentTrack.codecFourCC
+        }
+        if rawVideo.frameRate == nil,
+           let count = currentTrack.sampleCount, count > 0,
+           let timescale = currentTrack.mediaTimescale, timescale > 0,
+           let durationUnits = currentTrack.mediaDurationUnits, durationUnits > 0 {
+            let seconds = Double(durationUnits) / Double(timescale)
+            if seconds > 0 {
+                rawVideo.frameRate = Double(count) / seconds
+            }
+        }
+    }
+
+    /// Movie-level duration from `mvhd` (timescale + duration), in seconds.
+    private mutating func parseMovieDuration(_ box: Box) {
+        guard let version = readUInt8(offset: box.payloadStart) else {
+            return
+        }
+        let timescaleOffset: UInt64
+        let durationOffset: UInt64
+        let durationIs64: Bool
+        switch version {
+        case 0:
+            timescaleOffset = box.payloadStart + 12
+            durationOffset = box.payloadStart + 16
+            durationIs64 = false
+        case 1:
+            timescaleOffset = box.payloadStart + 20
+            durationOffset = box.payloadStart + 24
+            durationIs64 = true
+        default:
+            return
+        }
+        guard let timescale = readUInt32(offset: timescaleOffset), timescale > 0 else {
+            return
+        }
+        let durationUnits: UInt64?
+        if durationIs64 {
+            durationUnits = durationOffset + 8 <= box.end ? readUInt64(offset: durationOffset) : nil
+        } else {
+            durationUnits = durationOffset + 4 <= box.end ? readUInt32(offset: durationOffset).map(UInt64.init) : nil
+        }
+        guard let durationUnits, durationUnits > 0 else {
+            return
+        }
+        rawVideo.durationSeconds = Double(durationUnits) / Double(timescale)
+    }
+
+    /// Media timescale + duration from a track's `mdhd`, used to compute frame rate.
+    private mutating func parseMediaHeader(_ box: Box) {
+        guard let version = readUInt8(offset: box.payloadStart) else {
+            return
+        }
+        let timescaleOffset: UInt64
+        let durationOffset: UInt64
+        let durationIs64: Bool
+        switch version {
+        case 0:
+            timescaleOffset = box.payloadStart + 12
+            durationOffset = box.payloadStart + 16
+            durationIs64 = false
+        case 1:
+            timescaleOffset = box.payloadStart + 20
+            durationOffset = box.payloadStart + 24
+            durationIs64 = true
+        default:
+            return
+        }
+        currentTrack.mediaTimescale = readUInt32(offset: timescaleOffset)
+        if durationIs64 {
+            currentTrack.mediaDurationUnits = durationOffset + 8 <= box.end ? readUInt64(offset: durationOffset) : nil
+        } else {
+            currentTrack.mediaDurationUnits = durationOffset + 4 <= box.end ? readUInt32(offset: durationOffset).map(UInt64.init) : nil
+        }
+    }
+
+    /// Media handler type from `hdlr` (e.g. `vide`, `soun`). First wins: the media
+    /// handler in `mdia` precedes the QuickTime data handler in `minf`, which must
+    /// not overwrite it.
+    private mutating func parseTrackHandler(_ box: Box) {
+        guard currentTrack.handler == nil,
+              box.payloadStart + 12 <= box.end else {
+            return
+        }
+        currentTrack.handler = readASCIIString(offset: box.payloadStart + 8, length: 4)
+    }
+
+    /// First sample-entry four-character code from `stsd` (the codec).
+    private mutating func parseSampleDescription(_ box: Box) {
+        guard let entryCount = readUInt32(offset: box.payloadStart + 4), entryCount >= 1 else {
+            return
+        }
+        let entryStart = box.payloadStart + 8
+        guard entryStart + 8 <= box.end else {
+            return
+        }
+        currentTrack.codecFourCC = readASCIIString(offset: entryStart + 4, length: 4)
+    }
+
+    /// Sums the time-to-sample (`stts`) table to get the track's video sample count.
+    private mutating func parseTimeToSample(_ box: Box) {
+        guard let entryCount = readUInt32(offset: box.payloadStart + 4),
+              entryCount <= 1_000_000 else {
+            return
+        }
+        var cursor = box.payloadStart + 8
+        var sampleCount: UInt64 = 0
+        for _ in 0..<entryCount {
+            guard cursor + 8 <= box.end,
+                  let count = readUInt32(offset: cursor) else {
+                return
+            }
+            let (sum, overflow) = sampleCount.addingReportingOverflow(UInt64(count))
+            guard !overflow else {
+                return
+            }
+            sampleCount = sum
+            cursor += 8
+        }
+        currentTrack.sampleCount = sampleCount
     }
 
     private mutating func parseFileType(_ box: Box, path: String) {
@@ -925,7 +1083,7 @@ struct ISOBMFFMetadataParser {
             || (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
     }
 
-    private mutating func mergeEmbedded(result: MediaMetadataResult) {
+    private mutating func mergeEmbedded(result: ParsedMetadata) {
         let idOffset = findings.count
         findings.append(
             contentsOf: result.findings.map { finding in

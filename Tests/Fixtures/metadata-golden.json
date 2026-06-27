@@ -1,209 +1,184 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "fixtures": [
     {
       "path": "otos-catalog-state-robustness/Media/jpeg-exif-offset-date.jpg",
-      "identity": { "family": "jpeg", "extension": "jpg" },
-      "findings": [
-        { "namespace": "exif", "key": "DateTimeOriginal", "rawValue": "2025:06:12 16:48:36" },
-        { "namespace": "exif", "key": "OffsetTimeOriginal", "rawValue": "-08:00" },
-        { "namespace": "tiff", "key": "Make", "rawValue": "SONY" },
-        { "namespace": "tiff", "key": "Model", "rawValue": "ILCE-6700" },
-        { "namespace": "exif", "key": "LensModel", "rawValue": "18-50mm F2.8 DC DN | Contemporary 021" }
-      ],
-      "timestamps": [
-        { "role": "original", "rawTimestamp": "2025:06:12 16:48:36", "components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "authority": "localWithOffset" },
-        { "role": "digitized", "rawTimestamp": "2025:06:12 16:48:36", "components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "authority": "localWithOffset" },
-        { "role": "tiff", "rawTimestamp": "2025:06:12 16:48:36", "components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "authority": "localWithOffset" }
-      ],
-      "locations": [],
-      "camera": { "make": "SONY", "model": "ILCE-6700", "lensModel": "18-50mm F2.8 DC DN | Contemporary 021", "orientation": 1, "pixelWidth": 6192, "pixelHeight": 4128 },
-      "diagnosticCodes": [],
-      "provenance": ["MediaMetadata.TIFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "jpeg", "extension": "jpg", "brand": null, "detectedByMagic": true },
+      "timestamps": {
+        "original": { "components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "precision": "localWithOffset" },
+        "digitized": { "components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "precision": "localWithOffset" },
+        "tiffDateTime": { "components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "precision": "localWithOffset" }
+      },
+      "location": null,
+      "camera": { "make": "SONY", "model": "ILCE-6700", "lensModel": "18-50mm F2.8 DC DN | Contemporary 021", "serialNumber": null, "orientation": 1, "pixelWidth": 6192, "pixelHeight": 4128 },
+      "video": null
     },
     {
       "path": "otos-catalog-state-robustness/Media/ios-heic-offset-date.heic",
-      "identity": { "family": "heif", "extension": "heic", "brand": "heic" },
-      "findings": [
-        { "namespace": "exif", "key": "DateTimeOriginal", "rawValue": "2024:04:25 14:51:34" },
-        { "namespace": "exif", "key": "OffsetTimeOriginal", "rawValue": "-07:00" },
-        { "namespace": "gps", "key": "GPSDateStamp", "rawValue": "2024:04:25" },
-        { "namespace": "gps", "key": "GPSTimeStamp", "rawValue": "21 51 33.99" }
-      ],
-      "timestamps": [
-        { "role": "original", "rawTimestamp": "2024:04:25 14:51:34", "components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "authority": "localWithOffset" },
-        { "role": "digitized", "rawTimestamp": "2024:04:25 14:51:34", "components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "authority": "localWithOffset" },
-        { "role": "tiff", "rawTimestamp": "2024:04:25 14:51:34", "components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "authority": "localWithOffset" },
-        { "role": "gps", "rawTimestamp": "2024:04:25 21 51 33.99", "components": [2024, 4, 25, 21, 51, 33], "instant": "2024-04-25T21:51:33.990Z", "offsetSeconds": 0, "authority": "absoluteInstant" }
-      ],
-      "locations": [
-        { "latitude": 38.5145638888889, "longitude": -123.243386111111, "altitudeMeters": 41.22965578, "rawValue": "N 38 30 52.43 W 123 14 36.19", "source": "tiff.gps" }
-      ],
-      "camera": { "make": "Apple", "model": "iPhone 12 Pro", "lensModel": "iPhone 12 Pro back triple camera 6mm f/2", "orientation": 6, "pixelWidth": 4032, "pixelHeight": 3024 },
-      "diagnosticCodes": [],
-      "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "heif", "extension": "heic", "brand": "heic", "detectedByMagic": true },
+      "timestamps": {
+        "original": { "components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "precision": "localWithOffset" },
+        "digitized": { "components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "precision": "localWithOffset" },
+        "tiffDateTime": { "components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "precision": "localWithOffset" },
+        "gps": { "components": [2024, 4, 25, 21, 51, 33], "instant": "2024-04-25T21:51:33.990Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": { "latitude": 38.5145638888889, "longitude": -123.243386111111, "altitudeMeters": 41.22965578 },
+      "camera": { "make": "Apple", "model": "iPhone 12 Pro", "lensModel": "iPhone 12 Pro back triple camera 6mm f/2", "serialNumber": null, "orientation": 6, "pixelWidth": 4032, "pixelHeight": 3024 },
+      "video": null
     },
     {
       "path": "otos-catalog-state-robustness/Media/mov-no-embedded-capture-date.mov",
-      "identity": { "family": "isoBMFF", "extension": "mov", "brand": "qt  " },
-      "findings": [{ "namespace": "iso.ftyp", "key": "majorBrand", "rawValue": "qt  " }],
-      "timestamps": [], "locations": [],
-      "camera": { "pixelWidth": 960, "pixelHeight": 1280 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true },
+      "timestamps": {},
+      "location": null,
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 960, "pixelHeight": 1280 },
+      "video": { "durationSeconds": 1.5, "frameRate": 60.0, "codec": "h264" }
     },
     {
       "path": "otos-catalog-state-robustness/Media/mp4-no-embedded-capture-date.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "isom" },
-      "findings": [{ "namespace": "iso.ftyp", "key": "majorBrand", "rawValue": "isom" }],
-      "timestamps": [], "locations": [],
-      "camera": { "pixelWidth": 959, "pixelHeight": 1706 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true },
+      "timestamps": {},
+      "location": null,
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 959, "pixelHeight": 1706 },
+      "video": { "durationSeconds": 1.502, "frameRate": 59.9400599, "codec": "h264" }
     },
     {
       "path": "videometa/IMG_5179.MOV",
-      "identity": { "family": "isoBMFF", "extension": "mov", "brand": "qt  " },
-      "findings": [
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.creationdate", "rawValue": "2026-04-08T11:18:02-0700" },
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.location.ISO6709", "rawValue": "+37.9030-122.0560+038.313/" },
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.make", "rawValue": "Apple" },
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.model", "rawValue": "iPhone 15 Pro" }
-      ],
-      "timestamps": [
-        { "role": "quickTimeContainerCreationDate", "rawTimestamp": "3858517082", "components": [2026, 4, 8, 18, 18, 2], "instant": "2026-04-08T18:18:02Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 15 },
-        { "role": "quickTimeCreationDate", "rawTimestamp": "2026-04-08T11:18:02-0700", "components": [2026, 4, 8, 11, 18, 2], "instant": "2026-04-08T18:18:02Z", "offsetSeconds": -25200, "authority": "localWithOffset" }
-      ],
-      "locations": [{ "latitude": 37.903, "longitude": -122.056, "altitudeMeters": 38.313, "rawValue": "+37.9030-122.0560+038.313/", "source": "iso.moov.meta.ilst.com.apple.quicktime.location.ISO6709" }],
-      "camera": { "make": "Apple", "model": "iPhone 15 Pro", "lensModel": "iPhone 15 Pro back camera 9mm f/2.8", "pixelWidth": 3840, "pixelHeight": 2160 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2026, 4, 8, 18, 18, 2], "instant": "2026-04-08T18:18:02Z", "offsetSeconds": 0, "precision": "absolute" },
+        "quickTimeCreation": { "components": [2026, 4, 8, 11, 18, 2], "instant": "2026-04-08T18:18:02Z", "offsetSeconds": -25200, "precision": "localWithOffset" }
+      },
+      "location": { "latitude": 37.903, "longitude": -122.056, "altitudeMeters": 38.313 },
+      "camera": { "make": "Apple", "model": "iPhone 15 Pro", "lensModel": "iPhone 15 Pro back camera 9mm f/2.8", "serialNumber": null, "orientation": null, "pixelWidth": 3840, "pixelHeight": 2160 },
+      "video": { "durationSeconds": 0.7833333, "frameRate": 60.0, "codec": "hevc" }
     },
     {
       "path": "videometa/apple.mov",
-      "identity": { "family": "isoBMFF", "extension": "mov", "brand": "qt  " },
-      "findings": [
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.creationdate", "rawValue": "2026-03-17T20:11:08-0500" },
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.location.ISO6709", "rawValue": "+31.0397-104.8308+1233.381/" }
-      ],
-      "timestamps": [
-        { "role": "quickTimeContainerCreationDate", "rawTimestamp": "3856641069", "components": [2026, 3, 18, 1, 11, 9], "instant": "2026-03-18T01:11:09Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 15 },
-        { "role": "quickTimeCreationDate", "rawTimestamp": "2026-03-17T20:11:08-0500", "components": [2026, 3, 17, 20, 11, 8], "instant": "2026-03-18T01:11:08Z", "offsetSeconds": -18000, "authority": "localWithOffset" }
-      ],
-      "locations": [{ "latitude": 31.0397, "longitude": -104.8308, "altitudeMeters": 1233.381, "rawValue": "+31.0397-104.8308+1233.381/", "source": "iso.moov.meta.ilst.com.apple.quicktime.location.ISO6709" }],
-      "camera": { "make": "Apple", "model": "iPhone 15 Pro", "lensModel": "iPhone 15 Pro back camera 6.765mm f/1.78", "pixelWidth": 3840, "pixelHeight": 2160 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2026, 3, 18, 1, 11, 9], "instant": "2026-03-18T01:11:09Z", "offsetSeconds": 0, "precision": "absolute" },
+        "quickTimeCreation": { "components": [2026, 3, 17, 20, 11, 8], "instant": "2026-03-18T01:11:08Z", "offsetSeconds": -18000, "precision": "localWithOffset" }
+      },
+      "location": { "latitude": 31.0397, "longitude": -104.8308, "altitudeMeters": 1233.381 },
+      "camera": { "make": "Apple", "model": "iPhone 15 Pro", "lensModel": "iPhone 15 Pro back camera 6.765mm f/1.78", "serialNumber": null, "orientation": null, "pixelWidth": 3840, "pixelHeight": 2160 },
+      "video": { "durationSeconds": 13.2433333, "frameRate": 59.94715, "codec": "hevc" }
     },
     {
       "path": "videometa/dji_inspire3_car_4k120_rec709.mov",
-      "identity": { "family": "isoBMFF", "extension": "mov", "brand": "qt  " },
-      "findings": [{ "namespace": "iso.ftyp", "key": "majorBrand", "rawValue": "qt  " }],
-      "timestamps": [{ "role": "quickTimeContainerCreationDate", "rawTimestamp": "3763741638", "components": [2023, 4, 7, 19, 47, 18], "instant": "2023-04-07T19:47:18Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 5 }],
-      "locations": [], "camera": { "pixelWidth": 4096, "pixelHeight": 2160 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2023, 4, 7, 19, 47, 18], "instant": "2023-04-07T19:47:18Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": null,
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 4096, "pixelHeight": 2160 },
+      "video": { "durationSeconds": 5.68, "frameRate": 25.0, "codec": "proRes" }
     },
     {
       "path": "videometa/dji_ronin4d_4k_prores4444_25fps.mov",
-      "identity": { "family": "isoBMFF", "extension": "mov", "brand": "qt  " },
-      "findings": [{ "namespace": "iso.ftyp", "key": "majorBrand", "rawValue": "qt  " }],
-      "timestamps": [{ "role": "quickTimeContainerCreationDate", "rawTimestamp": "3722558395", "components": [2021, 12, 17, 3, 59, 55], "instant": "2021-12-17T03:59:55Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 5 }],
-      "locations": [], "camera": { "pixelWidth": 4096, "pixelHeight": 1712 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2021, 12, 17, 3, 59, 55], "instant": "2021-12-17T03:59:55Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": null,
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 4096, "pixelHeight": 1712 },
+      "video": { "durationSeconds": 10.0, "frameRate": 25.0, "codec": "proRes" }
     },
     {
       "path": "videometa/exiftool_quicktime.mov",
-      "identity": { "family": "isoBMFF", "extension": "mov" },
-      "findings": [
-        { "namespace": "pentax.tags", "key": "Make", "rawValue": "PENTAX DIGITAL CAMERA" },
-        { "namespace": "quicktime.ilst", "key": "contentCreateDate", "rawValue": "2010" }
-      ],
-      "timestamps": [{ "role": "quickTimeContainerCreationDate", "rawTimestamp": "3206613834", "components": [2005, 8, 11, 14, 3, 54], "instant": "2005-08-11T14:03:54Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 5 }],
-      "locations": [], "camera": { "make": "PENTAX DIGITAL CAMERA", "pixelWidth": 320, "pixelHeight": 240 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mov", "brand": null, "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2005, 8, 11, 14, 3, 54], "instant": "2005-08-11T14:03:54Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": null,
+      "camera": { "make": "PENTAX DIGITAL CAMERA", "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 320, "pixelHeight": 240 },
+      "video": { "durationSeconds": 4.9666667, "frameRate": 30.0, "codec": "motionJPEG" }
     },
     {
       "path": "videometa/google.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "isom" },
-      "findings": [
-        { "namespace": "quicktime.mdta", "key": "com.android.manufacturer", "rawValue": "Google" },
-        { "namespace": "quicktime.mdta", "key": "com.android.model", "rawValue": "Pixel 9 Pro" },
-        { "namespace": "quicktime.udta", "key": "gpsCoordinates", "rawValue": "+37.9030-122.0561/" }
-      ],
-      "timestamps": [{ "role": "quickTimeContainerCreationDate", "rawTimestamp": "3840819785", "components": [2025, 9, 15, 22, 23, 5], "instant": "2025-09-15T22:23:05Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 7 }],
-      "locations": [{ "latitude": 37.903, "longitude": -122.0561, "rawValue": "+37.9030-122.0561/", "source": "iso.moov.udta.gpsCoordinates" }],
-      "camera": { "make": "Google", "model": "Pixel 9 Pro", "pixelWidth": 3840, "pixelHeight": 2160 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2025, 9, 15, 22, 23, 5], "instant": "2025-09-15T22:23:05Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": { "latitude": 37.903, "longitude": -122.0561, "altitudeMeters": null },
+      "camera": { "make": "Google", "model": "Pixel 9 Pro", "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 3840, "pixelHeight": 2160 },
+      "video": { "durationSeconds": 7.0468, "frameRate": 30.0846248, "codec": "hevc" }
     },
     {
       "path": "videometa/gopro_action.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "mp41" },
-      "findings": [
-        { "namespace": "gopro.gpmf", "key": "CreationDate", "rawValue": "1693400431" },
-        { "namespace": "gopro.gpmf", "key": "TimeZone", "rawValue": "330" },
-        { "namespace": "gopro.gpmf", "key": "Model", "rawValue": "HERO12 Black" },
-        { "namespace": "gopro.gpmf", "key": "CameraSerialNumber", "rawValue": "C3501324543674" }
-      ],
-      "timestamps": [
-        { "role": "quickTimeContainerCreationDate", "rawTimestamp": "3776225432", "components": [2023, 8, 30, 7, 30, 32], "instant": "2023-08-30T07:30:32Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 9 },
-        { "role": "quickTimeCreationDate", "rawTimestamp": "1693400431", "components": [2023, 8, 30, 13, 0, 31], "instant": "2023-08-30T13:00:31Z", "offsetSeconds": 0, "authority": "absoluteInstant" }
-      ],
-      "locations": [], "camera": { "model": "HERO12 Black", "serialNumber": "C3501324543674", "pixelWidth": 3840, "pixelHeight": 3360 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "mp41", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2023, 8, 30, 7, 30, 32], "instant": "2023-08-30T07:30:32Z", "offsetSeconds": 0, "precision": "absolute" },
+        "quickTimeCreation": { "components": [2023, 8, 30, 13, 0, 31], "instant": "2023-08-30T13:00:31Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": null,
+      "camera": { "make": null, "model": "HERO12 Black", "lensModel": null, "serialNumber": "C3501324543674", "orientation": null, "pixelWidth": 3840, "pixelHeight": 3360 },
+      "video": { "durationSeconds": 13.0463667, "frameRate": 29.97003, "codec": "hevc" }
     },
     {
       "path": "videometa/minimal.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "isom" },
-      "findings": [{ "namespace": "iso.ftyp", "key": "majorBrand", "rawValue": "isom" }],
-      "timestamps": [{ "role": "quickTimeContainerCreationDate", "rawTimestamp": "3801292200", "components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T10:30:00Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 3 }],
-      "locations": [], "camera": { "pixelWidth": 320, "pixelHeight": 240 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T10:30:00Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": null,
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 320, "pixelHeight": 240 },
+      "video": { "durationSeconds": 1.0, "frameRate": 25.0, "codec": "h264" }
     },
     {
       "path": "videometa/nonfaststart.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "isom" },
-      "findings": [{ "namespace": "iso.ftyp", "key": "majorBrand", "rawValue": "isom" }],
-      "timestamps": [], "locations": [], "camera": { "pixelWidth": 320, "pixelHeight": 240 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true },
+      "timestamps": {},
+      "location": null,
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 320, "pixelHeight": 240 },
+      "video": { "durationSeconds": 5.0, "frameRate": 25.0, "codec": "h264" }
     },
     {
       "path": "videometa/sony_a6700.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "XAVC" },
-      "findings": [
-        { "namespace": "sony.nrtm", "key": "CreationDate", "rawValue": "2026-03-18T16:39:46-07:00" },
-        { "namespace": "sony.nrtm", "key": "Make", "rawValue": "Sony" },
-        { "namespace": "sony.nrtm", "key": "Model", "rawValue": "ILCE-6700" },
-        { "namespace": "sony.nrtm", "key": "DeviceSerialNo", "rawValue": "4294967295" },
-        { "namespace": "sony.nrtm", "key": "GPSTimestamp", "rawValue": "2026:03:18 23:39:36.000" }
-      ],
-      "timestamps": [
-        { "role": "quickTimeContainerCreationDate", "rawTimestamp": "3856721986", "components": [2026, 3, 18, 23, 39, 46], "instant": "2026-03-18T23:39:46Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 7 },
-        { "role": "quickTimeCreationDate", "rawTimestamp": "2026-03-18T16:39:46-07:00", "components": [2026, 3, 18, 16, 39, 46], "instant": "2026-03-18T23:39:46Z", "offsetSeconds": -25200, "authority": "localWithOffset" },
-        { "role": "gps", "rawTimestamp": "2026:03:18 23:39:36.000", "components": [2026, 3, 18, 23, 39, 36], "instant": "2026-03-18T23:39:36Z", "offsetSeconds": 0, "authority": "absoluteInstant" }
-      ],
-      "locations": [{ "latitude": 29.319700555555556, "longitude": -103.61025694444444, "rawValue": "N 29;19;10.922 W 103;36;36.925", "source": "sony.nrtm.gps" }],
-      "camera": { "make": "Sony", "model": "ILCE-6700", "serialNumber": "4294967295", "pixelWidth": 3840, "pixelHeight": 2160 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "XAVC", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2026, 3, 18, 23, 39, 46], "instant": "2026-03-18T23:39:46Z", "offsetSeconds": 0, "precision": "absolute" },
+        "quickTimeCreation": { "components": [2026, 3, 18, 16, 39, 46], "instant": "2026-03-18T23:39:46Z", "offsetSeconds": -25200, "precision": "localWithOffset" },
+        "gps": { "components": [2026, 3, 18, 23, 39, 36], "instant": "2026-03-18T23:39:36Z", "offsetSeconds": 0, "precision": "absolute" }
+      },
+      "location": { "latitude": 29.319700555555556, "longitude": -103.61025694444444, "altitudeMeters": null },
+      "camera": { "make": "Sony", "model": "ILCE-6700", "lensModel": null, "serialNumber": "4294967295", "orientation": null, "pixelWidth": 3840, "pixelHeight": 2160 },
+      "video": { "durationSeconds": 6.006, "frameRate": 59.9400599, "codec": "hevc" }
     },
     {
       "path": "videometa/with_audio.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "isom" },
-      "findings": [{ "namespace": "iso.ftyp", "key": "majorBrand", "rawValue": "isom" }],
-      "timestamps": [], "locations": [], "camera": { "pixelWidth": 320, "pixelHeight": 240 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true },
+      "timestamps": {},
+      "location": null,
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 320, "pixelHeight": 240 },
+      "video": { "durationSeconds": 1.0, "frameRate": 25.0, "codec": "h264" }
     },
     {
       "path": "videometa/with_gps.mp4",
-      "identity": { "family": "isoBMFF", "extension": "mp4", "brand": "isom" },
-      "findings": [
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.creationdate", "rawValue": "2024-06-15T10:30:00-0700" },
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.location.ISO6709", "rawValue": "+34.0592-118.4460+042.938/" },
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.make", "rawValue": "TestCamera" },
-        { "namespace": "quicktime.mdta", "key": "com.apple.quicktime.model", "rawValue": "TestModel" }
-      ],
-      "timestamps": [
-        { "role": "quickTimeContainerCreationDate", "rawTimestamp": "3801292200", "components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T10:30:00Z", "offsetSeconds": 0, "authority": "absoluteInstant", "count": 3 },
-        { "role": "quickTimeCreationDate", "rawTimestamp": "2024-06-15T10:30:00-0700", "components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T17:30:00Z", "offsetSeconds": -25200, "authority": "localWithOffset" }
-      ],
-      "locations": [{ "latitude": 34.0592, "longitude": -118.446, "altitudeMeters": 42.938, "rawValue": "+34.0592-118.4460+042.938/", "source": "iso.moov.meta.ilst.com.apple.quicktime.location.ISO6709" }],
-      "camera": { "make": "TestCamera", "model": "TestModel", "pixelWidth": 320, "pixelHeight": 240 },
-      "diagnosticCodes": [], "provenance": ["MediaMetadata.ISOBMFFMetadataParser:parsed"]
+      "outcome": "parsed",
+      "format": { "family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true },
+      "timestamps": {
+        "containerCreation": { "components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T10:30:00Z", "offsetSeconds": 0, "precision": "absolute" },
+        "quickTimeCreation": { "components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T17:30:00Z", "offsetSeconds": -25200, "precision": "localWithOffset" }
+      },
+      "location": { "latitude": 34.0592, "longitude": -118.446, "altitudeMeters": 42.938 },
+      "camera": { "make": "TestCamera", "model": "TestModel", "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 320, "pixelHeight": 240 },
+      "video": { "durationSeconds": 1.0, "frameRate": 25.0, "codec": "h264" }
     }
   ]
 }

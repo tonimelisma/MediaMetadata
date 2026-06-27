@@ -129,7 +129,7 @@ struct TIFFMetadataParser {
         self.family = family
     }
 
-    mutating func parse() -> MediaMetadataResult {
+    mutating func parse() -> ParsedMetadata {
         let identity = FormatIdentity(
             family: family,
             observedExtension: url.pathExtension.lowercased(),
@@ -157,7 +157,7 @@ struct TIFFMetadataParser {
         }
 
         guard let ifd0 = parseIFD(offset: UInt64(ifd0Offset), byteOrder: byteOrder, path: "tiff.ifd0") else {
-            return MediaMetadataResult(identity: identity, findings: findings, timestamps: [], diagnostics: diagnostics)
+            return ParsedMetadata(identity: identity, findings: findings, timestamps: [], diagnostics: diagnostics)
         }
 
         var tiffDateTime: RawField?
@@ -244,7 +244,7 @@ struct TIFFMetadataParser {
         let camera = parseCameraMetadata(ifd0: ifd0, exif: exif, byteOrder: byteOrder)
         let gps = parseGPSMetadata(ifd0: ifd0, byteOrder: byteOrder)
 
-        return MediaMetadataResult(
+        return ParsedMetadata(
             identity: identity,
             findings: findings,
             timestamps: timestamps + [gps.timestamp].compactMap { $0 },
@@ -336,7 +336,7 @@ struct TIFFMetadataParser {
         return (location, gpsTimestamp(dateStamp: dateStamp, timeStamp: timeStamp))
     }
 
-    private mutating func unsupportedResult(code: String, message: String) -> MediaMetadataResult {
+    private mutating func unsupportedResult(code: String, message: String) -> ParsedMetadata {
         diagnostics.append(
             MetadataDiagnostic(
                 severity: .info,
@@ -346,7 +346,7 @@ struct TIFFMetadataParser {
                 byteRange: nil
             )
         )
-        return MediaMetadataResult(
+        return ParsedMetadata(
             identity: FormatIdentity(
                 family: .unknown,
                 observedExtension: url.pathExtension.lowercased(),

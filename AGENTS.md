@@ -62,8 +62,11 @@ xcodebuild -scheme MediaMetadata -destination 'platform=macOS' test
   ImageIO, or AVFoundation in `Sources/MediaMetadata/`.
 - Parsers must fail closed: cap reads, cap recursion, check integer overflow,
   and return partial results with diagnostics instead of crashing.
-- Evidence comes first. Do not collapse raw metadata into a flattened
-  dictionary or hide the candidate list.
+- Evidence comes first in the **internal** model: do not collapse raw metadata
+  into a flattened dictionary or hide the candidate list there. The **public**
+  contract is intentionally a fixed, fully typed field set derived from that
+  evidence (see `MediaMetadataResult`); it exposes every date as its own named
+  field rather than a candidate array, and never returns raw metadata strings.
 - Preserve timestamp expression separately from absolute instants.
 
 ## Testing Conventions
@@ -201,5 +204,7 @@ After finishing an increment, produce a report in this exact format:
 - Do not commit directly to `main` unless explicitly instructed.
 - Do not add platform-specific frameworks to the core `MediaMetadata` target.
 - Do not treat framework-detected format as truth.
-- Do not collapse timestamp evidence into a single "best" value.
+- Do not collapse timestamp evidence into a single "best" value. The public
+  contract exposes every date as its own typed field; resolving which one is
+  authoritative is the consumer's job, not the library's.
 - Do not run `git push --force` or rewrite shared history.

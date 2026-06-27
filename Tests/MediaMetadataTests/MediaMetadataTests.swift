@@ -23,7 +23,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "arw"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.identity.family, .tiff)
         XCTAssertTrue(result.identity.detectedByMagic)
@@ -41,7 +41,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "arw"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .original })
 
         XCTAssertEqual(timestamp.rawTimestamp, "2026:04:26 14:57:35")
@@ -54,7 +54,7 @@ final class MediaMetadataTests: XCTestCase {
     func testRead_TruncatedTIFFReturnsDiagnosticsWithoutCrashing() throws {
         let url = try writeFixture(Data([0x49, 0x49, 0x2A]), extension: "arw")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.identity.family, .unknown)
         XCTAssertTrue(result.findings.isEmpty)
@@ -71,7 +71,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "arw"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .original })
 
         XCTAssertNil(timestamp.offsetSeconds)
@@ -88,7 +88,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "jpg"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .original })
 
         XCTAssertEqual(result.identity.family, .jpeg)
@@ -104,7 +104,7 @@ final class MediaMetadataTests: XCTestCase {
         )
         let url = try writeFixture(fixture, extension: "jpg")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.readMetrics.parserName, "MediaMetadata.TIFFMetadataParser")
         XCTAssertGreaterThanOrEqual(result.readMetrics.parserElapsedMilliseconds, 0)
@@ -131,7 +131,7 @@ final class MediaMetadataTests: XCTestCase {
         )
         let url = try writeFixture(fixture, extension: "jpg")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .original })
 
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 27, hour: 8, minute: 45, second: 43))
@@ -147,7 +147,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "avi"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .riff })
 
         XCTAssertEqual(result.identity.family, .riffAVI)
@@ -163,7 +163,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "avi"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .riff })
 
         XCTAssertEqual(result.identity.family, .riffAVI)
@@ -179,7 +179,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "avi"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .riff })
 
         XCTAssertEqual(result.diagnostics.first { $0.code == "riffMetadataListDepthExceeded" }?.severity, .warning)
@@ -190,7 +190,7 @@ final class MediaMetadataTests: XCTestCase {
     func testRead_AVIWithoutDateEmitsDiagnostic() throws {
         let url = try writeFixture(emptyAVIRIFFFixture(), extension: "avi")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.identity.family, .riffAVI)
         XCTAssertTrue(result.timestamps.isEmpty)
@@ -201,7 +201,7 @@ final class MediaMetadataTests: XCTestCase {
         let fixture = aviRIFFMoviPayloadFixture()
         let url = try writeFixture(fixture, extension: "avi")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.identity.family, .riffAVI)
         XCTAssertTrue(result.timestamps.isEmpty)
@@ -223,7 +223,7 @@ final class MediaMetadataTests: XCTestCase {
         ])
         let url = try writeFixture(fixture, extension: "avi")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .riff })
 
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 52))
@@ -241,7 +241,7 @@ final class MediaMetadataTests: XCTestCase {
         ])
         let url = try writeFixture(fixture, extension: "avi")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .riff })
 
         XCTAssertEqual(result.findings.first { $0.key == "ICRD" }?.rawValue, "not a timestamp")
@@ -262,7 +262,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "mov"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .quickTimeCreationDate })
         let location = try XCTUnwrap(result.locations.first)
 
@@ -285,7 +285,7 @@ final class MediaMetadataTests: XCTestCase {
         )
         let url = try writeFixture(data, extension: "mov")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .quickTimeCreationDate })
 
         XCTAssertEqual(result.identity.family, .isoBMFF)
@@ -306,7 +306,7 @@ final class MediaMetadataTests: XCTestCase {
         )
         let url = try writeFixture(data, extension: "mov")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .quickTimeCreationDate })
 
         XCTAssertEqual(result.identity.family, .isoBMFF)
@@ -325,7 +325,7 @@ final class MediaMetadataTests: XCTestCase {
         )
         let url = try writeFixture(data, extension: "mov")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .quickTimeCreationDate })
 
         XCTAssertEqual(result.identity.family, .isoBMFF)
@@ -342,7 +342,7 @@ final class MediaMetadataTests: XCTestCase {
         )
         let url = try writeFixture(fixture, extension: "mov")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .quickTimeCreationDate })
 
         XCTAssertEqual(timestamp.instant, makeUTCDate(year: 2026, month: 3, day: 5, hour: 0, minute: 46, second: 2))
@@ -366,7 +366,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "heic"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.identity.family, .heif)
         XCTAssertEqual(result.diagnostics.first { $0.code == "isoItemLocationExtentOverflow" }?.severity, .warning)
@@ -386,7 +386,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "heic"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.identity.family, .heif)
         XCTAssertEqual(result.diagnostics.first { $0.code == "heifExifItemUnreadable" }?.severity, .warning)
@@ -398,7 +398,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "mp3"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .id3RecordingDate })
 
         XCTAssertEqual(result.identity.family, .id3)
@@ -412,7 +412,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "mp3"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .id3RecordingDate })
 
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 52))
@@ -425,7 +425,7 @@ final class MediaMetadataTests: XCTestCase {
             extension: "mp3"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
 
         XCTAssertEqual(result.identity.family, .id3)
         XCTAssertTrue(result.timestamps.isEmpty)
@@ -439,7 +439,7 @@ final class MediaMetadataTests: XCTestCase {
         ])
         let url = try writeFixture(fixture, extension: "mp3")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .id3RecordingDate })
 
         XCTAssertEqual(result.findings.first { $0.key == "TDRC" }?.rawValue, "-")
@@ -457,7 +457,7 @@ final class MediaMetadataTests: XCTestCase {
         ])
         let url = try writeFixture(fixture, extension: "mp3")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .id3RecordingDate })
 
         XCTAssertEqual(result.findings.first { $0.key == "TDRC" }?.rawValue, "-")
@@ -474,7 +474,7 @@ final class MediaMetadataTests: XCTestCase {
         ])
         let url = try writeFixture(fixture, extension: "mp3")
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .id3RecordingDate })
 
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 52))
@@ -491,12 +491,74 @@ final class MediaMetadataTests: XCTestCase {
             extension: "wav"
         )
 
-        let result = MediaMetadataReader.read(url: url)
+        let result = MediaMetadataReader.extract(url: url)
         let timestamp = try XCTUnwrap(result.timestamps.first { $0.role == .riff })
 
         XCTAssertEqual(result.identity.family, .riffWAV)
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 52))
         XCTAssertTrue(result.diagnostics.isEmpty)
+    }
+
+    // MARK: - Public typed contract
+
+    func testPublicRead_TIFFExposesTypedOriginalTimestamp() throws {
+        let url = try writeFixture(
+            rawTIFFCaptureDateFixture(timestamp: "2026:04:26 14:57:35", offset: "-07:00"),
+            extension: "arw"
+        )
+
+        let result = MediaMetadataReader.read(url: url)
+
+        XCTAssertEqual(result.outcome, .parsed)
+        XCTAssertTrue(result.outcome.isDefinitive)
+        XCTAssertFalse(result.outcome.shouldRetry)
+        XCTAssertEqual(result.format.family, .tiff)
+        let original = try XCTUnwrap(result.timestamps.original)
+        XCTAssertEqual(
+            [original.year, original.month, original.day, original.hour, original.minute, original.second],
+            [2026, 4, 26, 14, 57, 35]
+        )
+        XCTAssertEqual(original.utcOffsetSeconds, -7 * 60 * 60)
+        XCTAssertEqual(original.precision, .localWithOffset)
+        XCTAssertEqual(original.instant, makeUTCDate(year: 2026, month: 4, day: 26, hour: 21, minute: 57, second: 35))
+        XCTAssertEqual(result.timestamps.all.count, 3)
+    }
+
+    func testPublicRead_JPEGExposesTypedCamera() throws {
+        let url = try writeFixture(
+            jpegEXIFFixture(timestamp: "2026:04:26 14:57:35", offset: "-07:00"),
+            extension: "jpg"
+        )
+
+        let result = MediaMetadataReader.read(url: url)
+
+        XCTAssertEqual(result.outcome, .parsed)
+        XCTAssertEqual(result.format.family, .jpeg)
+        XCTAssertNotNil(result.timestamps.original?.instant)
+    }
+
+    func testPublicRead_MissingFileIsTransientReadFailure() {
+        let url = tempDirectoryURL.appendingPathComponent("does-not-exist.arw")
+
+        let result = MediaMetadataReader.read(url: url)
+
+        XCTAssertEqual(result.outcome, .readFailure)
+        XCTAssertTrue(result.outcome.shouldRetry)
+        XCTAssertFalse(result.outcome.isDefinitive)
+        XCTAssertEqual(result.format.family, .unknown)
+    }
+
+    func testPublicRead_UnknownSignatureIsDefinitiveUnsupported() throws {
+        let url = try writeFixture(Data("not a media file at all".utf8), extension: "bin")
+
+        let result = MediaMetadataReader.read(url: url)
+
+        XCTAssertEqual(result.outcome, .unsupported)
+        XCTAssertTrue(result.outcome.isDefinitive)
+        XCTAssertFalse(result.outcome.shouldRetry)
+        XCTAssertEqual(result.format.family, .unknown)
+        XCTAssertNil(result.video)
+        XCTAssertNil(result.camera)
     }
 
     private func writeFixture(_ data: Data, extension fileExtension: String) throws -> URL {
