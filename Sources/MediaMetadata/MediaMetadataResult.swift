@@ -14,8 +14,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
     public let format: MediaFormat
     /// All capture/creation timestamps, each strongly typed and individually named.
     public let timestamps: CaptureTimestamps
-    /// Every capture location the file embeds, each tagged with its source. Empty when none.
-    public let locations: [GeoLocation]
+    /// Every capture location the file embeds, each addressable by its source.
+    public let locations: CaptureLocations
     /// Camera/device fields, when present.
     public let camera: Camera?
     /// Video specifics (duration, frame rate, codec), when the file is a movie.
@@ -25,7 +25,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         outcome: ReadOutcome,
         format: MediaFormat,
         timestamps: CaptureTimestamps,
-        locations: [GeoLocation] = [],
+        locations: CaptureLocations = CaptureLocations(),
         camera: Camera? = nil,
         video: VideoInfo? = nil
     ) {
@@ -45,7 +45,7 @@ extension MediaMetadataResult {
             outcome: ReadOutcome(parsed),
             format: MediaFormat(parsed.identity),
             timestamps: CaptureTimestamps(parsed.timestamps),
-            locations: parsed.locations.map(GeoLocation.init),
+            locations: CaptureLocations(parsed.locations),
             camera: parsed.camera.map(Camera.init),
             video: parsed.video.flatMap(VideoInfo.init)
         )
@@ -282,48 +282,62 @@ extension CaptureTime {
     }
 }
 
-/// A capture location in decimal degrees, tagged with the metadata block it came from.
+/// Every capture location the file embeds, each exposed as its own named field.
+/// The library applies no ordering, dedup, or "primary" preference — a caller
+/// picks the source it trusts. Each field is `nil` when that source is absent.
+public struct CaptureLocations: Equatable, Sendable {
+    /// TIFF/EXIF GPS IFD (also HEIF embedded EXIF).
+    public let exifGPS: GeoLocation?
+    /// QuickTime / ISO BMFF location (`ISO6709`, `©xyz`, or `gpsCoordinates`).
+    public let quickTime: GeoLocation?
+    /// Sony NRTM XML GPS.
+    public let sonyNRTM: GeoLocation?
+
+    public init(exifGPS: GeoLocation? = nil, quickTime: GeoLocation? = nil, sonyNRTM: GeoLocation? = nil) {
+        self.exifGPS = exifGPS
+        self.quickTime = quickTime
+        self.sonyNRTM = sonyNRTM
+    }
+
+    /// All present locations, for callers that want to scan rather than name a
+    /// source. The order is field-declaration order and carries no preference.
+    public var all: [GeoLocation] {
+        [exifGPS, quickTime, sonyNRTM].compactMap { $0 }
+    }
+}
+
+extension CaptureLocations {
+    init(_ candidates: [CaptureLocationCandidate]) {
+        func first(_ origin: CaptureLocationCandidate.Origin) -> GeoLocation? {
+            candidates.first { $0.origin == origin }.map(GeoLocation.init)
+        }
+        self.init(
+            exifGPS: first(.exifGPS),
+            quickTime: first(.quickTime),
+            sonyNRTM: first(.sonyNRTM)
+        )
+    }
+}
+
+/// A capture location in decimal degrees.
 public struct GeoLocation: Equatable, Sendable {
     public let latitude: Double
     public let longitude: Double
     public let altitudeMeters: Double?
-    /// Which metadata block this location was read from.
-    public let source: LocationSource
 
-    public init(latitude: Double, longitude: Double, altitudeMeters: Double? = nil, source: LocationSource) {
+    public init(latitude: Double, longitude: Double, altitudeMeters: Double? = nil) {
         self.latitude = latitude
         self.longitude = longitude
         self.altitudeMeters = altitudeMeters
-        self.source = source
     }
-}
-
-/// The metadata block a ``GeoLocation`` was extracted from.
-public enum LocationSource: String, Equatable, Sendable {
-    /// TIFF/EXIF GPS IFD (also HEIF embedded EXIF).
-    case exifGPS
-    /// QuickTime / ISO BMFF location (`ISO6709`, `©xyz`, or `gpsCoordinates`).
-    case quickTime
-    /// Sony NRTM XML GPS.
-    case sonyNRTM
 }
 
 extension GeoLocation {
     init(_ candidate: CaptureLocationCandidate) {
-        let source: LocationSource
-        switch candidate.origin {
-        case .exifGPS:
-            source = .exifGPS
-        case .quickTime:
-            source = .quickTime
-        case .sonyNRTM:
-            source = .sonyNRTM
-        }
         self.init(
             latitude: candidate.latitude,
             longitude: candidate.longitude,
-            altitudeMeters: candidate.altitudeMeters,
-            source: source
+            altitudeMeters: candidate.altitudeMeters
         )
     }
 }

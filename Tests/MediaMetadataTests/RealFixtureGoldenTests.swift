@@ -106,13 +106,27 @@ final class RealFixtureGoldenTests: XCTestCase {
         }
     }
 
-    private func assertLocations(_ actual: [GeoLocation], expected: [GoldenLocation], context: String) {
-        XCTAssertEqual(actual.count, expected.count, "\(context): location count")
-        for (index, (actual, expected)) in zip(actual, expected).enumerated() {
-            XCTAssertEqual(actual.latitude, expected.latitude, accuracy: 0.000_000_1, "\(context): location[\(index)] latitude")
-            XCTAssertEqual(actual.longitude, expected.longitude, accuracy: 0.000_000_1, "\(context): location[\(index)] longitude")
-            assertOptionalDoubleEqual(actual.altitudeMeters, expected.altitudeMeters, accuracy: 0.000_001, "\(context): location[\(index)] altitude")
-            XCTAssertEqual(actual.source.rawValue, expected.source, "\(context): location[\(index)] source")
+    private func assertLocations(_ actual: CaptureLocations, expected: GoldenLocations, context: String) {
+        let fields: [(String, GoldenLocation?, GeoLocation?)] = [
+            ("exifGPS", expected.exifGPS, actual.exifGPS),
+            ("quickTime", expected.quickTime, actual.quickTime),
+            ("sonyNRTM", expected.sonyNRTM, actual.sonyNRTM),
+        ]
+        for (name, expectedLocation, actualLocation) in fields {
+            assertLocation(expectedLocation, actualLocation, field: name, context: context)
+        }
+    }
+
+    private func assertLocation(_ expected: GoldenLocation?, _ actual: GeoLocation?, field: String, context: String) {
+        switch (expected, actual) {
+        case (nil, nil):
+            return
+        case let (expected?, actual?):
+            XCTAssertEqual(actual.latitude, expected.latitude, accuracy: 0.000_000_1, "\(context): \(field) latitude")
+            XCTAssertEqual(actual.longitude, expected.longitude, accuracy: 0.000_000_1, "\(context): \(field) longitude")
+            assertOptionalDoubleEqual(actual.altitudeMeters, expected.altitudeMeters, accuracy: 0.000_001, "\(context): \(field) altitude")
+        default:
+            XCTFail("\(context): \(field) location presence mismatch (expected \(expected != nil), got \(actual != nil))")
         }
     }
 
@@ -195,7 +209,7 @@ private struct GoldenFixture: Decodable {
     let outcome: String
     let format: GoldenFormat
     let timestamps: GoldenTimestamps
-    let locations: [GoldenLocation]
+    let locations: GoldenLocations
     let camera: GoldenCamera?
     let video: GoldenVideo?
 }
@@ -228,11 +242,16 @@ private struct GoldenTime: Decodable {
     let precision: String
 }
 
+private struct GoldenLocations: Decodable {
+    let exifGPS: GoldenLocation?
+    let quickTime: GoldenLocation?
+    let sonyNRTM: GoldenLocation?
+}
+
 private struct GoldenLocation: Decodable {
     let latitude: Double
     let longitude: Double
     let altitudeMeters: Double?
-    let source: String
 }
 
 private struct GoldenCamera: Decodable {

@@ -559,7 +559,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.format.family, .unknown)
         XCTAssertNil(result.video)
         XCTAssertNil(result.camera)
-        XCTAssertTrue(result.locations.isEmpty)
+        XCTAssertTrue(result.locations.all.isEmpty)
     }
 
     private func writeFixture(_ data: Data, extension fileExtension: String) throws -> URL {

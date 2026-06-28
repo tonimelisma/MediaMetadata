@@ -134,7 +134,20 @@ in the final completion report.
 - [ ] After merge, verify `main` on the remote contains the merged commit,
       e.g. `git fetch origin && git log origin/main --oneline -5`.
 
-### 7. Preserve all work
+### 7. Release a new version
+
+- [ ] Once `main` is healthy, choose the next semantic version. Pre-1.0, a
+      breaking public-API change bumps the minor (e.g. `0.1.0` → `0.2.0`);
+      backward-compatible changes bump the patch.
+- [ ] Update any user-facing version references in docs (e.g. the README install
+      snippet) to the new version.
+- [ ] Tag the merged `main` commit, matching the existing tag style
+      (`git tag X.Y.Z` — current tags have no `v` prefix), and push the tag.
+- [ ] Create a GitHub release for the tag with notes summarizing the
+      user-visible changes (`gh release create X.Y.Z`).
+- [ ] Confirm the release and tag are visible on the remote.
+
+### 8. Preserve all work
 
 - [ ] Before deleting any branch, worktree, or stash, confirm its commits are
       reachable from `origin/main` or another protected branch.
@@ -142,7 +155,7 @@ in the final completion report.
       disposable.
 - [ ] Never drop stashes or untracked files that contain user work.
 
-### 8. Clean up agent-created artifacts
+### 9. Clean up agent-created artifacts
 
 After the merged commit is confirmed on `origin/main`:
 
@@ -152,7 +165,7 @@ After the merged commit is confirmed on `origin/main`:
 - [ ] List any remaining dangling branches, stashes, or worktrees in the final
       report so the user can decide what to do with them.
 
-### 9. Final verification
+### 10. Final verification
 
 - [ ] Run `swift build` and `swift test` on `main` after merge to confirm the
       merged state is healthy.
@@ -175,9 +188,10 @@ After finishing an increment, produce a report in this exact format:
 | 4 | Commit | ✅ / ❌ |
 | 5 | Push and open PR | ✅ / ❌ |
 | 6 | Ensure code reaches main | ✅ / ❌ |
-| 7 | Preserve all work | ✅ / ❌ |
-| 8 | Clean up agent artifacts | ✅ / ❌ |
-| 9 | Final verification | ✅ / ❌ |
+| 7 | Release a new version | ✅ / ❌ |
+| 8 | Preserve all work | ✅ / ❌ |
+| 9 | Clean up agent artifacts | ✅ / ❌ |
+| 10 | Final verification | ✅ / ❌ |
 
 ### Changes Made
 

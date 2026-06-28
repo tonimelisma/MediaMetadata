@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.1.0"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.2.0"),
 ]
 ```
 
@@ -76,11 +76,13 @@ if let gps = result.timestamps.gps {
 // Other named fields: digitized, tiffDateTime, containerCreation, quickTimeCreation,
 // quickTimeLocation, quickTimeContentCreate, id3Recording, waveOrigination, riffRecording.
 
-// Every capture location the file embeds, each tagged with its source
-// (.exifGPS / .quickTime / .sonyNRTM). No single "best" pick.
-for location in result.locations {
-    print(location.source, location.latitude, location.longitude, location.altitudeMeters ?? 0)
+// Each capture location is its own named field by source — no array, no order,
+// no single "best" pick. Pick the source you trust, or scan `all`.
+if let exif = result.locations.exifGPS {
+    print(exif.latitude, exif.longitude, exif.altitudeMeters ?? 0)
 }
+if let quickTime = result.locations.quickTime { print(quickTime.latitude, quickTime.longitude) }
+for location in result.locations.all { print(location.latitude, location.longitude) }
 
 // Camera/device. Identity stays text; orientation is an enum, dimensions are Int.
 if let camera = result.camera {
