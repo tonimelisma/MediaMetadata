@@ -14,8 +14,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
     public let format: MediaFormat
     /// All capture/creation timestamps, each strongly typed and individually named.
     public let timestamps: CaptureTimestamps
-    /// Capture location, when the file embeds coordinates.
-    public let location: GeoLocation?
+    /// Every capture location the file embeds, each tagged with its source. Empty when none.
+    public let locations: [GeoLocation]
     /// Camera/device fields, when present.
     public let camera: Camera?
     /// Video specifics (duration, frame rate, codec), when the file is a movie.
@@ -25,14 +25,14 @@ public struct MediaMetadataResult: Equatable, Sendable {
         outcome: ReadOutcome,
         format: MediaFormat,
         timestamps: CaptureTimestamps,
-        location: GeoLocation? = nil,
+        locations: [GeoLocation] = [],
         camera: Camera? = nil,
         video: VideoInfo? = nil
     ) {
         self.outcome = outcome
         self.format = format
         self.timestamps = timestamps
-        self.location = location
+        self.locations = locations
         self.camera = camera
         self.video = video
     }
@@ -45,7 +45,7 @@ extension MediaMetadataResult {
             outcome: ReadOutcome(parsed),
             format: MediaFormat(parsed.identity),
             timestamps: CaptureTimestamps(parsed.timestamps),
-            location: parsed.locations.first.map(GeoLocation.init),
+            locations: parsed.locations.map(GeoLocation.init),
             camera: parsed.camera.map(Camera.init),
             video: parsed.video.flatMap(VideoInfo.init)
         )
@@ -282,25 +282,48 @@ extension CaptureTime {
     }
 }
 
-/// A capture location in decimal degrees.
+/// A capture location in decimal degrees, tagged with the metadata block it came from.
 public struct GeoLocation: Equatable, Sendable {
     public let latitude: Double
     public let longitude: Double
     public let altitudeMeters: Double?
+    /// Which metadata block this location was read from.
+    public let source: LocationSource
 
-    public init(latitude: Double, longitude: Double, altitudeMeters: Double? = nil) {
+    public init(latitude: Double, longitude: Double, altitudeMeters: Double? = nil, source: LocationSource) {
         self.latitude = latitude
         self.longitude = longitude
         self.altitudeMeters = altitudeMeters
+        self.source = source
     }
+}
+
+/// The metadata block a ``GeoLocation`` was extracted from.
+public enum LocationSource: String, Equatable, Sendable {
+    /// TIFF/EXIF GPS IFD (also HEIF embedded EXIF).
+    case exifGPS
+    /// QuickTime / ISO BMFF location (`ISO6709`, `©xyz`, or `gpsCoordinates`).
+    case quickTime
+    /// Sony NRTM XML GPS.
+    case sonyNRTM
 }
 
 extension GeoLocation {
     init(_ candidate: CaptureLocationCandidate) {
+        let source: LocationSource
+        switch candidate.origin {
+        case .exifGPS:
+            source = .exifGPS
+        case .quickTime:
+            source = .quickTime
+        case .sonyNRTM:
+            source = .sonyNRTM
+        }
         self.init(
             latitude: candidate.latitude,
             longitude: candidate.longitude,
-            altitudeMeters: candidate.altitudeMeters
+            altitudeMeters: candidate.altitudeMeters,
+            source: source
         )
     }
 }

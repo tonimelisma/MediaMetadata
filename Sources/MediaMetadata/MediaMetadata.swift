@@ -619,11 +619,20 @@ struct CaptureDateComponents: Equatable, Sendable {
 }
 
 struct CaptureLocationCandidate: Equatable, Sendable {
+    /// Which metadata block a location was read from. Mirrors the public
+    /// ``LocationSource`` (same raw values) so the projection is a 1:1 mapping.
+    enum Origin: String, Equatable, Sendable {
+        case exifGPS
+        case quickTime
+        case sonyNRTM
+    }
+
     let latitude: Double
     let longitude: Double
     let altitudeMeters: Double?
     let rawValue: String
     let source: String
+    let origin: Origin
     let evidenceIDs: [Int]
 
     init(
@@ -632,6 +641,7 @@ struct CaptureLocationCandidate: Equatable, Sendable {
         altitudeMeters: Double?,
         rawValue: String,
         source: String,
+        origin: Origin,
         evidenceIDs: [Int]
     ) {
         self.latitude = latitude
@@ -639,6 +649,7 @@ struct CaptureLocationCandidate: Equatable, Sendable {
         self.altitudeMeters = altitudeMeters
         self.rawValue = rawValue
         self.source = source
+        self.origin = origin
         self.evidenceIDs = evidenceIDs
     }
 }

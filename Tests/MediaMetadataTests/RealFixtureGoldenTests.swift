@@ -37,7 +37,7 @@ final class RealFixtureGoldenTests: XCTestCase {
         XCTAssertEqual(result.format.detectedByMagic, expected.format.detectedByMagic, context)
 
         try assertTimestamps(result.timestamps, expected: expected.timestamps, context: context)
-        assertLocation(result.location, expected: expected.location, context: context)
+        assertLocations(result.locations, expected: expected.locations, context: context)
         assertCamera(result.camera, expected: expected.camera, context: context)
         assertVideo(result.video, expected: expected.video, context: context)
 
@@ -106,16 +106,13 @@ final class RealFixtureGoldenTests: XCTestCase {
         }
     }
 
-    private func assertLocation(_ actual: GeoLocation?, expected: GoldenLocation?, context: String) {
-        switch (expected, actual) {
-        case (nil, nil):
-            return
-        case let (expected?, actual?):
-            XCTAssertEqual(actual.latitude, expected.latitude, accuracy: 0.000_000_1, context)
-            XCTAssertEqual(actual.longitude, expected.longitude, accuracy: 0.000_000_1, context)
-            assertOptionalDoubleEqual(actual.altitudeMeters, expected.altitudeMeters, accuracy: 0.000_001, context)
-        default:
-            XCTFail("\(context): location presence mismatch")
+    private func assertLocations(_ actual: [GeoLocation], expected: [GoldenLocation], context: String) {
+        XCTAssertEqual(actual.count, expected.count, "\(context): location count")
+        for (index, (actual, expected)) in zip(actual, expected).enumerated() {
+            XCTAssertEqual(actual.latitude, expected.latitude, accuracy: 0.000_000_1, "\(context): location[\(index)] latitude")
+            XCTAssertEqual(actual.longitude, expected.longitude, accuracy: 0.000_000_1, "\(context): location[\(index)] longitude")
+            assertOptionalDoubleEqual(actual.altitudeMeters, expected.altitudeMeters, accuracy: 0.000_001, "\(context): location[\(index)] altitude")
+            XCTAssertEqual(actual.source.rawValue, expected.source, "\(context): location[\(index)] source")
         }
     }
 
@@ -198,7 +195,7 @@ private struct GoldenFixture: Decodable {
     let outcome: String
     let format: GoldenFormat
     let timestamps: GoldenTimestamps
-    let location: GoldenLocation?
+    let locations: [GoldenLocation]
     let camera: GoldenCamera?
     let video: GoldenVideo?
 }
@@ -235,6 +232,7 @@ private struct GoldenLocation: Decodable {
     let latitude: Double
     let longitude: Double
     let altitudeMeters: Double?
+    let source: String
 }
 
 private struct GoldenCamera: Decodable {

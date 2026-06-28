@@ -615,6 +615,7 @@ struct TIFFMetadataParser {
             altitudeMeters: parsedAltitude,
             rawValue: rawValue,
             source: "tiff.gps",
+            origin: .exifGPS,
             evidenceIDs: evidenceIDs
         )
     }

@@ -76,9 +76,10 @@ if let gps = result.timestamps.gps {
 // Other named fields: digitized, tiffDateTime, containerCreation, quickTimeCreation,
 // quickTimeLocation, quickTimeContentCreate, id3Recording, waveOrigination, riffRecording.
 
-// Capture location in decimal degrees.
-if let location = result.location {
-    print(location.latitude, location.longitude, location.altitudeMeters ?? 0)
+// Every capture location the file embeds, each tagged with its source
+// (.exifGPS / .quickTime / .sonyNRTM). No single "best" pick.
+for location in result.locations {
+    print(location.source, location.latitude, location.longitude, location.altitudeMeters ?? 0)
 }
 
 // Camera/device. Identity stays text; orientation is an enum, dimensions are Int.

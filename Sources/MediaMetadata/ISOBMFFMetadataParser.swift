@@ -775,6 +775,7 @@ struct ISOBMFFMetadataParser {
                     altitudeMeters: nil,
                     rawValue: raw,
                     source: "sony.nrtm.gps",
+                    origin: .sonyNRTM,
                     evidenceIDs: [findingID]
                 )
             )
@@ -1118,6 +1119,7 @@ struct ISOBMFFMetadataParser {
                 altitudeMeters: location.altitudeMeters,
                 rawValue: location.rawValue,
                 source: location.source,
+                origin: location.origin,
                 evidenceIDs: location.evidenceIDs.map { idOffset + $0 }
             )
         })
@@ -1214,6 +1216,7 @@ struct ISOBMFFMetadataParser {
                 altitudeMeters: location.altitudeMeters,
                 rawValue: rawValue,
                 source: sourcePath,
+                origin: .quickTime,
                 evidenceIDs: [findingID]
             )
         )

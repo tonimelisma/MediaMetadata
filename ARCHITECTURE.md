@@ -72,7 +72,7 @@ public struct MediaMetadataResult {
     let outcome: ReadOutcome          // .parsed / .unsupported (definitive) | .readFailure (transient)
     let format: MediaFormat           // family, extension, brand, magic-byte detection
     let timestamps: CaptureTimestamps // one named CaptureTime? per source (original, gps, containerCreation, …)
-    let location: GeoLocation?        // decimal-degree latitude/longitude/altitude
+    let locations: [GeoLocation]      // every embedded location, each tagged with a LocationSource (no best-pick)
     let camera: Camera?               // make/model/lens/serial (text), Orientation enum, Int dimensions
     let video: VideoInfo?             // durationSeconds, frameRate, VideoCodec
 }
