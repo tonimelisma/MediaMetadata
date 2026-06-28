@@ -5,7 +5,7 @@ import XCTest
 final class RealFixtureGoldenTests: XCTestCase {
     func testAllRealFixturesMatchExifToolDerivedGoldens() throws {
         let corpus = try loadCorpus()
-        XCTAssertEqual(corpus.schemaVersion, 1)
+        XCTAssertEqual(corpus.schemaVersion, 2)
         XCTAssertEqual(corpus.fixtures.count, 16)
 
         for fixture in corpus.fixtures {
@@ -28,115 +28,141 @@ final class RealFixtureGoldenTests: XCTestCase {
 
         let result = MediaMetadataReader.read(url: url)
         let context = "fixture \(expected.path)"
-        XCTAssertEqual(result.identity.family.rawValue, expected.identity.family, context)
-        XCTAssertEqual(result.identity.observedExtension, expected.identity.extension, context)
-        XCTAssertEqual(result.identity.brand, expected.identity.brand, context)
-        XCTAssertTrue(result.identity.detectedByMagic, context)
 
-        for finding in expected.findings {
-            let matches = result.findings.filter {
-                $0.namespace == finding.namespace
-                    && $0.key == finding.key
-                    && $0.rawValue == finding.rawValue
-            }
-            XCTAssertEqual(matches.count, finding.count ?? 1, "\(context): finding \(finding.namespace).\(finding.key)")
-        }
-        assertFindingIntegrity(result, fileSize: result.readMetrics.fileSizeBytes, context: context)
+        // Public typed contract.
+        XCTAssertEqual(result.outcome.rawValue, expected.outcome, context)
+        XCTAssertEqual(result.format.family.rawValue, expected.format.family, context)
+        XCTAssertEqual(result.format.fileExtension, expected.format.extension, context)
+        XCTAssertEqual(result.format.brand, expected.format.brand, context)
+        XCTAssertEqual(result.format.detectedByMagic, expected.format.detectedByMagic, context)
+
         try assertTimestamps(result.timestamps, expected: expected.timestamps, context: context)
         assertLocations(result.locations, expected: expected.locations, context: context)
         assertCamera(result.camera, expected: expected.camera, context: context)
-        XCTAssertEqual(result.diagnostics.map(\.code), expected.diagnosticCodes, context)
-        XCTAssertEqual(
-            result.provenance.map { "\($0.parser):\($0.status.rawValue)" },
-            expected.provenance,
-            context
-        )
+        assertVideo(result.video, expected: expected.video, context: context)
 
+        // Read-metrics guardrails remain enforced through the internal evidence graph.
+        let parsed = MediaMetadataReader.extract(url: url)
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         let fileSize = (attributes[.size] as? NSNumber)?.uint64Value
-        XCTAssertEqual(result.readMetrics.fileSizeBytes, fileSize, context)
-        XCTAssertEqual(result.readMetrics.failedReadOperationCount, 0, context)
-        XCTAssertFalse(result.readMetrics.readWholeFile, context)
-        XCTAssertLessThanOrEqual(result.readMetrics.uniqueByteReadCount, result.readMetrics.fileSizeBytes, context)
-        XCTAssertLessThanOrEqual(result.readMetrics.largestReadLength, 1_048_576, context)
-    }
-
-    private func assertFindingIntegrity(_ result: MediaMetadataResult, fileSize: UInt64, context: String) {
-        for (index, finding) in result.findings.enumerated() {
-            XCTAssertEqual(finding.id, index, context)
-            if let range = finding.byteRange {
-                XCTAssertLessThanOrEqual(range.lowerBound, range.upperBound, context)
-                XCTAssertLessThanOrEqual(range.upperBound, fileSize, "\(context): \(finding.sourcePath)")
-            }
-        }
-        let validIDs = Set(result.findings.map(\.id))
-        for timestamp in result.timestamps {
-            XCTAssertFalse(timestamp.evidenceIDs.isEmpty, context)
-            XCTAssertTrue(timestamp.evidenceIDs.allSatisfy(validIDs.contains), context)
-        }
-        for location in result.locations {
-            XCTAssertFalse(location.evidenceIDs.isEmpty, context)
-            XCTAssertTrue(location.evidenceIDs.allSatisfy(validIDs.contains), context)
-        }
+        XCTAssertEqual(parsed.readMetrics.fileSizeBytes, fileSize, context)
+        XCTAssertEqual(parsed.readMetrics.failedReadOperationCount, 0, context)
+        XCTAssertFalse(parsed.readMetrics.readWholeFile, context)
+        XCTAssertLessThanOrEqual(parsed.readMetrics.uniqueByteReadCount, parsed.readMetrics.fileSizeBytes, context)
+        XCTAssertLessThanOrEqual(parsed.readMetrics.largestReadLength, 1_048_576, context)
     }
 
     private func assertTimestamps(
-        _ actual: [CaptureTimestampCandidate],
-        expected: [GoldenTimestamp],
+        _ actual: CaptureTimestamps,
+        expected: GoldenTimestamps,
         context: String
     ) throws {
-        XCTAssertEqual(actual.count, expected.reduce(0) { $0 + ($1.count ?? 1) }, context)
-        for expectedTimestamp in expected {
-            let expectedDate = try expectedTimestamp.instant.map(parseISO8601)
-            let matches = actual.filter { timestamp in
-                guard timestamp.role.rawValue == expectedTimestamp.role,
-                      timestamp.rawTimestamp == expectedTimestamp.rawTimestamp,
-                      timestamp.authority.rawValue == expectedTimestamp.authority,
-                      timestamp.offsetSeconds == expectedTimestamp.offsetSeconds,
-                      components(timestamp.dateComponents) == expectedTimestamp.components else {
-                    return false
-                }
-                switch (timestamp.instant, expectedDate) {
-                case (nil, nil):
-                    return true
-                case let (actualDate?, expectedDate?):
-                    return abs(actualDate.timeIntervalSince(expectedDate)) < 0.001
-                default:
-                    return false
-                }
-            }
-            XCTAssertEqual(matches.count, expectedTimestamp.count ?? 1, "\(context): timestamp \(expectedTimestamp.role)")
+        let fields: [(String, GoldenTime?, CaptureTime?)] = [
+            ("original", expected.original, actual.original),
+            ("digitized", expected.digitized, actual.digitized),
+            ("tiffDateTime", expected.tiffDateTime, actual.tiffDateTime),
+            ("gps", expected.gps, actual.gps),
+            ("quickTimeCreation", expected.quickTimeCreation, actual.quickTimeCreation),
+            ("quickTimeLocation", expected.quickTimeLocation, actual.quickTimeLocation),
+            ("quickTimeContentCreate", expected.quickTimeContentCreate, actual.quickTimeContentCreate),
+            ("containerCreation", expected.containerCreation, actual.containerCreation),
+            ("id3Recording", expected.id3Recording, actual.id3Recording),
+            ("waveOrigination", expected.waveOrigination, actual.waveOrigination),
+            ("riffRecording", expected.riffRecording, actual.riffRecording),
+        ]
+        for (name, expectedTime, actualTime) in fields {
+            try assertTime(expectedTime, actualTime, field: name, context: context)
         }
     }
 
-    private func assertLocations(
-        _ actual: [CaptureLocationCandidate],
-        expected: [GoldenLocation],
+    private func assertTime(
+        _ expected: GoldenTime?,
+        _ actual: CaptureTime?,
+        field: String,
         context: String
-    ) {
-        XCTAssertEqual(actual.count, expected.count, context)
-        for (actualLocation, expectedLocation) in zip(actual, expected) {
-            XCTAssertEqual(actualLocation.latitude, expectedLocation.latitude, accuracy: 0.000_000_1, context)
-            XCTAssertEqual(actualLocation.longitude, expectedLocation.longitude, accuracy: 0.000_000_1, context)
-            assertOptionalDoubleEqual(
-                actualLocation.altitudeMeters,
-                expectedLocation.altitudeMeters,
-                accuracy: 0.000_001,
-                context
+    ) throws {
+        switch (expected, actual) {
+        case (nil, nil):
+            return
+        case let (expected?, actual?):
+            XCTAssertEqual(
+                [actual.year, actual.month, actual.day, actual.hour, actual.minute, actual.second],
+                expected.components,
+                "\(context): \(field) components"
             )
-            XCTAssertEqual(actualLocation.rawValue, expectedLocation.rawValue, context)
-            XCTAssertEqual(actualLocation.source, expectedLocation.source, context)
+            XCTAssertEqual(actual.utcOffsetSeconds, expected.offsetSeconds, "\(context): \(field) offset")
+            XCTAssertEqual(actual.precision.rawValue, expected.precision, "\(context): \(field) precision")
+            let expectedInstant = try expected.instant.map(parseISO8601)
+            switch (actual.instant, expectedInstant) {
+            case (nil, nil):
+                break
+            case let (actualInstant?, expectedInstant?):
+                XCTAssertEqual(actualInstant.timeIntervalSince(expectedInstant), 0, accuracy: 0.001, "\(context): \(field) instant")
+            default:
+                XCTFail("\(context): \(field) instant presence mismatch")
+            }
+        default:
+            XCTFail("\(context): \(field) presence mismatch (expected \(expected != nil), got \(actual != nil))")
         }
     }
 
-    private func assertCamera(_ actual: CameraMetadata?, expected: GoldenCamera?, context: String) {
+    private func assertLocations(_ actual: CaptureLocations, expected: GoldenLocations, context: String) {
+        let fields: [(String, GoldenLocation?, GeoLocation?)] = [
+            ("exifGPS", expected.exifGPS, actual.exifGPS),
+            ("quickTime", expected.quickTime, actual.quickTime),
+            ("sonyNRTM", expected.sonyNRTM, actual.sonyNRTM),
+        ]
+        for (name, expectedLocation, actualLocation) in fields {
+            assertLocation(expectedLocation, actualLocation, field: name, context: context)
+        }
+    }
+
+    private func assertLocation(_ expected: GoldenLocation?, _ actual: GeoLocation?, field: String, context: String) {
+        switch (expected, actual) {
+        case (nil, nil):
+            return
+        case let (expected?, actual?):
+            XCTAssertEqual(actual.latitude, expected.latitude, accuracy: 0.000_000_1, "\(context): \(field) latitude")
+            XCTAssertEqual(actual.longitude, expected.longitude, accuracy: 0.000_000_1, "\(context): \(field) longitude")
+            assertOptionalDoubleEqual(actual.altitudeMeters, expected.altitudeMeters, accuracy: 0.000_001, "\(context): \(field) altitude")
+        default:
+            XCTFail("\(context): \(field) location presence mismatch (expected \(expected != nil), got \(actual != nil))")
+        }
+    }
+
+    private func assertCamera(_ actual: Camera?, expected: GoldenCamera?, context: String) {
         XCTAssertEqual(actual?.make, expected?.make, context)
         XCTAssertEqual(actual?.model, expected?.model, context)
         XCTAssertEqual(actual?.lensModel, expected?.lensModel, context)
         XCTAssertEqual(actual?.serialNumber, expected?.serialNumber, context)
-        XCTAssertEqual(actual?.orientation, expected?.orientation, context)
+        XCTAssertEqual(actual?.orientation?.rawValue, expected?.orientation, context)
         XCTAssertEqual(actual?.pixelWidth, expected?.pixelWidth, context)
         XCTAssertEqual(actual?.pixelHeight, expected?.pixelHeight, context)
+    }
+
+    private func assertVideo(_ actual: VideoInfo?, expected: GoldenVideo?, context: String) {
+        switch (expected, actual) {
+        case (nil, nil):
+            return
+        case let (expected?, actual?):
+            assertOptionalDoubleEqual(actual.durationSeconds, expected.durationSeconds, accuracy: 0.01, "\(context): duration")
+            assertOptionalDoubleEqual(actual.frameRate, expected.frameRate, accuracy: 0.05, "\(context): frameRate")
+            XCTAssertEqual(actual.codec.map(Self.codecString), expected.codec, "\(context): codec")
+        default:
+            XCTFail("\(context): video presence mismatch")
+        }
+    }
+
+    private static func codecString(_ codec: VideoCodec) -> String {
+        switch codec {
+        case .h264: return "h264"
+        case .hevc: return "hevc"
+        case .proRes: return "proRes"
+        case .av1: return "av1"
+        case .vp9: return "vp9"
+        case .motionJPEG: return "motionJPEG"
+        case let .other(fourCC): return "other:\(fourCC)"
+        }
     }
 
     private func assertExifToolRecord(at url: URL, fixture: String) throws {
@@ -163,10 +189,6 @@ final class RealFixtureGoldenTests: XCTestCase {
         return date
     }
 
-    private func components(_ value: CaptureDateComponents) -> [Int] {
-        [value.year, value.month, value.day, value.hour, value.minute, value.second]
-    }
-
     private static let fixturesURL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
@@ -184,44 +206,52 @@ private struct GoldenCorpus: Decodable {
 
 private struct GoldenFixture: Decodable {
     let path: String
-    let identity: GoldenIdentity
-    let findings: [GoldenFinding]
-    let timestamps: [GoldenTimestamp]
-    let locations: [GoldenLocation]
+    let outcome: String
+    let format: GoldenFormat
+    let timestamps: GoldenTimestamps
+    let locations: GoldenLocations
     let camera: GoldenCamera?
-    let diagnosticCodes: [String]
-    let provenance: [String]
+    let video: GoldenVideo?
 }
 
-private struct GoldenIdentity: Decodable {
+private struct GoldenFormat: Decodable {
     let family: String
     let `extension`: String
     let brand: String?
+    let detectedByMagic: Bool
 }
 
-private struct GoldenFinding: Decodable {
-    let namespace: String
-    let key: String
-    let rawValue: String
-    let count: Int?
+private struct GoldenTimestamps: Decodable {
+    let original: GoldenTime?
+    let digitized: GoldenTime?
+    let tiffDateTime: GoldenTime?
+    let gps: GoldenTime?
+    let quickTimeCreation: GoldenTime?
+    let quickTimeLocation: GoldenTime?
+    let quickTimeContentCreate: GoldenTime?
+    let containerCreation: GoldenTime?
+    let id3Recording: GoldenTime?
+    let waveOrigination: GoldenTime?
+    let riffRecording: GoldenTime?
 }
 
-private struct GoldenTimestamp: Decodable {
-    let role: String
-    let rawTimestamp: String
+private struct GoldenTime: Decodable {
     let components: [Int]
     let instant: String?
     let offsetSeconds: Int?
-    let authority: String
-    let count: Int?
+    let precision: String
+}
+
+private struct GoldenLocations: Decodable {
+    let exifGPS: GoldenLocation?
+    let quickTime: GoldenLocation?
+    let sonyNRTM: GoldenLocation?
 }
 
 private struct GoldenLocation: Decodable {
     let latitude: Double
     let longitude: Double
     let altitudeMeters: Double?
-    let rawValue: String
-    let source: String
 }
 
 private struct GoldenCamera: Decodable {
@@ -232,6 +262,12 @@ private struct GoldenCamera: Decodable {
     let orientation: Int?
     let pixelWidth: Int?
     let pixelHeight: Int?
+}
+
+private struct GoldenVideo: Decodable {
+    let durationSeconds: Double?
+    let frameRate: Double?
+    let codec: String?
 }
 
 private extension XCTestCase {

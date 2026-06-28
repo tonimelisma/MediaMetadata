@@ -1,7 +1,20 @@
 import Foundation
 
 public enum MediaMetadataReader {
+    /// Reads media metadata from `url` and returns a fully typed, fixed field set.
+    ///
+    /// The library performs all byte-parsing: every date is a strongly typed
+    /// ``CaptureTime`` exposed as its own named field (no "best date" resolution),
+    /// locations and dimensions are numeric, and the result carries a
+    /// definitive-vs-transient ``ReadOutcome``. The call never throws.
     public static func read(url: URL) -> MediaMetadataResult {
+        MediaMetadataResult(extract(url: url))
+    }
+
+    /// Internal entry point that produces the full evidence graph
+    /// (findings, candidates, provenance, diagnostics, read metrics). The public
+    /// ``read(url:)`` maps this into the typed field set; tests exercise it directly.
+    static func extract(url: URL) -> ParsedMetadata {
         let clock = ContinuousClock()
         let readStarted = clock.now
         do {
@@ -16,7 +29,7 @@ public enum MediaMetadataReader {
                 )
             )
         } catch {
-            return MediaMetadataResult(
+            return ParsedMetadata(
                 identity: FormatIdentity(
                     family: .unknown,
                     observedExtension: url.pathExtension.lowercased(),
@@ -45,7 +58,7 @@ public enum MediaMetadataReader {
         }
     }
 
-    private static func read(url: URL, source: FileByteSource) -> MediaMetadataResult {
+    private static func read(url: URL, source: FileByteSource) -> ParsedMetadata {
         guard let magic = try? source.data(offset: 0, length: Int(min(source.size, 12))),
               !magic.isEmpty else {
             return measureParser("MediaMetadata.FormatProbe") {
@@ -78,7 +91,7 @@ public enum MediaMetadataReader {
         if isJPEG(magic) {
             guard let exifOffset = jpegEXIFTIFFOffset(source: source) else {
                 return measureParser("MediaMetadata.JPEGProbe") {
-                    MediaMetadataResult(
+                    ParsedMetadata(
                         identity: FormatIdentity(
                             family: .jpeg,
                             observedExtension: url.pathExtension.lowercased(),
@@ -140,8 +153,8 @@ public enum MediaMetadataReader {
 
     private static func measureParser(
         _ parserName: String,
-        _ parse: () -> MediaMetadataResult
-    ) -> MediaMetadataResult {
+        _ parse: () -> ParsedMetadata
+    ) -> ParsedMetadata {
         let clock = ContinuousClock()
         let started = clock.now
         return parse().withReadMetrics(
@@ -279,8 +292,8 @@ public enum MediaMetadataReader {
         return nil
     }
 
-    private static func unsupportedResult(url: URL, code: String, message: String, parser: String) -> MediaMetadataResult {
-        MediaMetadataResult(
+    private static func unsupportedResult(url: URL, code: String, message: String, parser: String) -> ParsedMetadata {
+        ParsedMetadata(
             identity: FormatIdentity(
                 family: .unknown,
                 observedExtension: url.pathExtension.lowercased(),
@@ -309,17 +322,18 @@ public enum MediaMetadataReader {
     }
 }
 
-public struct MediaMetadataResult: Equatable, Sendable {
-    public let identity: FormatIdentity
-    public let findings: [MetadataFinding]
-    public let timestamps: [CaptureTimestampCandidate]
-    public let locations: [CaptureLocationCandidate]
-    public let camera: CameraMetadata?
-    public let diagnostics: [MetadataDiagnostic]
-    public let provenance: [ParserProvenance]
-    public let readMetrics: MediaMetadataReadMetrics
+struct ParsedMetadata: Equatable, Sendable {
+    let identity: FormatIdentity
+    let findings: [MetadataFinding]
+    let timestamps: [CaptureTimestampCandidate]
+    let locations: [CaptureLocationCandidate]
+    let camera: CameraMetadata?
+    let diagnostics: [MetadataDiagnostic]
+    let provenance: [ParserProvenance]
+    let video: RawVideoInfo?
+    let readMetrics: MediaMetadataReadMetrics
 
-    public init(
+    init(
         identity: FormatIdentity,
         findings: [MetadataFinding],
         timestamps: [CaptureTimestampCandidate],
@@ -327,6 +341,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         camera: CameraMetadata? = nil,
         diagnostics: [MetadataDiagnostic],
         provenance: [ParserProvenance] = [],
+        video: RawVideoInfo? = nil,
         readMetrics: MediaMetadataReadMetrics = .empty
     ) {
         self.identity = identity
@@ -336,11 +351,12 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.camera = camera
         self.diagnostics = diagnostics
         self.provenance = provenance
+        self.video = video
         self.readMetrics = readMetrics
     }
 
-    func withReadMetrics(_ readMetrics: MediaMetadataReadMetrics) -> MediaMetadataResult {
-        MediaMetadataResult(
+    func withReadMetrics(_ readMetrics: MediaMetadataReadMetrics) -> ParsedMetadata {
+        ParsedMetadata(
             identity: identity,
             findings: findings,
             timestamps: timestamps,
@@ -348,22 +364,36 @@ public struct MediaMetadataResult: Equatable, Sendable {
             camera: camera,
             diagnostics: diagnostics,
             provenance: provenance,
+            video: video,
             readMetrics: readMetrics
         )
     }
 }
 
-public struct MediaMetadataReadMetrics: Equatable, Sendable {
-    public struct SourceReadMetrics: Equatable, Sendable {
-        public let readOperationCount: Int
-        public let failedReadOperationCount: Int
-        public let byteRequestedCount: UInt64
-        public let byteReadCount: UInt64
-        public let uniqueByteReadCount: UInt64
-        public let largestReadLength: Int
-        public let highestReadEndOffset: UInt64
+/// Internal, parser-side video facts (movie duration, per-track frame rate, and
+/// the first video sample-entry four-character code). Mapped into the public
+/// ``VideoInfo`` by ``MediaMetadataResult``.
+struct RawVideoInfo: Equatable, Sendable {
+    var durationSeconds: Double?
+    var frameRate: Double?
+    var codecFourCC: String?
 
-        public init(
+    var isEmpty: Bool {
+        durationSeconds == nil && frameRate == nil && codecFourCC == nil
+    }
+}
+
+struct MediaMetadataReadMetrics: Equatable, Sendable {
+    struct SourceReadMetrics: Equatable, Sendable {
+        let readOperationCount: Int
+        let failedReadOperationCount: Int
+        let byteRequestedCount: UInt64
+        let byteReadCount: UInt64
+        let uniqueByteReadCount: UInt64
+        let largestReadLength: Int
+        let highestReadEndOffset: UInt64
+
+        init(
             readOperationCount: Int = 0,
             failedReadOperationCount: Int = 0,
             byteRequestedCount: UInt64 = 0,
@@ -382,23 +412,23 @@ public struct MediaMetadataReadMetrics: Equatable, Sendable {
         }
     }
 
-    public static let empty = MediaMetadataReadMetrics()
+    static let empty = MediaMetadataReadMetrics()
 
-    public let parserName: String
-    public let parserElapsedMilliseconds: Int
-    public let fileSizeBytes: UInt64
-    public let elapsedMilliseconds: Int
-    public let readOperationCount: Int
-    public let failedReadOperationCount: Int
-    public let byteRequestedCount: UInt64
-    public let byteReadCount: UInt64
-    public let uniqueByteReadCount: UInt64
-    public let largestReadLength: Int
-    public let highestReadEndOffset: UInt64
-    public let readCoveragePermille: Int
-    public let readWholeFile: Bool
+    let parserName: String
+    let parserElapsedMilliseconds: Int
+    let fileSizeBytes: UInt64
+    let elapsedMilliseconds: Int
+    let readOperationCount: Int
+    let failedReadOperationCount: Int
+    let byteRequestedCount: UInt64
+    let byteReadCount: UInt64
+    let uniqueByteReadCount: UInt64
+    let largestReadLength: Int
+    let highestReadEndOffset: UInt64
+    let readCoveragePermille: Int
+    let readWholeFile: Bool
 
-    public init(
+    init(
         parserName: String = "",
         parserElapsedMilliseconds: Int = 0,
         fileSizeBytes: UInt64 = 0,
@@ -455,8 +485,8 @@ public struct MediaMetadataReadMetrics: Equatable, Sendable {
     }
 }
 
-public struct FormatIdentity: Equatable, Sendable {
-    public enum Family: String, Equatable, Sendable {
+struct FormatIdentity: Equatable, Sendable {
+    enum Family: String, Equatable, Sendable {
         case tiff
         case jpeg
         case heif
@@ -467,12 +497,12 @@ public struct FormatIdentity: Equatable, Sendable {
         case unknown
     }
 
-    public let family: Family
-    public let observedExtension: String
-    public let detectedByMagic: Bool
-    public let brand: String?
+    let family: Family
+    let observedExtension: String
+    let detectedByMagic: Bool
+    let brand: String?
 
-    public init(family: Family, observedExtension: String, detectedByMagic: Bool, brand: String? = nil) {
+    init(family: Family, observedExtension: String, detectedByMagic: Bool, brand: String? = nil) {
         self.family = family
         self.observedExtension = observedExtension
         self.detectedByMagic = detectedByMagic
@@ -480,16 +510,16 @@ public struct FormatIdentity: Equatable, Sendable {
     }
 }
 
-public struct MetadataFinding: Equatable, Sendable, Identifiable {
-    public let id: Int
-    public let namespace: String
-    public let key: String
-    public let rawValue: String
-    public let parser: String
-    public let sourcePath: String
-    public let byteRange: Range<UInt64>?
+struct MetadataFinding: Equatable, Sendable, Identifiable {
+    let id: Int
+    let namespace: String
+    let key: String
+    let rawValue: String
+    let parser: String
+    let sourcePath: String
+    let byteRange: Range<UInt64>?
 
-    public init(
+    init(
         id: Int,
         namespace: String,
         key: String,
@@ -508,8 +538,8 @@ public struct MetadataFinding: Equatable, Sendable, Identifiable {
     }
 }
 
-public struct CaptureTimestampCandidate: Equatable, Sendable {
-    public enum Role: String, Equatable, Sendable {
+struct CaptureTimestampCandidate: Equatable, Sendable {
+    enum Role: String, Equatable, Sendable {
         case original
         case digitized
         case tiff
@@ -523,21 +553,21 @@ public struct CaptureTimestampCandidate: Equatable, Sendable {
         case waveRecordingDate
     }
 
-    public enum Authority: String, Equatable, Sendable {
+    enum Authority: String, Equatable, Sendable {
         case localWithOffset
         case localWithoutOffset
         case absoluteInstant
     }
 
-    public let role: Role
-    public let rawTimestamp: String
-    public let dateComponents: CaptureDateComponents
-    public let instant: Date?
-    public let offsetSeconds: Int?
-    public let authority: Authority
-    public let evidenceIDs: [Int]
+    let role: Role
+    let rawTimestamp: String
+    let dateComponents: CaptureDateComponents
+    let instant: Date?
+    let offsetSeconds: Int?
+    let authority: Authority
+    let evidenceIDs: [Int]
 
-    public init(
+    init(
         role: Role,
         rawTimestamp: String,
         dateComponents: CaptureDateComponents,
@@ -556,15 +586,15 @@ public struct CaptureTimestampCandidate: Equatable, Sendable {
     }
 }
 
-public struct CaptureDateComponents: Equatable, Sendable {
-    public let year: Int
-    public let month: Int
-    public let day: Int
-    public let hour: Int
-    public let minute: Int
-    public let second: Int
+struct CaptureDateComponents: Equatable, Sendable {
+    let year: Int
+    let month: Int
+    let day: Int
+    let hour: Int
+    let minute: Int
+    let second: Int
 
-    public init(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) {
+    init(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) {
         self.year = year
         self.month = month
         self.day = day
@@ -573,7 +603,7 @@ public struct CaptureDateComponents: Equatable, Sendable {
         self.second = second
     }
 
-    public static func utcComponents(from date: Date) -> CaptureDateComponents {
+    static func utcComponents(from date: Date) -> CaptureDateComponents {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
@@ -588,20 +618,30 @@ public struct CaptureDateComponents: Equatable, Sendable {
     }
 }
 
-public struct CaptureLocationCandidate: Equatable, Sendable {
-    public let latitude: Double
-    public let longitude: Double
-    public let altitudeMeters: Double?
-    public let rawValue: String
-    public let source: String
-    public let evidenceIDs: [Int]
+struct CaptureLocationCandidate: Equatable, Sendable {
+    /// Which metadata block a location was read from. Mirrors the public
+    /// ``LocationSource`` (same raw values) so the projection is a 1:1 mapping.
+    enum Origin: String, Equatable, Sendable {
+        case exifGPS
+        case quickTime
+        case sonyNRTM
+    }
 
-    public init(
+    let latitude: Double
+    let longitude: Double
+    let altitudeMeters: Double?
+    let rawValue: String
+    let source: String
+    let origin: Origin
+    let evidenceIDs: [Int]
+
+    init(
         latitude: Double,
         longitude: Double,
         altitudeMeters: Double?,
         rawValue: String,
         source: String,
+        origin: Origin,
         evidenceIDs: [Int]
     ) {
         self.latitude = latitude
@@ -609,20 +649,21 @@ public struct CaptureLocationCandidate: Equatable, Sendable {
         self.altitudeMeters = altitudeMeters
         self.rawValue = rawValue
         self.source = source
+        self.origin = origin
         self.evidenceIDs = evidenceIDs
     }
 }
 
-public struct CameraMetadata: Equatable, Sendable {
-    public let make: String?
-    public let model: String?
-    public let lensModel: String?
-    public let serialNumber: String?
-    public let orientation: Int?
-    public let pixelWidth: Int?
-    public let pixelHeight: Int?
+struct CameraMetadata: Equatable, Sendable {
+    let make: String?
+    let model: String?
+    let lensModel: String?
+    let serialNumber: String?
+    let orientation: Int?
+    let pixelWidth: Int?
+    let pixelHeight: Int?
 
-    public init(
+    init(
         make: String? = nil,
         model: String? = nil,
         lensModel: String? = nil,
@@ -641,35 +682,35 @@ public struct CameraMetadata: Equatable, Sendable {
     }
 }
 
-public struct ParserProvenance: Equatable, Sendable {
-    public enum Status: String, Equatable, Sendable {
+struct ParserProvenance: Equatable, Sendable {
+    enum Status: String, Equatable, Sendable {
         case parsed
         case unsupported
         case failed
     }
 
-    public let parser: String
-    public let status: Status
+    let parser: String
+    let status: Status
 
-    public init(parser: String, status: Status) {
+    init(parser: String, status: Status) {
         self.parser = parser
         self.status = status
     }
 }
 
-public struct MetadataDiagnostic: Equatable, Sendable {
-    public enum Severity: String, Equatable, Sendable {
+struct MetadataDiagnostic: Equatable, Sendable {
+    enum Severity: String, Equatable, Sendable {
         case info
         case warning
     }
 
-    public let severity: Severity
-    public let code: String
-    public let message: String
-    public let parser: String
-    public let byteRange: Range<UInt64>?
+    let severity: Severity
+    let code: String
+    let message: String
+    let parser: String
+    let byteRange: Range<UInt64>?
 
-    public init(
+    init(
         severity: Severity,
         code: String,
         message: String,

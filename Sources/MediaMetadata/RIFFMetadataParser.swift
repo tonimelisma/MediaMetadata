@@ -15,11 +15,11 @@ struct RIFFMetadataParser {
         self.url = url
     }
 
-    mutating func parse() -> MediaMetadataResult {
+    mutating func parse() -> ParsedMetadata {
         guard let header = try? source.data(offset: 0, length: 12),
               header.count == 12,
               Data(header[0..<4]) == Data("RIFF".utf8) else {
-            return MediaMetadataResult(
+            return ParsedMetadata(
                 identity: FormatIdentity(
                     family: .unknown,
                     observedExtension: url.pathExtension.lowercased(),
@@ -72,7 +72,7 @@ struct RIFFMetadataParser {
                 )
             )
         }
-        return MediaMetadataResult(
+        return ParsedMetadata(
             identity: identity,
             findings: findings,
             timestamps: timestamps,

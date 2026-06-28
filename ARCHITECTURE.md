@@ -55,56 +55,55 @@ The package rejects framework-shaped shortcuts:
   the choice.
 
 The central abstraction is evidence. Normalized metadata is derived from
-evidence, not substituted for it.
+evidence, not substituted for it. This evidence model is **internal**: the public
+contract is a fixed, fully typed field set derived from it.
 
 ## Public Model Principles
 
-Return both normalized values and raw evidence.
+The library does all byte-parsing and returns a fixed, strongly-typed field set.
+Callers never see raw metadata strings, JSON, or a candidate list — and the
+library never resolves a single "best date." Each capture/creation timestamp is
+exposed as its own named, typed field.
 
-Recommended top-level concepts:
-
-- `MediaMetadataResult`: detected format, evidence findings, normalized
-  candidates, diagnostics, and parser provenance.
-- `FormatIdentity`: container family, codec-ish hints when cheaply available,
-  extension observed, and magic-byte detection result.
-- `MetadataFinding`: namespace, key, raw value, parsed primitive value when
-  available, parser, container path, and byte range when known.
-- `CaptureTimestampCandidate`: original text, parsed absolute `Date`, optional
-  offset seconds, optional timezone identifier, authority, source evidence IDs,
-  and confidence.
-- `CaptureLocationCandidate`: latitude, longitude, optional altitude, original
-  text, source evidence IDs, and confidence.
-- `CameraMetadata`: make, model, lens, serial-ish fields, orientation,
-  dimensions.
-- `MetadataDiagnostic`: non-fatal parse notes such as truncated metadata,
-  unsupported box, offset out of bounds, conflicting timestamps, or missing
-  embedded AVI dates.
-
-Timestamp modeling preserves expression and meaning separately:
-
-- local timestamp with explicit offset
-- local timestamp without offset
-- absolute UTC/container timestamp
-- GPS timestamp
-- GPS-localized capture timestamp
-- filesystem timestamp evidence supplied by the consuming app when embedded
-  metadata is unavailable
-
-The package can rank candidates, but it never hides the candidate list. The
-consumer decides which candidate is authoritative for naming and UI.
-
-Illustrative shape:
+Public top-level shape (`Sources/MediaMetadata/MediaMetadataResult.swift`):
 
 ```swift
-struct MediaMetadataResult {
-    let identity: FormatIdentity
-    let findings: [MetadataFinding]
-    let timestamps: [CaptureTimestampCandidate]
-    let locations: [CaptureLocationCandidate]
-    let camera: CameraMetadata?
-    let diagnostics: [MetadataDiagnostic]
+public struct MediaMetadataResult {
+    let outcome: ReadOutcome          // .parsed / .unsupported (definitive) | .readFailure (transient)
+    let format: MediaFormat           // family, extension, brand, magic-byte detection
+    let timestamps: CaptureTimestamps // one named CaptureTime? per source (original, gps, containerCreation, …)
+    let locations: CaptureLocations   // one named GeoLocation? per source (exifGPS/quickTime/sonyNRTM) — no order, no best-pick
+    let camera: Camera?               // make/model/lens/serial (text), Orientation enum, Int dimensions
+    let video: VideoInfo?             // durationSeconds, frameRate, VideoCodec
 }
 ```
+
+- `ReadOutcome` is the definitive-vs-transient signal: `.parsed`/`.unsupported`
+  are definitive (`isDefinitive == true` — record and stop); `.readFailure` is
+  transient (`shouldRetry == true` — the bytes could not be read).
+- `CaptureTime` carries calendar fields, an optional `utcOffsetSeconds`, an
+  absolute `instant` when computable, and a `precision`
+  (`localWithOffset` / `localFloating` / `absolute`) — expression and meaning
+  preserved separately, never collapsed to a bare `Date`.
+- `VideoCodec` is an enum (`h264`, `hevc`, `proRes`, …) with an `.other(fourCC:)`
+  fallback so the open-ended codec set stays lossless yet typed.
+
+The internal evidence graph still exists and is the source of truth for the typed
+projection. It is reachable in-process via `MediaMetadataReader.extract(url:)`
+(internal, exercised by tests) and is **not** part of the public surface:
+
+- `ParsedMetadata`: detected format, evidence findings, normalized candidates,
+  diagnostics, parser provenance, raw video facts, and read metrics.
+- `MetadataFinding`: namespace, key, raw value, parser, container path, and byte
+  range when known.
+- `CaptureTimestampCandidate`: original text, parsed `Date`, offset, authority,
+  and source evidence IDs.
+- `CaptureLocationCandidate`, `CameraMetadata`, `MetadataDiagnostic`,
+  `ParserProvenance`, `MediaMetadataReadMetrics`.
+
+The internal model never hides the candidate list; the public projection buckets
+each candidate into its named field (first wins) without discarding the evidence
+that produced it.
 
 ## Parser Architecture
 
