@@ -1,0 +1,43 @@
+{
+  "arguments": [
+    "-a",
+    "-n",
+    "-json",
+    "-G1",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion": "13.55",
+  "fixture": "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
+  "records": [
+    {
+      "Composite:Duration": 10.799892,
+      "Composite:ImageSize": "1440 1080",
+      "Composite:Megapixels": 1.5552,
+      "RIFF:AudioCodec": "",
+      "RIFF:AudioSampleCount": 171864,
+      "RIFF:AudioSampleRate": 16000,
+      "RIFF:AvgBytesPerSec": 32000,
+      "RIFF:BitsPerSample": 16,
+      "RIFF:Encoding": 1,
+      "RIFF:FrameCount": 324,
+      "RIFF:FrameRate": 30.000300003,
+      "RIFF:ImageHeight": 1080,
+      "RIFF:ImageWidth": 1440,
+      "RIFF:MaxDataRate": 0,
+      "RIFF:NumChannels": 1,
+      "RIFF:Quality": 4294967295,
+      "RIFF:SampleRate": 16000,
+      "RIFF:SampleSize": 0,
+      "RIFF:StreamCount": 2,
+      "RIFF:StreamType": "vids",
+      "RIFF:TotalFrameCount": 172188,
+      "RIFF:VideoCodec": "MJPG",
+      "RIFF:VideoFrameCount": 324,
+      "RIFF:VideoFrameRate": 30.000000003,
+      "SourceFile": "Tests/Fixtures/sofian-kuvat/avi-mjpg-hdrl-duration.avi"
+    }
+  ],
+  "schemaVersion": 1
+}

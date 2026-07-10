@@ -63,6 +63,14 @@ The source README records these files as user-provided and rights-clean. It
 also prohibits fixtures with sensitive subjects, locations, or private
 metadata.
 
+### `sofian-kuvat/`
+
+- Source: user-owned family photos under
+  `~/Desktop/OneDrive/Perheen kuvat/Sofian kuvat/`
+- Contents: a header-only Motion-JPEG AVI extract used to lock AVI duration,
+  frame rate, codec, and dimensions. See `sofian-kuvat/README.md` for the
+  privacy and provenance record.
+
 ## Privacy and Licensing Record
 
 This import copies files already maintained by the user in existing fixture
@@ -78,14 +86,14 @@ the parser behavior it is intended to cover.
 
 ## Local Corpus Requirement
 
-Real-fixture and golden tests require all 16 canonical media files. Prepare a
+Real-fixture and golden tests require all 17 canonical media files. Prepare a
 developer checkout with:
 
 ```sh
 Scripts/check-local-fixtures.sh
 ```
 
-That command verifies the 12 committed fixtures, downloads and SHA-256 verifies
+That command verifies the 13 committed fixtures, downloads and SHA-256 verifies
 the three public DJI/GoPro fixtures when absent, and fails with instructions if
 the manual `videometa/apple.mov` prerequisite is missing. Tests do not skip an
 incomplete corpus. CI must not download or bootstrap these files implicitly.

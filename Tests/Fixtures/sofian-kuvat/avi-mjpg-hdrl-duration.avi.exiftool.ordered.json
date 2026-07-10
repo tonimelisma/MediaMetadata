@@ -1,0 +1,136 @@
+{
+  "arguments": [
+    "-a",
+    "-n",
+    "-G1",
+    "-S",
+    "-sep",
+    "U+001F",
+    "--File:all",
+    "--System:all",
+    "--ExifTool:all"
+  ],
+  "exifToolVersion": "13.55",
+  "fixture": "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
+  "groups": [
+    {
+      "name": "RIFF",
+      "tags": [
+        {
+          "tag": "FrameRate",
+          "value": "30.000300003"
+        },
+        {
+          "tag": "MaxDataRate",
+          "value": "0"
+        },
+        {
+          "tag": "FrameCount",
+          "value": "324"
+        },
+        {
+          "tag": "StreamCount",
+          "value": "2"
+        },
+        {
+          "tag": "ImageWidth",
+          "value": "1440"
+        },
+        {
+          "tag": "ImageHeight",
+          "value": "1080"
+        },
+        {
+          "tag": "StreamType",
+          "value": "vids"
+        },
+        {
+          "tag": "VideoCodec",
+          "value": "MJPG"
+        },
+        {
+          "tag": "VideoFrameRate",
+          "value": "30.000000003"
+        },
+        {
+          "tag": "VideoFrameCount",
+          "value": "324"
+        },
+        {
+          "tag": "Quality",
+          "value": "4294967295"
+        },
+        {
+          "tag": "SampleSize",
+          "value": "0"
+        },
+        {
+          "tag": "StreamType",
+          "value": "auds"
+        },
+        {
+          "tag": "AudioCodec",
+          "value": ""
+        },
+        {
+          "tag": "AudioSampleRate",
+          "value": "16000"
+        },
+        {
+          "tag": "AudioSampleCount",
+          "value": "171864"
+        },
+        {
+          "tag": "Quality",
+          "value": "4294967295"
+        },
+        {
+          "tag": "SampleSize",
+          "value": "2"
+        },
+        {
+          "tag": "Encoding",
+          "value": "1"
+        },
+        {
+          "tag": "NumChannels",
+          "value": "1"
+        },
+        {
+          "tag": "SampleRate",
+          "value": "16000"
+        },
+        {
+          "tag": "AvgBytesPerSec",
+          "value": "32000"
+        },
+        {
+          "tag": "BitsPerSample",
+          "value": "16"
+        },
+        {
+          "tag": "TotalFrameCount",
+          "value": "172188"
+        }
+      ]
+    },
+    {
+      "name": "Composite",
+      "tags": [
+        {
+          "tag": "ImageSize",
+          "value": "1440 1080"
+        },
+        {
+          "tag": "Megapixels",
+          "value": "1.5552"
+        },
+        {
+          "tag": "Duration",
+          "value": "10.799892"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1
+}

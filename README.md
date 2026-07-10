@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.2.0"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.2.1"),
 ]
 ```
 
@@ -110,7 +110,7 @@ signature is not handled it is `.unsupported` (definitive); otherwise it is
 | JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment |
 | HEIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item |
 | ISO BMFF (MP4 / MOV) | ✅ | ✅ | ✅ | ✅ | ✅ | QuickTime metadata, GoPro GPMF, Sony NRTM; duration, frame rate, codec |
-| RIFF AVI | ✅ | ✅ | — | — | — | `LIST.INFO` `ICRD` / `IDIT` |
+| RIFF AVI | ✅ | ✅ | — | — | ✅ | `LIST.INFO` `ICRD` / `IDIT`; `avih`/`strh` duration, frame rate, codec |
 | RIFF WAV | ✅ | ✅ | — | — | — | `LIST.INFO` `ICRD`, Broadcast Wave `bext` origination date |
 | ID3v2 | ✅ | ✅ | — | — | — | `TDRC`, `TDOR`, legacy `TYER`/`TDAT`/`TIME` |
 | PNG, WebP, Matroska, XMP | — | — | — | — | — | Not yet implemented |
