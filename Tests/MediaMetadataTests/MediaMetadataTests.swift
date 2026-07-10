@@ -227,6 +227,31 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(video.codec, .motionJPEG)
     }
 
+    func testRead_WAVIgnoresAVINamedChunks() throws {
+        let url = try writeFixture(wavWithAVINamedChunksFixture(), extension: "wav")
+
+        let result = MediaMetadataReader.read(url: url)
+
+        XCTAssertEqual(result.format.family, .riffWAV)
+        XCTAssertNil(result.video)
+        XCTAssertNil(result.camera)
+    }
+
+    func testRead_AVIIgnoresEmptyStreamHandlerFourCC() throws {
+        let url = try writeFixture(
+            aviHeaderVideoFixture(handler: Data([0, 0, 0, 0])),
+            extension: "avi"
+        )
+
+        let result = MediaMetadataReader.read(url: url)
+        let video = try XCTUnwrap(result.video)
+
+        XCTAssertEqual(video.durationSeconds ?? 0, 10.8, accuracy: 0.01)
+        XCTAssertEqual(video.frameRate ?? 0, 30.0, accuracy: 0.05)
+        XCTAssertNil(video.codec)
+        XCTAssertNil(MediaMetadataReader.extract(url: url).findings.first { $0.key == "VideoCodec" })
+    }
+
     func testRead_AVISkipsMediaPayloadListChunks() throws {
         let fixture = aviRIFFMoviPayloadFixture()
         let url = try writeFixture(fixture, extension: "avi")
@@ -753,7 +778,7 @@ final class MediaMetadataTests: XCTestCase {
     }
 
     /// Minimal AVI `hdrl` with `avih` + video `strh` matching a 324-frame / 30 fps clip.
-    private func aviHeaderVideoFixture() -> Data {
+    private func aviHeaderVideoFixture(handler: Data = Data("MJPG".utf8)) -> Data {
         var hdrl = Data("hdrl".utf8)
         hdrl.append(riffChunk(id: "avih", payload: aviAVIHPayload(
             microSecPerFrame: 33_333,
@@ -764,7 +789,7 @@ final class MediaMetadataTests: XCTestCase {
         var strl = Data("strl".utf8)
         strl.append(riffChunk(id: "strh", payload: aviSTRHPayload(
             streamType: "vids",
-            handler: "MJPG",
+            handler: handler,
             scale: 1,
             rate: 30,
             length: 324
@@ -796,7 +821,7 @@ final class MediaMetadataTests: XCTestCase {
         var strl = Data("strl".utf8)
         strl.append(riffChunk(id: "strh", payload: aviSTRHPayload(
             streamType: "vids",
-            handler: "MJPG",
+            handler: Data("MJPG".utf8),
             scale: 1,
             rate: 30,
             length: 324
@@ -809,6 +834,30 @@ final class MediaMetadataTests: XCTestCase {
         data.append(Data("AVI ".utf8))
         data.append(infoList)
         data.append(hdrlList)
+        return data
+    }
+
+    /// WAVE container that embeds AVI-named chunks; those must not become video facts.
+    private func wavWithAVINamedChunksFixture() -> Data {
+        let avih = riffChunk(id: "avih", payload: aviAVIHPayload(
+            microSecPerFrame: 33_333,
+            totalFrames: 324,
+            width: 1440,
+            height: 1080
+        ))
+        let strh = riffChunk(id: "strh", payload: aviSTRHPayload(
+            streamType: "vids",
+            handler: Data("MJPG".utf8),
+            scale: 1,
+            rate: 30,
+            length: 324
+        ))
+
+        var data = Data("RIFF".utf8)
+        data.append(littleEndianUInt32(UInt32(4 + avih.count + strh.count)))
+        data.append(Data("WAVE".utf8))
+        data.append(avih)
+        data.append(strh)
         return data
     }
 
@@ -834,13 +883,14 @@ final class MediaMetadataTests: XCTestCase {
 
     private func aviSTRHPayload(
         streamType: String,
-        handler: String,
+        handler: Data,
         scale: UInt32,
         rate: UInt32,
         length: UInt32
     ) -> Data {
+        precondition(handler.count == 4)
         var payload = Data(streamType.utf8)
-        payload.append(Data(handler.utf8))
+        payload.append(handler)
         payload.append(littleEndianUInt32(0)) // Flags
         payload.append(littleEndianUInt32(0)) // Priority + Language
         payload.append(littleEndianUInt32(0)) // InitialFrames

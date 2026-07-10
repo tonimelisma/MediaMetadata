@@ -157,9 +157,9 @@ struct RIFFMetadataParser {
                         )
                     }
                 }
-            } else if chunkID == "avih" {
+            } else if family == .riffAVI, chunkID == "avih" {
                 parseAVIHeaderChunk(startOffset: payloadOffset, endOffset: payloadEnd, path: "\(path).avih")
-            } else if chunkID == "strh" {
+            } else if family == .riffAVI, chunkID == "strh" {
                 parseStreamHeaderChunk(startOffset: payloadOffset, endOffset: payloadEnd, path: "\(path).strh")
             } else if chunkID == "bext" {
                 if parseBroadcastWaveChunk(startOffset: payloadOffset, endOffset: payloadEnd, path: "\(path).bext") {
@@ -292,13 +292,20 @@ struct RIFFMetadataParser {
             return
         }
 
-        let handler = ascii(data[4..<8])
+        let handler = printableFourCC(data[4..<8])
         let scale = littleEndianUInt32(data, offset: 20)
         let rate = littleEndianUInt32(data, offset: 24)
         let length = littleEndianUInt32(data, offset: 32)
 
-        if rawVideo.codecFourCC == nil, !handler.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if rawVideo.codecFourCC == nil, let handler {
             rawVideo.codecFourCC = handler
+            appendFinding(
+                namespace: "riff.strh",
+                key: "VideoCodec",
+                value: handler,
+                sourcePath: "\(path).fccHandler",
+                byteRange: (startOffset + 4)..<(startOffset + 8)
+            )
         }
 
         if scale > 0, rate > 0 {
@@ -314,14 +321,6 @@ struct RIFFMetadataParser {
                 }
             }
         }
-
-        appendFinding(
-            namespace: "riff.strh",
-            key: "VideoCodec",
-            value: handler,
-            sourcePath: "\(path).fccHandler",
-            byteRange: (startOffset + 4)..<(startOffset + 8)
-        )
     }
 
     @discardableResult
@@ -436,6 +435,18 @@ struct RIFFMetadataParser {
 
     private func ascii(_ data: Data.SubSequence) -> String {
         String(data: Data(data), encoding: .ascii) ?? ""
+    }
+
+    /// Returns a FourCC only when all four bytes are printable ASCII (0x20...0x7E).
+    /// Zero-filled or otherwise non-printable handlers are treated as unknown.
+    private func printableFourCC(_ data: Data.SubSequence) -> String? {
+        guard data.count == 4,
+              data.allSatisfy({ (0x20...0x7E).contains($0) }),
+              let value = String(data: Data(data), encoding: .ascii) else {
+            return nil
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : value
     }
 
     private func adding(_ lhs: UInt64, _ rhs: UInt64) -> UInt64? {
