@@ -66,12 +66,17 @@ print(result.format.family, result.format.brand ?? "")
 // Every capture/creation date is its own strongly typed field — no raw strings,
 // no "best date" guess. Each CaptureTime carries calendar fields, an optional
 // UTC offset, an absolute `instant` when one can be computed, and a `precision`.
+// Use `captureLocalComponents` for capture-local naming; it is nil for absolute
+// (UTC-anchored) timestamps so they cannot be mistaken for local wall clock.
 if let original = result.timestamps.original {
     print(original.year, original.month, original.day, original.hour, original.minute, original.second)
     print(original.utcOffsetSeconds ?? -1, original.instant ?? .distantPast, original.precision)
+    if let local = original.captureLocalComponents {
+        print(local.year, local.month, local.day, local.hour, local.minute, local.second)
+    }
 }
 if let gps = result.timestamps.gps {
-    print(gps.instant ?? .distantPast) // UTC-anchored
+    print(gps.instant ?? .distantPast) // UTC-anchored; captureLocalComponents is nil
 }
 // Other named fields: digitized, tiffDateTime, containerCreation, quickTimeCreation,
 // quickTimeLocation, quickTimeContentCreate, id3Recording, waveOrigination, riffRecording.

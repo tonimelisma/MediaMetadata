@@ -583,7 +583,7 @@ struct ISOBMFFMetadataParser {
 
         if let epoch = metadata.creationEpoch,
            epoch <= UInt64(Int64.max) {
-            let findingID = appendFinding(
+            let creationFindingID = appendFinding(
                 namespace: "gopro.gpmf",
                 key: "CreationDate",
                 value: String(epoch),
@@ -599,11 +599,31 @@ struct ISOBMFFMetadataParser {
                     instant: date,
                     offsetSeconds: 0,
                     authority: .absoluteInstant,
-                    evidenceIDs: [findingID]
+                    evidenceIDs: [creationFindingID]
                 )
             )
-        }
-        if let minutes = metadata.timeZoneMinutes {
+            if let minutes = metadata.timeZoneMinutes {
+                let timeZoneFindingID = appendFinding(
+                    namespace: "gopro.gpmf",
+                    key: "TimeZone",
+                    value: String(minutes),
+                    sourcePath: "\(path).TimeZone",
+                    byteRange: nil
+                )
+                let offsetSeconds = minutes * 60
+                timestamps.append(
+                    CaptureTimestampCandidate(
+                        role: .quickTimeCreationDate,
+                        rawTimestamp: "\(epoch)/TZON:\(minutes)",
+                        dateComponents: CaptureDateComponents.localComponents(from: date, offsetSeconds: offsetSeconds),
+                        instant: date,
+                        offsetSeconds: offsetSeconds,
+                        authority: .localWithOffset,
+                        evidenceIDs: [creationFindingID, timeZoneFindingID]
+                    )
+                )
+            }
+        } else if let minutes = metadata.timeZoneMinutes {
             appendFinding(
                 namespace: "gopro.gpmf",
                 key: "TimeZone",

@@ -125,22 +125,38 @@ extension MediaFormat {
 /// Every capture/creation timestamp the file expresses, one per source, fully
 /// typed. The library never collapses these into a single "best" value — the
 /// caller decides which field is authoritative for its purpose.
+///
+/// Within each role, when multiple candidates exist, a local-authority candidate
+/// (`localFloating` / `localWithOffset`) is preferred over a UTC-anchored
+/// `absolute` one so a GoPro GPMF epoch cannot shadow an offset-bearing Apple
+/// `com.apple.quicktime.creationdate` (or a derived GPMF local candidate).
 public struct CaptureTimestamps: Equatable, Sendable {
-    /// EXIF `DateTimeOriginal` (with `OffsetTimeOriginal` when present).
+    /// EXIF `DateTimeOriginal` (CIPA DC-008): local capture wall clock. Offset
+    /// only via EXIF 2.31 `OffsetTimeOriginal`. Floating when no offset is present.
     public let original: CaptureTime?
-    /// EXIF `DateTimeDigitized` (with `OffsetTimeDigitized` when present).
+    /// EXIF `DateTimeDigitized` (CIPA DC-008): local digitization wall clock.
+    /// Offset only via EXIF 2.31 `OffsetTimeDigitized`.
     public let digitized: CaptureTime?
-    /// TIFF IFD0 `DateTime`.
+    /// TIFF IFD0 `DateTime`: local modification/creation wall clock; offset via
+    /// EXIF 2.31 `OffsetTime` when present.
     public let tiffDateTime: CaptureTime?
-    /// GPS date + time, anchored to UTC.
+    /// GPS date + time: UTC by specification (`GPSDateStamp` + `GPSTimeStamp`).
     public let gps: CaptureTime?
-    /// QuickTime `com.apple.quicktime.creationdate` / Sony NRTM / GoPro GPMF creation date.
+    /// QuickTime `com.apple.quicktime.creationdate` / Sony NRTM / GoPro GPMF
+    /// creation date. Offset-bearing ISO-8601 strings are local capture time;
+    /// bare `Z` is treated as UTC-anchored (encoder normalization, not a zone
+    /// claim). A GPMF UTC epoch paired with a device `TimeZone` minutes field
+    /// also yields a derived local-with-offset candidate.
     public let quickTimeCreation: CaptureTime?
     /// QuickTime `com.apple.quicktime.location.date`.
     public let quickTimeLocation: CaptureTime?
     /// QuickTime `©day` content-create date.
     public let quickTimeContentCreate: CaptureTime?
-    /// ISO BMFF container creation date (`mvhd`/`mdhd`/`tkhd`), anchored to UTC.
+    /// ISO BMFF / QuickTime container `creation_time` (`mvhd`/`mdhd`/`tkhd`):
+    /// UTC per specification. Cameras frequently violate the spec and write
+    /// unmarked local time (ExifTool's `QuickTimeUTC` option exists for this),
+    /// so this field is classified `absolute` and must not be used as
+    /// capture-local naming input.
     public let containerCreation: CaptureTime?
     /// ID3v2 recording date (`TDRC`/`TDOR`/legacy frames).
     public let id3Recording: CaptureTime?
@@ -187,21 +203,28 @@ public struct CaptureTimestamps: Equatable, Sendable {
 
 extension CaptureTimestamps {
     init(_ candidates: [CaptureTimestampCandidate]) {
-        func first(_ role: CaptureTimestampCandidate.Role) -> CaptureTime? {
-            candidates.first { $0.role == role }.map(CaptureTime.init)
+        func preferred(_ role: CaptureTimestampCandidate.Role) -> CaptureTime? {
+            let matching = candidates.filter { $0.role == role }
+            guard !matching.isEmpty else {
+                return nil
+            }
+            let selected = matching.first(where: { $0.authority == .localWithOffset })
+                ?? matching.first(where: { $0.authority == .localWithoutOffset })
+                ?? matching.first
+            return selected.map(CaptureTime.init)
         }
         self.init(
-            original: first(.original),
-            digitized: first(.digitized),
-            tiffDateTime: first(.tiff),
-            gps: first(.gps),
-            quickTimeCreation: first(.quickTimeCreationDate),
-            quickTimeLocation: first(.quickTimeLocationDate),
-            quickTimeContentCreate: first(.quickTimeContentCreateDate),
-            containerCreation: first(.quickTimeContainerCreationDate),
-            id3Recording: first(.id3RecordingDate),
-            waveOrigination: first(.waveRecordingDate),
-            riffRecording: first(.riff)
+            original: preferred(.original),
+            digitized: preferred(.digitized),
+            tiffDateTime: preferred(.tiff),
+            gps: preferred(.gps),
+            quickTimeCreation: preferred(.quickTimeCreationDate),
+            quickTimeLocation: preferred(.quickTimeLocationDate),
+            quickTimeContentCreate: preferred(.quickTimeContentCreateDate),
+            containerCreation: preferred(.quickTimeContainerCreationDate),
+            id3Recording: preferred(.id3RecordingDate),
+            waveOrigination: preferred(.waveRecordingDate),
+            riffRecording: preferred(.riff)
         )
     }
 }
@@ -209,6 +232,28 @@ extension CaptureTimestamps {
 /// A single capture/creation timestamp with its wall-clock fields, its UTC offset
 /// (when the file expresses one), and an absolute ``instant`` (when it can be
 /// computed). The library has already parsed the source bytes into these values.
+///
+/// ## Wall-clock completeness
+/// Every `CaptureTime` carries complete `year`…`second` components, a
+/// ``precision``, and ``utcOffsetSeconds`` when known. Calendar consumers that
+/// need the capture-local wall clock must use ``captureLocalComponents`` (or the
+/// component fields only after checking precision) — never assume UTC components
+/// are local.
+///
+/// ## Per-source semantics
+/// - EXIF `DateTimeOriginal` / `DateTimeDigitized`: local capture time (CIPA
+///   DC-008); offset only via EXIF 2.31 `OffsetTime*`.
+/// - QuickTime/ISO BMFF container `creation_time`: UTC per spec, but often
+///   violated by cameras writing unmarked local time — classified ``absolute``.
+/// - GPS timestamps: UTC.
+/// - Bare `Z`-suffixed strings: UTC-anchored normalization idiom, not a claim
+///   that capture happened in UTC+0 — classified ``absolute``.
+/// - Explicit `±hhmm` offsets (including `+0000`): affirmative zone claims —
+///   classified ``localWithOffset``.
+/// - PTP DateTime strings (when supplied by a caller upstream): local device
+///   time with an optional `Z`/`±hhmm` suffix (ISO 15740 §5.3.4.1).
+///
+/// ``instant`` is `nil` for ``Precision/localFloating`` by design.
 public struct CaptureTime: Equatable, Sendable {
     /// How precisely the source pins the moment in time.
     public enum Precision: String, Equatable, Sendable {
@@ -216,7 +261,9 @@ public struct CaptureTime: Equatable, Sendable {
         case localWithOffset
         /// Wall-clock only, no offset in the file — ``instant`` is `nil`.
         case localFloating
-        /// UTC-anchored at the source (GPS, container epoch) — ``instant`` is exact, offset 0.
+        /// UTC-anchored at the source (GPS, container epoch, bare `Z`) —
+        /// ``instant`` is exact; offset is 0. Not usable as capture-local naming
+        /// input — see ``captureLocalComponents``.
         case absolute
     }
 
@@ -229,6 +276,7 @@ public struct CaptureTime: Equatable, Sendable {
     /// Offset from UTC in seconds, or `nil` when the timestamp is floating.
     public let utcOffsetSeconds: Int?
     /// Absolute instant when one can be computed (offset known, or UTC-anchored source).
+    /// Always `nil` for ``Precision/localFloating``.
     public let instant: Date?
     /// Expression precision of the timestamp.
     public let precision: Precision
@@ -253,6 +301,29 @@ public struct CaptureTime: Equatable, Sendable {
         self.utcOffsetSeconds = utcOffsetSeconds
         self.instant = instant
         self.precision = precision
+    }
+
+    /// Wall-clock components for capture-local naming, or `nil` when this
+    /// timestamp is UTC-anchored (``Precision/absolute``).
+    ///
+    /// Returns components only for ``Precision/localFloating`` and
+    /// ``Precision/localWithOffset``. A UTC-anchored timestamp without a local
+    /// offset is not the time "when and where the item was captured" and must
+    /// be structurally unusable for calendar naming.
+    public var captureLocalComponents: CaptureDateComponents? {
+        switch precision {
+        case .localFloating, .localWithOffset:
+            return CaptureDateComponents(
+                year: year,
+                month: month,
+                day: day,
+                hour: hour,
+                minute: minute,
+                second: second
+            )
+        case .absolute:
+            return nil
+        }
     }
 }
 

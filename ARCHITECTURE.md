@@ -84,7 +84,10 @@ public struct MediaMetadataResult {
 - `CaptureTime` carries calendar fields, an optional `utcOffsetSeconds`, an
   absolute `instant` when computable, and a `precision`
   (`localWithOffset` / `localFloating` / `absolute`) — expression and meaning
-  preserved separately, never collapsed to a bare `Date`.
+  preserved separately, never collapsed to a bare `Date`. Every emitted
+  `CaptureTime` has complete `year`…`second` components. Use
+  `captureLocalComponents` for capture-local naming; it returns `nil` for
+  `absolute` so UTC wall clocks cannot be mistaken for local capture time.
 - `VideoCodec` is an enum (`h264`, `hevc`, `proRes`, …) with an `.other(fourCC:)`
   fallback so the open-ended codec set stays lossless yet typed.
 
@@ -102,8 +105,9 @@ projection. It is reachable in-process via `MediaMetadataReader.extract(url:)`
   `ParserProvenance`, `MediaMetadataReadMetrics`.
 
 The internal model never hides the candidate list; the public projection buckets
-each candidate into its named field (first wins) without discarding the evidence
-that produced it.
+each candidate into its named field. Within a role, a local-authority candidate
+(`localWithOffset` / `localWithoutOffset`) is preferred over a UTC-anchored
+`absoluteInstant` so an absolute epoch cannot shadow capture-local evidence.
 
 ## Parser Architecture
 
@@ -179,3 +183,9 @@ small examples that would be hard to obtain from real cameras.
 - Require tests for every promoted timestamp authority.
 - Runtime timestamp selection must use package evidence or filesystem mtime
   authority only.
+
+## Roadmap
+
+- **EXIF sub-second components** (`SubSecTimeOriginal` / `SubSecTimeDigitized`):
+  exposing fractional seconds would reduce same-second naming collisions for
+  consumers. Deferred; not required for the current capture-local contract.

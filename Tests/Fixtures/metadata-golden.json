@@ -120,7 +120,7 @@
       "format": { "family": "isoBMFF", "extension": "mp4", "brand": "mp41", "detectedByMagic": true },
       "timestamps": {
         "containerCreation": { "components": [2023, 8, 30, 7, 30, 32], "instant": "2023-08-30T07:30:32Z", "offsetSeconds": 0, "precision": "absolute" },
-        "quickTimeCreation": { "components": [2023, 8, 30, 13, 0, 31], "instant": "2023-08-30T13:00:31Z", "offsetSeconds": 0, "precision": "absolute" }
+        "quickTimeCreation": { "components": [2023, 8, 30, 18, 30, 31], "instant": "2023-08-30T13:00:31Z", "offsetSeconds": 19800, "precision": "localWithOffset" }
       },
       "locations": {},
       "camera": { "make": null, "model": "HERO12 Black", "lensModel": null, "serialNumber": "C3501324543674", "orientation": null, "pixelWidth": 3840, "pixelHeight": 3360 },

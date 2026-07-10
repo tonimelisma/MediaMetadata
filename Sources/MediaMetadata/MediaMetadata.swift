@@ -586,15 +586,21 @@ struct CaptureTimestampCandidate: Equatable, Sendable {
     }
 }
 
-struct CaptureDateComponents: Equatable, Sendable {
-    let year: Int
-    let month: Int
-    let day: Int
-    let hour: Int
-    let minute: Int
-    let second: Int
+/// Complete wall-clock date-time components (`year`…`second`).
+///
+/// Every emitted ``CaptureTime`` carries a full set of these components. Use
+/// ``CaptureTime/captureLocalComponents`` when you need them only for
+/// capture-local naming — that accessor returns `nil` for UTC-anchored
+/// (``CaptureTime/Precision/absolute``) timestamps.
+public struct CaptureDateComponents: Equatable, Sendable {
+    public let year: Int
+    public let month: Int
+    public let day: Int
+    public let hour: Int
+    public let minute: Int
+    public let second: Int
 
-    init(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) {
+    public init(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) {
         self.year = year
         self.month = month
         self.day = day
@@ -615,6 +621,12 @@ struct CaptureDateComponents: Equatable, Sendable {
             minute: components.minute ?? 0,
             second: components.second ?? 0
         )
+    }
+
+    /// Local wall-clock components recovered from a UTC instant plus a known
+    /// device offset (seconds east of UTC).
+    static func localComponents(from instant: Date, offsetSeconds: Int) -> CaptureDateComponents {
+        utcComponents(from: instant.addingTimeInterval(TimeInterval(offsetSeconds)))
     }
 }
 
