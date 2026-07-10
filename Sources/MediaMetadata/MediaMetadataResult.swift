@@ -450,7 +450,7 @@ public enum VideoCodec: Equatable, Sendable {
             self = .av1
         case "vp09":
             self = .vp9
-        case "jpeg", "mjpa", "mjpb":
+        case "jpeg", "mjpa", "mjpb", "mjpg":
             self = .motionJPEG
         default:
             self = .other(fourCC: raw)

@@ -6,7 +6,7 @@ final class RealFixtureGoldenTests: XCTestCase {
     func testAllRealFixturesMatchExifToolDerivedGoldens() throws {
         let corpus = try loadCorpus()
         XCTAssertEqual(corpus.schemaVersion, 2)
-        XCTAssertEqual(corpus.fixtures.count, 16)
+        XCTAssertEqual(corpus.fixtures.count, 17)
 
         for fixture in corpus.fixtures {
             try assertFixture(fixture)

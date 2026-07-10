@@ -197,6 +197,36 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.diagnostics.first { $0.code == "aviMissingEmbeddedDate" }?.severity, .info)
     }
 
+    func testRead_ParsesAVIDurationFrameRateAndCodecFromHeader() throws {
+        let url = try writeFixture(aviHeaderVideoFixture(), extension: "avi")
+
+        let publicResult = MediaMetadataReader.read(url: url)
+        let video = try XCTUnwrap(publicResult.video)
+
+        XCTAssertEqual(publicResult.format.family, .riffAVI)
+        XCTAssertEqual(video.durationSeconds ?? 0, 10.8, accuracy: 0.01)
+        XCTAssertEqual(video.frameRate ?? 0, 30.0, accuracy: 0.05)
+        XCTAssertEqual(video.codec, .motionJPEG)
+        XCTAssertEqual(publicResult.camera?.pixelWidth, 1440)
+        XCTAssertEqual(publicResult.camera?.pixelHeight, 1080)
+        XCTAssertNil(publicResult.timestamps.riffRecording)
+    }
+
+    func testRead_AVIParsesVideoFactsEvenWhenINFODateAppearsFirst() throws {
+        let url = try writeFixture(
+            aviInfoThenHeaderVideoFixture(key: "ICRD", value: "2026:04:26 19:33:52"),
+            extension: "avi"
+        )
+
+        let result = MediaMetadataReader.read(url: url)
+        let video = try XCTUnwrap(result.video)
+        let recording = try XCTUnwrap(result.timestamps.riffRecording)
+
+        XCTAssertEqual(recording.year, 2026)
+        XCTAssertEqual(video.durationSeconds ?? 0, 10.8, accuracy: 0.01)
+        XCTAssertEqual(video.codec, .motionJPEG)
+    }
+
     func testRead_AVISkipsMediaPayloadListChunks() throws {
         let fixture = aviRIFFMoviPayloadFixture()
         let url = try writeFixture(fixture, extension: "avi")
@@ -720,6 +750,105 @@ final class MediaMetadataTests: XCTestCase {
         data.append(littleEndianUInt32(4))
         data.append(Data("AVI ".utf8))
         return data
+    }
+
+    /// Minimal AVI `hdrl` with `avih` + video `strh` matching a 324-frame / 30 fps clip.
+    private func aviHeaderVideoFixture() -> Data {
+        var hdrl = Data("hdrl".utf8)
+        hdrl.append(riffChunk(id: "avih", payload: aviAVIHPayload(
+            microSecPerFrame: 33_333,
+            totalFrames: 324,
+            width: 1440,
+            height: 1080
+        )))
+        var strl = Data("strl".utf8)
+        strl.append(riffChunk(id: "strh", payload: aviSTRHPayload(
+            streamType: "vids",
+            handler: "MJPG",
+            scale: 1,
+            rate: 30,
+            length: 324
+        )))
+        hdrl.append(riffChunk(id: "LIST", payload: strl))
+        let hdrlList = riffChunk(id: "LIST", payload: hdrl)
+
+        var data = Data("RIFF".utf8)
+        data.append(littleEndianUInt32(UInt32(4 + hdrlList.count)))
+        data.append(Data("AVI ".utf8))
+        data.append(hdrlList)
+        return data
+    }
+
+    private func aviInfoThenHeaderVideoFixture(key: String, value: String) -> Data {
+        var valueData = Data(value.utf8)
+        valueData.append(0)
+        var infoPayload = Data("INFO".utf8)
+        infoPayload.append(riffChunk(id: key, payload: valueData))
+        let infoList = riffChunk(id: "LIST", payload: infoPayload)
+
+        var hdrl = Data("hdrl".utf8)
+        hdrl.append(riffChunk(id: "avih", payload: aviAVIHPayload(
+            microSecPerFrame: 33_333,
+            totalFrames: 324,
+            width: 1440,
+            height: 1080
+        )))
+        var strl = Data("strl".utf8)
+        strl.append(riffChunk(id: "strh", payload: aviSTRHPayload(
+            streamType: "vids",
+            handler: "MJPG",
+            scale: 1,
+            rate: 30,
+            length: 324
+        )))
+        hdrl.append(riffChunk(id: "LIST", payload: strl))
+        let hdrlList = riffChunk(id: "LIST", payload: hdrl)
+
+        var data = Data("RIFF".utf8)
+        data.append(littleEndianUInt32(UInt32(4 + infoList.count + hdrlList.count)))
+        data.append(Data("AVI ".utf8))
+        data.append(infoList)
+        data.append(hdrlList)
+        return data
+    }
+
+    private func aviAVIHPayload(
+        microSecPerFrame: UInt32,
+        totalFrames: UInt32,
+        width: UInt32,
+        height: UInt32
+    ) -> Data {
+        var payload = Data()
+        payload.append(littleEndianUInt32(microSecPerFrame))
+        payload.append(littleEndianUInt32(0)) // MaxBytesPerSec
+        payload.append(littleEndianUInt32(0)) // PaddingGranularity
+        payload.append(littleEndianUInt32(0)) // Flags
+        payload.append(littleEndianUInt32(totalFrames))
+        payload.append(littleEndianUInt32(0)) // InitialFrames
+        payload.append(littleEndianUInt32(1)) // Streams
+        payload.append(littleEndianUInt32(0)) // SuggestedBufferSize
+        payload.append(littleEndianUInt32(width))
+        payload.append(littleEndianUInt32(height))
+        return payload
+    }
+
+    private func aviSTRHPayload(
+        streamType: String,
+        handler: String,
+        scale: UInt32,
+        rate: UInt32,
+        length: UInt32
+    ) -> Data {
+        var payload = Data(streamType.utf8)
+        payload.append(Data(handler.utf8))
+        payload.append(littleEndianUInt32(0)) // Flags
+        payload.append(littleEndianUInt32(0)) // Priority + Language
+        payload.append(littleEndianUInt32(0)) // InitialFrames
+        payload.append(littleEndianUInt32(scale))
+        payload.append(littleEndianUInt32(rate))
+        payload.append(littleEndianUInt32(0)) // Start
+        payload.append(littleEndianUInt32(length))
+        return payload
     }
 
     private func aviRIFFMoviPayloadFixture() -> Data {

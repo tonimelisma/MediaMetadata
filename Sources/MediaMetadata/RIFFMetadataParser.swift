@@ -3,12 +3,20 @@ import Foundation
 private let riffParserName = "MediaMetadata.RIFFMetadataParser"
 private let maxRIFFMetadataListDepth = 16
 private let timestampInfoChunkIDs: Set<String> = ["ICRD", "IDIT", "TDT"]
+/// Minimum `avih` payload used for duration / dimensions (10 little-endian DWORDs).
+private let avihMinimumPayloadLength: UInt64 = 40
+/// Minimum `strh` payload used for stream type, handler, scale/rate, and length.
+private let strhMinimumPayloadLength: UInt64 = 36
 
 struct RIFFMetadataParser {
     private let source: FileByteSource
     private let url: URL
+    private var family: FormatIdentity.Family = .unknown
     private var findings: [MetadataFinding] = []
     private var diagnostics: [MetadataDiagnostic] = []
+    private var rawVideo = RawVideoInfo()
+    private var camera: CameraMetadata?
+    private var foundParseableTimestamp = false
 
     init(source: FileByteSource, url: URL) {
         self.source = source
@@ -43,7 +51,6 @@ struct RIFFMetadataParser {
         }
 
         let formType = ascii(header[8..<12])
-        let family: FormatIdentity.Family
         switch formType {
         case "AVI ":
             family = .riffAVI
@@ -59,7 +66,7 @@ struct RIFFMetadataParser {
             brand: formType
         )
 
-        _ = parseMetadataChunks(startOffset: 12, endOffset: source.size, path: "riff", depth: 0)
+        parseMetadataChunks(startOffset: 12, endOffset: source.size, path: "riff", depth: 0)
         let timestamps = findings.compactMap(timestampCandidate)
         if timestamps.isEmpty, family == .riffAVI {
             diagnostics.append(
@@ -76,15 +83,16 @@ struct RIFFMetadataParser {
             identity: identity,
             findings: findings,
             timestamps: timestamps,
+            camera: camera,
             diagnostics: diagnostics,
             provenance: [
                 ParserProvenance(parser: riffParserName, status: .parsed)
-            ]
+            ],
+            video: rawVideo.isEmpty ? nil : rawVideo
         )
     }
 
-    @discardableResult
-    private mutating func parseMetadataChunks(startOffset: UInt64, endOffset: UInt64, path: String, depth: Int) -> Bool {
+    private mutating func parseMetadataChunks(startOffset: UInt64, endOffset: UInt64, path: String, depth: Int) {
         var offset = startOffset
         while let headerEnd = adding(offset, 8), headerEnd <= endOffset {
             guard let header = try? source.data(offset: offset, length: 8),
@@ -98,7 +106,7 @@ struct RIFFMetadataParser {
                         byteRange: offset..<(min(offset + 8, source.size))
                     )
                 )
-                return false
+                return
             }
 
             let chunkID = ascii(header[0..<4])
@@ -117,7 +125,7 @@ struct RIFFMetadataParser {
                         byteRange: offset..<(min(computedPayloadEnd ?? source.size, source.size))
                     )
                 )
-                return false
+                return
             }
 
             if chunkID == "LIST",
@@ -127,7 +135,7 @@ struct RIFFMetadataParser {
                 let listType = ascii(listTypeData[0..<4])
                 if listType == "INFO" {
                     if parseINFOChunks(startOffset: payloadOffset + 4, endOffset: payloadEnd, path: "\(path).LIST.INFO") {
-                        return true
+                        foundParseableTimestamp = true
                     }
                 } else if listType != "movi" {
                     if depth >= maxRIFFMetadataListDepth {
@@ -141,28 +149,50 @@ struct RIFFMetadataParser {
                             )
                         )
                     } else {
-                        if parseMetadataChunks(
+                        parseMetadataChunks(
                             startOffset: payloadOffset + 4,
                             endOffset: payloadEnd,
                             path: "\(path).LIST.\(listType)",
                             depth: depth + 1
-                        ) {
-                            return true
-                        }
+                        )
                     }
                 }
+            } else if chunkID == "avih" {
+                parseAVIHeaderChunk(startOffset: payloadOffset, endOffset: payloadEnd, path: "\(path).avih")
+            } else if chunkID == "strh" {
+                parseStreamHeaderChunk(startOffset: payloadOffset, endOffset: payloadEnd, path: "\(path).strh")
             } else if chunkID == "bext" {
                 if parseBroadcastWaveChunk(startOffset: payloadOffset, endOffset: payloadEnd, path: "\(path).bext") {
-                    return true
+                    foundParseableTimestamp = true
                 }
             }
 
+            if shouldStopWalking() {
+                return
+            }
+
             guard let nextOffset = adding(payloadEnd, chunkSize % 2) else {
-                return false
+                return
             }
             offset = nextOffset
         }
-        return false
+    }
+
+    /// WAV can stop after the first parseable timestamp. AVI must keep walking
+    /// until video facts are complete even when an INFO date appears first; once
+    /// both a timestamp and video facts are known it may stop. AVI without a
+    /// date still walks the rest of the container (skipping `movi` payloads) so
+    /// a late `LIST.INFO` is not missed.
+    private func shouldStopWalking() -> Bool {
+        switch family {
+        case .riffWAV:
+            return foundParseableTimestamp
+        case .riffAVI:
+            let hasVideo = rawVideo.durationSeconds != nil && rawVideo.codecFourCC != nil
+            return hasVideo && foundParseableTimestamp
+        default:
+            return foundParseableTimestamp
+        }
     }
 
     @discardableResult
@@ -190,13 +220,118 @@ struct RIFFMetadataParser {
         return true
     }
 
+    private mutating func parseAVIHeaderChunk(startOffset: UInt64, endOffset: UInt64, path: String) {
+        guard endOffset >= startOffset + avihMinimumPayloadLength,
+              let data = try? source.data(offset: startOffset, length: Int(avihMinimumPayloadLength)),
+              data.count == Int(avihMinimumPayloadLength) else {
+            diagnostics.append(
+                MetadataDiagnostic(
+                    severity: .warning,
+                    code: "aviTruncatedHeader",
+                    message: "Could not read AVI main header (avih).",
+                    parser: riffParserName,
+                    byteRange: startOffset..<endOffset
+                )
+            )
+            return
+        }
+
+        let microSecPerFrame = littleEndianUInt32(data, offset: 0)
+        let totalFrames = littleEndianUInt32(data, offset: 16)
+        let width = littleEndianUInt32(data, offset: 32)
+        let height = littleEndianUInt32(data, offset: 36)
+
+        if microSecPerFrame > 0, totalFrames > 0 {
+            let duration = Double(totalFrames) * Double(microSecPerFrame) / 1_000_000.0
+            if duration > 0, rawVideo.durationSeconds == nil {
+                rawVideo.durationSeconds = duration
+            }
+            if rawVideo.frameRate == nil {
+                rawVideo.frameRate = 1_000_000.0 / Double(microSecPerFrame)
+            }
+        }
+
+        if width > 0, height > 0, camera == nil {
+            camera = CameraMetadata(pixelWidth: Int(width), pixelHeight: Int(height))
+        }
+
+        appendFinding(
+            namespace: "riff.avih",
+            key: "TotalFrames",
+            value: String(totalFrames),
+            sourcePath: "\(path).TotalFrames",
+            byteRange: (startOffset + 16)..<(startOffset + 20)
+        )
+        appendFinding(
+            namespace: "riff.avih",
+            key: "MicroSecPerFrame",
+            value: String(microSecPerFrame),
+            sourcePath: "\(path).MicroSecPerFrame",
+            byteRange: startOffset..<(startOffset + 4)
+        )
+    }
+
+    private mutating func parseStreamHeaderChunk(startOffset: UInt64, endOffset: UInt64, path: String) {
+        guard endOffset >= startOffset + strhMinimumPayloadLength,
+              let data = try? source.data(offset: startOffset, length: Int(strhMinimumPayloadLength)),
+              data.count == Int(strhMinimumPayloadLength) else {
+            diagnostics.append(
+                MetadataDiagnostic(
+                    severity: .warning,
+                    code: "aviTruncatedStreamHeader",
+                    message: "Could not read AVI stream header (strh).",
+                    parser: riffParserName,
+                    byteRange: startOffset..<endOffset
+                )
+            )
+            return
+        }
+
+        let streamType = ascii(data[0..<4])
+        guard streamType == "vids" else {
+            return
+        }
+
+        let handler = ascii(data[4..<8])
+        let scale = littleEndianUInt32(data, offset: 20)
+        let rate = littleEndianUInt32(data, offset: 24)
+        let length = littleEndianUInt32(data, offset: 32)
+
+        if rawVideo.codecFourCC == nil, !handler.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            rawVideo.codecFourCC = handler
+        }
+
+        if scale > 0, rate > 0 {
+            let frameRate = Double(rate) / Double(scale)
+            if frameRate > 0 {
+                // Prefer the video stream's scale/rate over avih MicroSecPerFrame.
+                rawVideo.frameRate = frameRate
+            }
+            if length > 0, rawVideo.durationSeconds == nil {
+                let duration = Double(length) * Double(scale) / Double(rate)
+                if duration > 0 {
+                    rawVideo.durationSeconds = duration
+                }
+            }
+        }
+
+        appendFinding(
+            namespace: "riff.strh",
+            key: "VideoCodec",
+            value: handler,
+            sourcePath: "\(path).fccHandler",
+            byteRange: (startOffset + 4)..<(startOffset + 8)
+        )
+    }
+
     @discardableResult
     private mutating func parseINFOChunks(startOffset: UInt64, endOffset: UInt64, path: String) -> Bool {
         var offset = startOffset
+        var foundParseable = false
         while let headerEnd = adding(offset, 8), headerEnd <= endOffset {
             guard let header = try? source.data(offset: offset, length: 8),
                   header.count == 8 else {
-                return false
+                return foundParseable
             }
             let key = ascii(header[0..<4])
             let size = UInt64(littleEndianUInt32(header, offset: 4))
@@ -215,11 +350,11 @@ struct RIFFMetadataParser {
                         byteRange: offset..<(min(computedValueEnd ?? source.size, source.size))
                     )
                 )
-                return false
+                return foundParseable
             }
             if !timestampInfoChunkIDs.contains(key) {
                 guard let nextOffset = adding(valueEnd, size % 2) else {
-                    return false
+                    return foundParseable
                 }
                 offset = nextOffset
                 continue
@@ -234,7 +369,7 @@ struct RIFFMetadataParser {
                         byteRange: offset..<(min(computedValueEnd ?? source.size, source.size))
                     )
                 )
-                return false
+                return foundParseable
             }
             let trimmed = valueData.prefix { $0 != 0 }
             if let value = String(data: Data(trimmed), encoding: .ascii)?
@@ -248,15 +383,18 @@ struct RIFFMetadataParser {
                     byteRange: valueOffset..<valueEnd
                 )
                 if CaptureDateComponents(riffTimestamp: value) != nil {
+                    foundParseable = true
+                    // Keep scanning sibling INFO keys only until the first parseable
+                    // timestamp; video facts are collected outside INFO.
                     return true
                 }
             }
             guard let nextOffset = adding(valueEnd, size % 2) else {
-                return false
+                return foundParseable
             }
             offset = nextOffset
         }
-        return false
+        return foundParseable
     }
 
     private mutating func appendFinding(

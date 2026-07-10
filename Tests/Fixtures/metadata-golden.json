@@ -179,6 +179,15 @@
       "locations": { "quickTime": { "latitude": 34.0592, "longitude": -118.446, "altitudeMeters": 42.938 } },
       "camera": { "make": "TestCamera", "model": "TestModel", "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 320, "pixelHeight": 240 },
       "video": { "durationSeconds": 1.0, "frameRate": 25.0, "codec": "h264" }
+    },
+    {
+      "path": "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
+      "outcome": "parsed",
+      "format": { "family": "riffAVI", "extension": "avi", "brand": "AVI ", "detectedByMagic": true },
+      "timestamps": {},
+      "locations": {},
+      "camera": { "make": null, "model": null, "lensModel": null, "serialNumber": null, "orientation": null, "pixelWidth": 1440, "pixelHeight": 1080 },
+      "video": { "durationSeconds": 10.799892, "frameRate": 30.0, "codec": "motionJPEG" }
     }
   ]
 }
