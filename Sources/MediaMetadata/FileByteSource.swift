@@ -32,6 +32,14 @@ final class FileByteSource: MediaByteSource {
         guard length >= 0, offset <= size, UInt64(length) <= size - offset else {
             return nil
         }
+        // A zero-length read is trivially satisfied, and must not reach the handle.
+        // `FileHandle.read(upToCount: 0)` answers nil, which the short-read rule below
+        // would then report as a transport failure — so an empty file, whose first probe
+        // asks for `min(size, 12)` = 0 bytes, would come back `.readFailure` and be retried
+        // forever instead of being recorded as the definitive "nothing here" it is.
+        guard length > 0 else {
+            return Data()
+        }
         try handle.seek(toOffset: offset)
         let data = try handle.read(upToCount: length)
         let delivered = data?.count ?? 0

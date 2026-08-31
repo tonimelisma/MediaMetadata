@@ -208,6 +208,26 @@ final class MediaByteSourceTests: XCTestCase {
         XCTAssertNil(try source.data(offset: 99, length: 1), "a range beyond the end is a structural nil")
     }
 
+    func testAZeroLengthReadIsSatisfiedRatherThanReportedAsAFailure() throws {
+        let url = try write(Data(), extension: "jpg")
+        let source = try FileByteSource(url: url)
+        defer { source.close() }
+
+        XCTAssertEqual(try source.data(offset: 0, length: 0), Data())
+    }
+
+    /// An empty file's first probe asks for `min(size, 12)` = 0 bytes. Treating that as a
+    /// short read made the whole file `.readFailure` — a retryable outcome for a file whose
+    /// emptiness is a permanent, knowable fact.
+    func testAnEmptyFileIsDefinitivelyUnsupportedNotATransientFailure() throws {
+        let url = try write(Data(), extension: "jpg")
+
+        let result = MediaMetadataReader.read(url: url)
+
+        XCTAssertEqual(result.outcome, .unsupported)
+        XCTAssertTrue(result.outcome.isDefinitive)
+    }
+
     // MARK: - R5: cost is reported for any source, not just files
 
     func testReadCostIsReportedForACustomSource() {
