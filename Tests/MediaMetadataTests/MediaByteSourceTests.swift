@@ -366,16 +366,29 @@ final class MediaByteSourceTests: XCTestCase {
         XCTAssertEqual(extracted, Self.fakeJPEG())
     }
 
-    func testAPreviewPointingAtSomethingThatIsNotAnImageIsNotReported() {
-        // A descriptor that does not resolve to an image leaves a consumer unable to tell a
-        // bad descriptor from a bad transport, so it is refused rather than reported.
-        let bytes = Self.tiffFixtureWithPreview(previewBytes: Data(repeating: 0x00, count: 16))
-        let result = MediaMetadataReader.read(
-            source: PatternedByteSource(bytes: bytes, pattern: .exact), filenameHint: "a.arw"
-        )
+    /// A declared preview is reported as declared, without reading its bytes to check.
+    ///
+    /// This reverses an earlier contract, and the reversal is the point. Verifying a
+    /// preview by reading two bytes at its offset made a descriptor a checked fact — and
+    /// measured against a camera over MTP it cost two extra round trips per RAW file, each
+    /// landing far from the metadata region and missing every cache, at ~141 ms apiece.
+    /// About 130 s across a 991-item card, to prove something the consumer establishes for
+    /// free the moment it decodes bytes it was going to fetch anyway.
+    ///
+    /// So the range is bounds-checked (free) and otherwise trusted. A descriptor that does
+    /// not decode is a case every consumer already handles.
+    func testADeclaredPreviewIsReportedWithoutReadingItsBytes() {
+        let counting = CountingByteSource(bytes: Self.tiffFixtureWithPreview(
+            previewBytes: Data(repeating: 0x00, count: 16)
+        ))
+        let result = MediaMetadataReader.read(source: counting, filenameHint: "a.arw")
 
-        XCTAssertTrue(result.previews.isEmpty)
-        XCTAssertEqual(result.outcome, .parsed, "a bad preview is not a read failure")
+        XCTAssertEqual(result.previews.count, 1, "the descriptor is reported as the container declares it")
+        XCTAssertEqual(result.outcome, .parsed)
+        XCTAssertLessThanOrEqual(
+            result.readCost.transportReadCount, 2,
+            "reporting a preview must not cost a round trip of its own"
+        )
     }
 
     func testAPreviewDeclaredOutsideTheFileIsNotReported() {

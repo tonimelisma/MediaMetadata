@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.5.0"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.6.0"),
 ]
 ```
 
@@ -134,10 +134,18 @@ if let preview = result.previews.first {   // largest first
 }
 ```
 
-The declared range is verified before it is reported — its leading bytes must be the
-codec's marker — so a descriptor is a checked fact rather than a claim. Decoding is
-deliberately not offered: "generate thumbnails" and "decode pixels" are non-goals, and
-doing either would mean linking a graphics framework.
+Previews are ordered **largest first by byte length**, because declared dimensions are
+often absent — Sony's ARW omits them in exactly the directories that carry previews, so
+`pixelWidth`/`pixelHeight` are frequently nil. **Do not require them**: pick by
+`byteLength` and let the decode tell you the real size.
+
+The range is bounds-checked but its bytes are **not** read to verify it. Doing so cost two
+extra round trips per RAW file over MTP — ~130 s across a 991-item card — to prove
+something you establish for free the moment you decode. A descriptor that does not decode
+is a case you already handle.
+
+Decoding is deliberately not offered: "generate thumbnails" and "decode pixels" are
+non-goals, and doing either would mean linking a graphics framework.
 
 This matters most where ImageIO cannot help: it refuses a truncated RAW outright, so a
 consumer holding only a prefix of an ARW has no way to reach the preview without this.
