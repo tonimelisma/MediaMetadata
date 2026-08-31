@@ -102,6 +102,12 @@ struct TIFFMetadataParser {
         static let pixelHeight: UInt16 = 0xA003
         static let bodySerialNumber: UInt16 = 0xA431
         static let lensModel: UInt16 = 0xA434
+        /// Offset of an embedded JPEG. In IFD1 this is the EXIF thumbnail; Sony and others
+        /// also put a large preview here in IFD0.
+        static let jpegInterchangeFormat: UInt16 = 0x0201
+        static let jpegInterchangeFormatLength: UInt16 = 0x0202
+        static let imageWidth: UInt16 = 0x0100
+        static let imageLength: UInt16 = 0x0101
     }
 
     private enum GPSTag {
@@ -121,6 +127,7 @@ struct TIFFMetadataParser {
     private let family: FormatIdentity.Family
     private var diagnostics: [MetadataDiagnostic] = []
     private var findings: [MetadataFinding] = []
+    private var previews: [RawEmbeddedPreview] = []
 
     init(source: MediaByteSource, fileExtension: String, baseOffset: UInt64 = 0, family: FormatIdentity.Family = .tiff) {
         self.source = source
@@ -158,6 +165,16 @@ struct TIFFMetadataParser {
 
         guard let ifd0 = parseIFD(offset: UInt64(ifd0Offset), byteOrder: byteOrder, path: "tiff.ifd0") else {
             return ParsedMetadata(identity: identity, findings: findings, timestamps: [], diagnostics: diagnostics)
+        }
+
+        // Previews, largest first. IFD0 is where vendors put a full-size preview (Sony ARW
+        // carries a 1616x1080 JPEG there); IFD1 is the standard EXIF thumbnail, which is
+        // also exactly what a PTP camera returns when asked for one. Reporting both lets a
+        // consumer pick by size instead of guessing which IFD a vendor used.
+        collectPreview(from: ifd0, byteOrder: byteOrder, path: "tiff.ifd0")
+        if let ifd1Offset = nextIFDOffset(after: UInt64(ifd0Offset), entryCount: UInt16(ifd0.count), byteOrder: byteOrder),
+           let ifd1 = parseIFD(offset: ifd1Offset, byteOrder: byteOrder, path: "tiff.ifd1") {
+            collectPreview(from: ifd1, byteOrder: byteOrder, path: "tiff.ifd1")
         }
 
         var tiffDateTime: RawField?
@@ -251,7 +268,8 @@ struct TIFFMetadataParser {
             locations: [gps.location].compactMap { $0 },
             camera: camera,
             diagnostics: diagnostics,
-            provenance: [ParserProvenance(parser: parserName, status: .parsed)]
+            provenance: [ParserProvenance(parser: parserName, status: .parsed)],
+            previews: previews.sorted { ($0.pixelWidth ?? 0) > ($1.pixelWidth ?? 0) }
         )
     }
 
@@ -355,6 +373,75 @@ struct TIFFMetadataParser {
             findings: [],
             timestamps: [],
             diagnostics: diagnostics
+        )
+    }
+
+    /// Offset of the IFD that follows this one, or nil when the chain ends.
+    ///
+    /// TIFF chains its directories: each ends with the absolute offset of the next, and a
+    /// zero terminates. IFD1 is where the EXIF thumbnail lives, so reaching it is what lets
+    /// previews be reported at all.
+    private func nextIFDOffset(after offset: UInt64, entryCount: UInt16, byteOrder: ByteOrder) -> UInt64? {
+        let pointerOffset = offset + 2 + UInt64(entryCount) * 12
+        guard let data = data(relativeOffset: pointerOffset, length: 4),
+              let next = byteOrder.uint32(data),
+              next != 0
+        else {
+            return nil
+        }
+        return UInt64(next)
+    }
+
+    /// Reports an embedded JPEG an IFD declares, once its bytes are confirmed to be one.
+    ///
+    /// The declared range is verified rather than trusted: two bytes are read at the stated
+    /// offset and must be a JPEG SOI marker. A descriptor pointing at something that is not
+    /// an image would be a fabricated fact — a consumer would fetch the range, fail to
+    /// decode it, and have no way to tell a broken descriptor from a broken transport. Two
+    /// bytes is a cheap price for the claim being true.
+    private mutating func collectPreview(
+        from entries: [UInt16: IFDEntry],
+        byteOrder: ByteOrder,
+        path: String
+    ) {
+        guard let offsetEntry = entries[Tag.jpegInterchangeFormat],
+              let lengthEntry = entries[Tag.jpegInterchangeFormatLength],
+              let offset = longValue(from: offsetEntry),
+              let length = longValue(from: lengthEntry),
+              length > 0
+        else {
+            return
+        }
+        let absoluteOffset = baseOffset + UInt64(offset)
+        guard UInt64(length) <= source.size, absoluteOffset <= source.size - UInt64(length) else {
+            appendDiagnostic(
+                code: "previewOutOfBounds",
+                message: "The preview declared at \(path) lies outside the file.",
+                byteRange: nil
+            )
+            return
+        }
+        guard let marker = try? source.data(offset: absoluteOffset, length: 2),
+              marker.count == 2,
+              marker[marker.startIndex] == 0xFF,
+              marker[marker.startIndex + 1] == 0xD8
+        else {
+            appendDiagnostic(
+                code: "previewNotJPEG",
+                message: "The preview declared at \(path) does not begin with a JPEG marker.",
+                byteRange: nil
+            )
+            return
+        }
+        previews.append(
+            RawEmbeddedPreview(
+                byteOffset: absoluteOffset,
+                byteLength: Int(length),
+                pixelWidth: entries[Tag.imageWidth].flatMap { longValue(from: $0) }.map(Int.init),
+                pixelHeight: entries[Tag.imageLength].flatMap { longValue(from: $0) }.map(Int.init),
+                encoding: "jpeg",
+                sourcePath: path
+            )
         )
     }
 

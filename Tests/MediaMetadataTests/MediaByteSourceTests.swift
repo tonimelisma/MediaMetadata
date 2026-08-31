@@ -252,6 +252,57 @@ final class MediaByteSourceTests: XCTestCase {
         )
     }
 
+    // MARK: - R11: embedded previews are located, verified, and never decoded
+
+    func testAnEmbeddedPreviewIsReportedWithItsRangeAndDimensions() {
+        let bytes = Self.tiffFixtureWithPreview()
+        let result = MediaMetadataReader.read(
+            source: PatternedByteSource(bytes: bytes, pattern: .exact), filenameHint: "a.arw"
+        )
+
+        let preview = try! XCTUnwrap(result.previews.first)
+        XCTAssertEqual(preview.encoding, .jpeg)
+        XCTAssertEqual(preview.pixelWidth, 1_616)
+        XCTAssertEqual(preview.pixelHeight, 1_080)
+        XCTAssertEqual(preview.sourcePath, "tiff.ifd1")
+
+        // The descriptor must be usable as-is: reading exactly the declared range yields
+        // exactly the embedded image. A consumer over a remote transport fetches this range
+        // instead of the whole file, so an off-by-one here is a broken image, not a warning.
+        let start = Int(preview.byteOffset)
+        let extracted = bytes.subdata(in: start ..< (start + preview.byteLength))
+        XCTAssertEqual(extracted, Self.fakeJPEG())
+    }
+
+    func testAPreviewPointingAtSomethingThatIsNotAnImageIsNotReported() {
+        // A descriptor that does not resolve to an image leaves a consumer unable to tell a
+        // bad descriptor from a bad transport, so it is refused rather than reported.
+        let bytes = Self.tiffFixtureWithPreview(previewBytes: Data(repeating: 0x00, count: 16))
+        let result = MediaMetadataReader.read(
+            source: PatternedByteSource(bytes: bytes, pattern: .exact), filenameHint: "a.arw"
+        )
+
+        XCTAssertTrue(result.previews.isEmpty)
+        XCTAssertEqual(result.outcome, .parsed, "a bad preview is not a read failure")
+    }
+
+    func testAPreviewDeclaredOutsideTheFileIsNotReported() {
+        let bytes = Self.tiffFixtureWithPreview(previewOffsetOverride: 4_000_000)
+        let result = MediaMetadataReader.read(
+            source: PatternedByteSource(bytes: bytes, pattern: .exact), filenameHint: "a.arw"
+        )
+
+        XCTAssertTrue(result.previews.isEmpty)
+    }
+
+    func testAFileWithNoEmbeddedPreviewReportsNone() {
+        let result = MediaMetadataReader.read(
+            source: PatternedByteSource(bytes: Self.tiffFixture(), pattern: .exact), filenameHint: "a.arw"
+        )
+
+        XCTAssertTrue(result.previews.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func write(_ data: Data, extension fileExtension: String) throws -> URL {
@@ -292,6 +343,48 @@ final class MediaByteSourceTests: XCTestCase {
 
         data.append(dateTime)
         data.append(offset)
+        return data
+    }
+
+    /// Two bytes of JPEG SOI plus filler, enough to be recognised as a JPEG.
+    private static func fakeJPEG() -> Data {
+        var data = Data([0xFF, 0xD8])
+        data.append(Data(repeating: 0x42, count: 30))
+        data.append(Data([0xFF, 0xD9]))
+        return data
+    }
+
+    /// TIFF with an IFD1 declaring an embedded JPEG at tags 0x0201/0x0202, plus its
+    /// dimensions at 0x0100/0x0101 — the shape Sony ARW and the EXIF thumbnail both use.
+    private static func tiffFixtureWithPreview(
+        previewBytes: Data? = nil,
+        previewOffsetOverride: UInt32? = nil
+    ) -> Data {
+        let preview = previewBytes ?? fakeJPEG()
+        var data = Data()
+        data.append(contentsOf: [0x49, 0x49, 0x2A, 0x00])
+        data.append(uint32(8))
+
+        let ifd0Start: UInt32 = 8
+        let ifd0Size: UInt32 = 2 + 12 + 4
+        let ifd1Start = ifd0Start + ifd0Size
+        let ifd1Size: UInt32 = 2 + (12 * 4) + 4
+        let previewStart = ifd1Start + ifd1Size
+
+        // IFD0: one entry (an unused ExifIFD pointer to nowhere useful), next = IFD1.
+        data.append(uint16(1))
+        data.append(entry(tag: 0x010F, type: 2, count: 1, value: 0))
+        data.append(uint32(ifd1Start))
+
+        // IFD1: width, height, preview offset, preview length. Chain terminates.
+        data.append(uint16(4))
+        data.append(entry(tag: 0x0100, type: 4, count: 1, value: 1_616))
+        data.append(entry(tag: 0x0101, type: 4, count: 1, value: 1_080))
+        data.append(entry(tag: 0x0201, type: 4, count: 1, value: previewOffsetOverride ?? previewStart))
+        data.append(entry(tag: 0x0202, type: 4, count: 1, value: UInt32(preview.count)))
+        data.append(uint32(0))
+
+        data.append(preview)
         return data
     }
 

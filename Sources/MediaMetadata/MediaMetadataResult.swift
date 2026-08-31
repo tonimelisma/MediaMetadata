@@ -22,6 +22,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
     public let video: VideoInfo?
     /// What this read actually cost.
     public let readCost: ReadCost
+    /// Images the container embeds, largest first — where they are, not their bytes.
+    public let previews: [EmbeddedPreview]
 
     public init(
         outcome: ReadOutcome,
@@ -30,7 +32,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
         locations: CaptureLocations = CaptureLocations(),
         camera: Camera? = nil,
         video: VideoInfo? = nil,
-        readCost: ReadCost = ReadCost()
+        readCost: ReadCost = ReadCost(),
+        previews: [EmbeddedPreview] = []
     ) {
         self.outcome = outcome
         self.format = format
@@ -39,6 +42,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.camera = camera
         self.video = video
         self.readCost = readCost
+        self.previews = previews
     }
 }
 
@@ -107,7 +111,8 @@ extension MediaMetadataResult {
             locations: CaptureLocations(parsed.locations),
             camera: parsed.camera.map(Camera.init),
             video: parsed.video.flatMap(VideoInfo.init),
-            readCost: ReadCost(parsed.readMetrics)
+            readCost: ReadCost(parsed.readMetrics),
+            previews: parsed.previews.map(EmbeddedPreview.init)
         )
     }
 }
@@ -603,6 +608,73 @@ extension ReadCost {
             resourceSizeBytes: metrics.fileSizeBytes,
             elapsedMilliseconds: metrics.elapsedMilliseconds,
             readWholeResource: metrics.readWholeFile
+        )
+    }
+}
+
+
+/// Where an embedded image lives inside the container — never its bytes.
+///
+/// Extracting the JPEG a RAW file embeds is one of the most common things anyone does with
+/// these containers, and finding it means walking the IFD chain: format knowledge, which is
+/// this package's job, and which every consumer would otherwise reimplement. Decoding it is
+/// not: "generate thumbnails" and "decode pixels" are non-goals, and decoding would drag in
+/// a graphics framework this package deliberately does not link.
+///
+/// So the answer is a descriptor. A consumer reads ``byteOffset``/``byteLength`` through its
+/// own transport — which may be the thing that makes this worth doing at all, since one
+/// ranged read of a few hundred kilobytes can replace a multi-megabyte download — and
+/// decodes with whatever it likes.
+///
+/// The range is verified before being reported: its bytes are confirmed to begin with the
+/// codec's marker. A descriptor pointing at something that is not an image would leave a
+/// consumer unable to tell a bad descriptor from a bad transport.
+public struct EmbeddedPreview: Equatable, Sendable {
+    /// Encoding of the embedded image, confirmed from its leading bytes.
+    public enum Encoding: Equatable, Sendable {
+        case jpeg
+        case other(String)
+    }
+
+    /// Absolute offset of the image within the resource.
+    public let byteOffset: UInt64
+    /// Length of the image in bytes.
+    public let byteLength: Int
+    /// Declared width, when the container states one.
+    public let pixelWidth: Int?
+    /// Declared height, when the container states one.
+    public let pixelHeight: Int?
+    /// What the bytes at ``byteOffset`` are.
+    public let encoding: Encoding
+    /// Where in the container this preview was declared, e.g. `tiff.ifd1`.
+    public let sourcePath: String
+
+    public init(
+        byteOffset: UInt64,
+        byteLength: Int,
+        pixelWidth: Int? = nil,
+        pixelHeight: Int? = nil,
+        encoding: Encoding = .jpeg,
+        sourcePath: String = ""
+    ) {
+        self.byteOffset = byteOffset
+        self.byteLength = byteLength
+        self.pixelWidth = pixelWidth
+        self.pixelHeight = pixelHeight
+        self.encoding = encoding
+        self.sourcePath = sourcePath
+    }
+}
+
+extension EmbeddedPreview {
+    init(_ raw: RawEmbeddedPreview) {
+        self.init(
+            byteOffset: raw.byteOffset,
+            byteLength: raw.byteLength,
+            pixelWidth: raw.pixelWidth,
+            pixelHeight: raw.pixelHeight,
+            encoding: raw.encoding == "jpeg" ? .jpeg : .other(raw.encoding),
+            sourcePath: raw.sourcePath
         )
     }
 }

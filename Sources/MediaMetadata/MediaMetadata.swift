@@ -442,6 +442,7 @@ struct ParsedMetadata: Equatable, Sendable {
     let provenance: [ParserProvenance]
     let video: RawVideoInfo?
     let readMetrics: MediaMetadataReadMetrics
+    let previews: [RawEmbeddedPreview]
 
     init(
         identity: FormatIdentity,
@@ -452,7 +453,8 @@ struct ParsedMetadata: Equatable, Sendable {
         diagnostics: [MetadataDiagnostic],
         provenance: [ParserProvenance] = [],
         video: RawVideoInfo? = nil,
-        readMetrics: MediaMetadataReadMetrics = .empty
+        readMetrics: MediaMetadataReadMetrics = .empty,
+        previews: [RawEmbeddedPreview] = []
     ) {
         self.identity = identity
         self.findings = findings
@@ -463,6 +465,7 @@ struct ParsedMetadata: Equatable, Sendable {
         self.provenance = provenance
         self.video = video
         self.readMetrics = readMetrics
+        self.previews = previews
     }
 
     /// Records that a read failed during this parse, which makes the outcome
@@ -492,7 +495,8 @@ struct ParsedMetadata: Equatable, Sendable {
                 ParserProvenance(parser: "MediaMetadata.MediaByteSource", status: .failed),
             ],
             video: video,
-            readMetrics: readMetrics
+            readMetrics: readMetrics,
+            previews: previews
         )
     }
 
@@ -506,7 +510,8 @@ struct ParsedMetadata: Equatable, Sendable {
             diagnostics: diagnostics,
             provenance: provenance,
             video: video,
-            readMetrics: readMetrics
+            readMetrics: readMetrics,
+            previews: previews
         )
     }
 }
@@ -876,4 +881,17 @@ struct MetadataDiagnostic: Equatable, Sendable {
         self.parser = parser
         self.byteRange = byteRange
     }
+}
+
+
+/// An embedded image a container declares, verified to start with its codec's marker.
+///
+/// Internal evidence; ``EmbeddedPreview`` is the public projection.
+struct RawEmbeddedPreview: Equatable, Sendable {
+    let byteOffset: UInt64
+    let byteLength: Int
+    let pixelWidth: Int?
+    let pixelHeight: Int?
+    let encoding: String
+    let sourcePath: String
 }
