@@ -269,7 +269,11 @@ struct TIFFMetadataParser {
             camera: camera,
             diagnostics: diagnostics,
             provenance: [ParserProvenance(parser: parserName, status: .parsed)],
-            previews: previews.sorted { ($0.pixelWidth ?? 0) > ($1.pixelWidth ?? 0) }
+            // Largest first, by byte length. Declared dimensions are usually absent, so
+            // ordering by them put the 160x120 thumbnail and the full-size preview in
+            // arbitrary order; bytes are always known and track image size closely enough
+            // to pick the better one.
+            previews: previews.sorted { $0.byteLength > $1.byteLength }
         )
     }
 
@@ -392,16 +396,24 @@ struct TIFFMetadataParser {
         return UInt64(next)
     }
 
-    /// Reports an embedded JPEG an IFD declares, once its bytes are confirmed to be one.
+    /// Reports an embedded JPEG an IFD declares.
     ///
-    /// The declared range is verified rather than trusted: two bytes are read at the stated
-    /// offset and must be a JPEG SOI marker. A descriptor pointing at something that is not
-    /// an image would be a fabricated fact — a consumer would fetch the range, fail to
-    /// decode it, and have no way to tell a broken descriptor from a broken transport. Two
-    /// bytes is a cheap price for the claim being true.
+    /// The range is bounds-checked against `size`, which is free. It is deliberately **not**
+    /// verified by reading its leading bytes, which is not.
+    ///
+    /// An earlier version read two bytes at the offset to confirm a JPEG SOI marker, so a
+    /// descriptor was a checked fact rather than a claim. Measured against a camera over
+    /// MTP, that cost **two extra round trips per RAW file** — one per declared preview,
+    /// each landing far from the metadata region and so missing every cache — at ~141 ms
+    /// each. Roughly 130 s across a 991-item card, spent proving something the consumer
+    /// establishes for free the moment it decodes the bytes it was going to fetch anyway.
+    ///
+    /// The principle: this package must not spend a round trip to validate a claim its
+    /// consumer will validate as a side effect of using it. A descriptor that does not
+    /// decode is already a case every consumer must handle.
     private mutating func collectPreview(
         from entries: [UInt16: IFDEntry],
-        byteOrder: ByteOrder,
+        byteOrder _: ByteOrder,
         path: String
     ) {
         guard let offsetEntry = entries[Tag.jpegInterchangeFormat],
@@ -421,22 +433,15 @@ struct TIFFMetadataParser {
             )
             return
         }
-        guard let marker = try? source.data(offset: absoluteOffset, length: 2),
-              marker.count == 2,
-              marker[marker.startIndex] == 0xFF,
-              marker[marker.startIndex + 1] == 0xD8
-        else {
-            appendDiagnostic(
-                code: "previewNotJPEG",
-                message: "The preview declared at \(path) does not begin with a JPEG marker.",
-                byteRange: nil
-            )
-            return
-        }
         previews.append(
             RawEmbeddedPreview(
                 byteOffset: absoluteOffset,
                 byteLength: Int(length),
+                // Often absent. In IFD0 these tags describe the *main* image, and Sony's
+                // ARW omits them in the directories that carry previews — measured, every
+                // preview on that body reports no dimensions at all. A consumer that
+                // required them would silently discard every preview, which is exactly what
+                // happened, so they are reported as unknown rather than guessed.
                 pixelWidth: entries[Tag.imageWidth].flatMap { longValue(from: $0) }.map(Int.init),
                 pixelHeight: entries[Tag.imageLength].flatMap { longValue(from: $0) }.map(Int.init),
                 encoding: "jpeg",
