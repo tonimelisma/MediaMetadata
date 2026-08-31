@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.3.0"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.4.0"),
 ]
 ```
 
