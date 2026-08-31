@@ -63,8 +63,8 @@ struct ISOBMFFMetadataParser {
         case serialNumber
     }
 
-    private let source: FileByteSource
-    private let url: URL
+    private let source: MediaByteSource
+    private let fileExtension: String
     private var brand: String?
     private var findings: [MetadataFinding] = []
     private var timestamps: [CaptureTimestampCandidate] = []
@@ -85,9 +85,9 @@ struct ISOBMFFMetadataParser {
         var codecFourCC: String?
     }
 
-    init(source: FileByteSource, url: URL) {
+    init(source: MediaByteSource, fileExtension: String) {
         self.source = source
-        self.url = url
+        self.fileExtension = fileExtension
     }
 
     mutating func parse() -> ParsedMetadata {
@@ -96,7 +96,7 @@ struct ISOBMFFMetadataParser {
         return ParsedMetadata(
             identity: FormatIdentity(
                 family: inferredFamily(),
-                observedExtension: url.pathExtension.lowercased(),
+                observedExtension: fileExtension,
                 detectedByMagic: true,
                 brand: brand
             ),
@@ -1046,7 +1046,7 @@ struct ISOBMFFMetadataParser {
                     )
                     continue
                 }
-                var parser = TIFFMetadataParser(source: source, url: url, baseOffset: tiffOffset, family: .heif)
+                var parser = TIFFMetadataParser(source: source, fileExtension: fileExtension, baseOffset: tiffOffset, family: .heif)
                 mergeEmbedded(result: parser.parse())
             }
         }
@@ -1318,7 +1318,7 @@ struct ISOBMFFMetadataParser {
     }
 
     private func inferredFamily() -> FormatIdentity.Family {
-        let ext = url.pathExtension.lowercased()
+        let ext = fileExtension
         if ["heic", "heif", "hif", "avci", "avcs"].contains(ext) || ["heic", "heix", "hevc", "mif1", "msf1"].contains(brand ?? "") {
             return .heif
         }

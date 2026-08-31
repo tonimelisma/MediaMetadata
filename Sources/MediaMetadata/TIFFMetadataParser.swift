@@ -115,16 +115,16 @@ struct TIFFMetadataParser {
         static let dateStamp: UInt16 = 0x001D
     }
 
-    private let source: FileByteSource
-    private let url: URL
+    private let source: MediaByteSource
+    private let fileExtension: String
     private let baseOffset: UInt64
     private let family: FormatIdentity.Family
     private var diagnostics: [MetadataDiagnostic] = []
     private var findings: [MetadataFinding] = []
 
-    init(source: FileByteSource, url: URL, baseOffset: UInt64 = 0, family: FormatIdentity.Family = .tiff) {
+    init(source: MediaByteSource, fileExtension: String, baseOffset: UInt64 = 0, family: FormatIdentity.Family = .tiff) {
         self.source = source
-        self.url = url
+        self.fileExtension = fileExtension
         self.baseOffset = baseOffset
         self.family = family
     }
@@ -132,7 +132,7 @@ struct TIFFMetadataParser {
     mutating func parse() -> ParsedMetadata {
         let identity = FormatIdentity(
             family: family,
-            observedExtension: url.pathExtension.lowercased(),
+            observedExtension: fileExtension,
             detectedByMagic: true
         )
 
@@ -349,7 +349,7 @@ struct TIFFMetadataParser {
         return ParsedMetadata(
             identity: FormatIdentity(
                 family: .unknown,
-                observedExtension: url.pathExtension.lowercased(),
+                observedExtension: fileExtension,
                 detectedByMagic: false
             ),
             findings: [],

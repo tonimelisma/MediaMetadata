@@ -34,6 +34,67 @@ explicit provenance.
 - Depend on AppKit, SwiftUI, ImageIO, AVFoundation, or platform APIs in the core
   target.
 
+## Consumer Boundary
+
+The Non-Goals above say what the package will not do. This section says how to decide,
+for a capability nobody has classified yet, which side of the line it falls on — and how
+to keep the package useful to consumers it has never met.
+
+**The package owns: "what do these bytes say, and what did it cost to find out?"**
+Container indexes, where metadata lives, tag semantics, timestamp expression (UTC offset,
+precision, floating versus absolute), format identity, embedded-resource *locations*,
+byte-range accounting, and the definitive-versus-transient outcome. Every one of these is
+derivable from bytes alone. None of them needs to know who is asking.
+
+**The consumer owns: "which of those claims do I trust, and what did the bytes cost me?"**
+Which timestamp wins for a given purpose, any derivation from other facts, dedupe and
+identity, transport lifecycle, sessions, retries, deadlines, concurrency, thread policy,
+cache sizing, and persistence schema.
+
+**The seam is:** a byte range in, bytes out, plus an honest failure channel. Anything that
+needs more than that from the consumer is probably consumer policy in disguise.
+
+### The rule
+
+> Every change must be justifiable to a second consumer who has never heard of the
+> requesting application.
+
+Not "would the requesting app benefit" — would a CLI date-extraction tool, a Linux ingest
+service, or an unrelated gallery application benefit. Name that consumer in the issue. If
+the only justification that can be written is "my app needs it", the capability belongs in
+that app.
+
+This rule has teeth in both directions. It rejects consumer policy arriving as a feature
+request, and it also rejects *refusing* a genuinely general capability merely because one
+consumer happens to be asking first.
+
+### Two worked examples
+
+**Caching is the package's, sizing is the consumer's.** A parse may issue many small reads
+inside one region — measured at 138 reads over 1.5 KB for HEIF. That pattern is the
+package's own, so mitigating it is the package's job: coalesce reads internally, and offer
+an aligned read-through `CachingByteSource` decorator. But the *chunk size* depends on
+transport latency the package cannot see, so it is a parameter the consumer supplies. Owning
+the mechanism and not the number is the correct split; refusing the mechanism would make
+every remote consumer reinvent it.
+
+**Embedded previews are located here and decoded there.** Finding a RAW file's embedded
+JPEG means walking the IFD chain — squarely this package's competence, and duplicated in
+every consumer that has to do it alone. But "generate thumbnails" and "decode pixels" are
+Non-Goals, and decoding would drag in a graphics framework. So the package reports a
+*descriptor* — byte offset, length, declared dimensions, encoding — and the consumer reads
+that range through its own transport and decodes with whatever it likes. Both Non-Goals
+hold, the dependency rule holds, and the container knowledge lives where it belongs.
+
+### The dependency rule that keeps this honest
+
+The core target imports `Foundation` and nothing else. That is true today — every source
+file, no exceptions — and it is what makes the package usable on Linux, in a CLI, in a
+server, and in tests without a display. It is also the constraint that forces the right
+answer whenever a "just use the system framework for this one case" shortcut appears: if a
+capability cannot be expressed in `Foundation` over bytes, it is almost certainly the
+consumer's half of the seam.
+
 ## Package Shape
 
 A small SwiftPM package with a single runtime parser target:
@@ -183,6 +244,19 @@ small examples that would be hard to obtain from real cameras.
 - Require tests for every promoted timestamp authority.
 - Runtime timestamp selection must use package evidence or filesystem mtime
   authority only.
+- **The core target imports `Foundation` and nothing else.** No graphics,
+  media, or UI framework; no third-party dependency. This is the constraint
+  that keeps the package usable on Linux, in a CLI, on a server, and in tests
+  without a display — and the one that forces the right answer whenever a
+  "just use the system framework for this one case" shortcut appears. See
+  Consumer Boundary.
+- **Parsing must not depend on read granularity.** A source may satisfy reads
+  a byte at a time or in oversized chunks; results must be byte-identical
+  either way. Every parser family carries a test that proves it.
+- **A failure must never be reported as definitive.** A read that could not be
+  satisfied for reasons outside the file's own structure is `.readFailure`,
+  never `.parsed` with empty fields. Consumers cache definitive answers, so
+  misreporting a transport failure corrupts durable state.
 
 ## Roadmap
 

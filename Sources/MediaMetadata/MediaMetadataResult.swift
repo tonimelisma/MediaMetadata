@@ -20,6 +20,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
     public let camera: Camera?
     /// Video specifics (duration, frame rate, codec), when the file is a movie.
     public let video: VideoInfo?
+    /// What this read actually cost.
+    public let readCost: ReadCost
 
     public init(
         outcome: ReadOutcome,
@@ -27,7 +29,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
         timestamps: CaptureTimestamps,
         locations: CaptureLocations = CaptureLocations(),
         camera: Camera? = nil,
-        video: VideoInfo? = nil
+        video: VideoInfo? = nil,
+        readCost: ReadCost = ReadCost()
     ) {
         self.outcome = outcome
         self.format = format
@@ -35,6 +38,62 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.locations = locations
         self.camera = camera
         self.video = video
+        self.readCost = readCost
+    }
+}
+
+/// What a parse cost the transport it read through.
+///
+/// Public because a consumer over anything but a local disk needs it and cannot derive it:
+/// bytes may be metered, round trips may cost tens of milliseconds each, and a vendor whose
+/// files need ten times the usual reads is otherwise invisible until someone measures by
+/// hand. It is also how a consumer verifies its own caching actually works — a chunk cache
+/// that is not being hit shows up here as an unchanged `readOperationCount`.
+///
+/// Counted by the package over every source, so the numbers mean the same thing for a
+/// file, a network reader, or a test double.
+public struct ReadCost: Equatable, Sendable {
+    /// Range reads the parser issued.
+    public let readOperationCount: Int
+    /// Reads that returned nothing — a range past the end, or a failure.
+    public let failedReadOperationCount: Int
+    /// Bytes asked for across every read.
+    public let bytesRequested: UInt64
+    /// Bytes actually delivered, counting overlapping reads more than once.
+    public let bytesRead: UInt64
+    /// Distinct bytes of the resource touched, with overlaps merged. The honest answer to
+    /// "how much of this file did we have to fetch".
+    public let uniqueBytesRead: UInt64
+    /// Highest offset any read reached. Tells a consumer whether a parse stayed near the
+    /// head or had to reach the tail, which decides how to prefetch.
+    public let highestOffsetTouched: UInt64
+    /// Size the source reported.
+    public let resourceSizeBytes: UInt64
+    /// Wall time for the whole parse, including transport waits.
+    public let elapsedMilliseconds: Int
+    /// Whether the parse ended up touching the entire resource.
+    public let readWholeResource: Bool
+
+    public init(
+        readOperationCount: Int = 0,
+        failedReadOperationCount: Int = 0,
+        bytesRequested: UInt64 = 0,
+        bytesRead: UInt64 = 0,
+        uniqueBytesRead: UInt64 = 0,
+        highestOffsetTouched: UInt64 = 0,
+        resourceSizeBytes: UInt64 = 0,
+        elapsedMilliseconds: Int = 0,
+        readWholeResource: Bool = false
+    ) {
+        self.readOperationCount = readOperationCount
+        self.failedReadOperationCount = failedReadOperationCount
+        self.bytesRequested = bytesRequested
+        self.bytesRead = bytesRead
+        self.uniqueBytesRead = uniqueBytesRead
+        self.highestOffsetTouched = highestOffsetTouched
+        self.resourceSizeBytes = resourceSizeBytes
+        self.elapsedMilliseconds = elapsedMilliseconds
+        self.readWholeResource = readWholeResource
     }
 }
 
@@ -47,7 +106,8 @@ extension MediaMetadataResult {
             timestamps: CaptureTimestamps(parsed.timestamps),
             locations: CaptureLocations(parsed.locations),
             camera: parsed.camera.map(Camera.init),
-            video: parsed.video.flatMap(VideoInfo.init)
+            video: parsed.video.flatMap(VideoInfo.init),
+            readCost: ReadCost(parsed.readMetrics)
         )
     }
 }
@@ -526,5 +586,23 @@ public enum VideoCodec: Equatable, Sendable {
         default:
             self = .other(fourCC: raw)
         }
+    }
+}
+
+
+extension ReadCost {
+    /// Projects the internal read metrics into the public cost view.
+    init(_ metrics: MediaMetadataReadMetrics) {
+        self.init(
+            readOperationCount: metrics.readOperationCount,
+            failedReadOperationCount: metrics.failedReadOperationCount,
+            bytesRequested: metrics.byteRequestedCount,
+            bytesRead: metrics.byteReadCount,
+            uniqueBytesRead: metrics.uniqueByteReadCount,
+            highestOffsetTouched: metrics.highestReadEndOffset,
+            resourceSizeBytes: metrics.fileSizeBytes,
+            elapsedMilliseconds: metrics.elapsedMilliseconds,
+            readWholeResource: metrics.readWholeFile
+        )
     }
 }
