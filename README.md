@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.3.0"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.4.0"),
 ]
 ```
 
@@ -42,6 +42,98 @@ Then add `MediaMetadata` to your target's dependencies.
 
 The package depends only on `Foundation` and builds on Apple platforms and on
 Linux.
+
+## Reading from somewhere that is not a file
+
+`read(url:)` is a convenience over `read(source:filenameHint:)`. Bytes that have no
+file URL — a camera object reachable only over MTP, a zip member, an HTTP range
+reader, an in-memory buffer — go through the source entry point instead.
+
+```swift
+let result = MediaMetadataReader.read(source: myByteSource, filenameHint: "DSC00001.arw")
+print(result.readCost.readOperationCount, result.readCost.uniqueBytesRead)
+```
+
+Implementing `MediaByteSource` is three members, but one of them carries the contract
+that matters:
+
+```swift
+public protocol MediaByteSource {
+    var size: UInt64 { get }
+    func data(offset: UInt64, length: Int) throws -> Data?
+    func close()
+}
+```
+
+A read has **three** outcomes, and conflating two of them is the mistake this shape
+exists to prevent:
+
+| Situation | Result |
+| --- | --- |
+| Fully in-bounds range, every byte delivered | `Data` of exactly `length` |
+| Range extends past `size` | `nil` |
+| Fully in-bounds range that did not deliver `length` bytes | `throw` |
+
+`nil` means *the file ends there* — a structural fact a parser expects and handles.
+Throwing means *the transport could not answer* — and anything thrown makes the result
+`.readFailure`, so a caller retries instead of recording "this file has no capture
+date" about a file nobody managed to read. Consumers cache definitive answers, so
+getting this wrong writes a wrong answer that is never revisited.
+
+### Execution contract
+
+- Parsing is **synchronous**, and a source **may block the calling thread** for as long
+  as the transport takes. Run parses off the main thread, and off any actor whose own
+  progress the read depends on.
+- A source is **confined to a single `read(source:)` call**. It must not escape that
+  call, be stored beyond it, or be used concurrently. That confinement is what lets a
+  conformance hold non-`Sendable` transport state without an unsafe escape hatch.
+
+### Making remote reads affordable
+
+A parse issues many small reads clustered in one or two regions — measured on a
+991-file corpus: 138 reads totalling 1,533 bytes inside a single 100 KB region for
+HEIF, 21 reads totalling 1,155 bytes inside 44 KB for TIFF. Free on a local file; on a
+transport with 40 ms latency that is ~5.9 s per file. Wrap the source:
+
+```swift
+let cached = CachingByteSource(wrapping: mySlowSource, chunkSize: 128 * 1024)
+let result = MediaMetadataReader.read(source: cached, filenameHint: name)
+```
+
+The chunk size is yours — it depends on latency and per-request overhead this package
+cannot see. `result.readCost` is how you check the cache is actually working. Local
+files need none of this; `FileByteSource` already sits on the page cache.
+
+### Embedded previews
+
+RAW containers declare where their embedded JPEG lives. The package reports *where*, and
+never the bytes:
+
+```swift
+if let preview = result.previews.first {   // largest first
+    // fetch preview.byteOffset ..< +preview.byteLength through your own transport,
+    // then decode it with whatever you like.
+}
+```
+
+The declared range is verified before it is reported — its leading bytes must be the
+codec's marker — so a descriptor is a checked fact rather than a claim. Decoding is
+deliberately not offered: "generate thumbnails" and "decode pixels" are non-goals, and
+doing either would mean linking a graphics framework.
+
+This matters most where ImageIO cannot help: it refuses a truncated RAW outright, so a
+consumer holding only a prefix of an ARW has no way to reach the preview without this.
+HEIF needs nothing here — ImageIO parses a HEIF prefix happily.
+
+### Identifying without parsing
+
+```swift
+let format = MediaMetadataReader.identify(source: source, filenameHint: name)
+```
+
+One read of at most 12 bytes. Useful for triaging a directory of unknown files, and for
+confirming a transport returned the file you asked for before spending a parse on it.
 
 ## Quick Start
 

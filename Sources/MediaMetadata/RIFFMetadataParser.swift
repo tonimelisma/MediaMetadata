@@ -9,8 +9,8 @@ private let avihMinimumPayloadLength: UInt64 = 40
 private let strhMinimumPayloadLength: UInt64 = 36
 
 struct RIFFMetadataParser {
-    private let source: FileByteSource
-    private let url: URL
+    private let source: MediaByteSource
+    private let fileExtension: String
     private var family: FormatIdentity.Family = .unknown
     private var findings: [MetadataFinding] = []
     private var diagnostics: [MetadataDiagnostic] = []
@@ -18,9 +18,9 @@ struct RIFFMetadataParser {
     private var camera: CameraMetadata?
     private var foundParseableTimestamp = false
 
-    init(source: FileByteSource, url: URL) {
+    init(source: MediaByteSource, fileExtension: String) {
         self.source = source
-        self.url = url
+        self.fileExtension = fileExtension
     }
 
     mutating func parse() -> ParsedMetadata {
@@ -30,7 +30,7 @@ struct RIFFMetadataParser {
             return ParsedMetadata(
                 identity: FormatIdentity(
                     family: .unknown,
-                    observedExtension: url.pathExtension.lowercased(),
+                    observedExtension: fileExtension,
                     detectedByMagic: false
                 ),
                 findings: [],
@@ -61,7 +61,7 @@ struct RIFFMetadataParser {
         }
         let identity = FormatIdentity(
             family: family,
-            observedExtension: url.pathExtension.lowercased(),
+            observedExtension: fileExtension,
             detectedByMagic: true,
             brand: formType
         )

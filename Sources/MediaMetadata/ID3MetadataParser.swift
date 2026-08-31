@@ -4,14 +4,14 @@ private let id3ParserName = "MediaMetadata.ID3MetadataParser"
 private let id3TimestampFrameIDs: Set<String> = ["TDRC", "TDOR", "TYER", "TDAT", "TIME"]
 
 struct ID3MetadataParser {
-    private let source: FileByteSource
-    private let url: URL
+    private let source: MediaByteSource
+    private let fileExtension: String
     private var findings: [MetadataFinding] = []
     private var diagnostics: [MetadataDiagnostic] = []
 
-    init(source: FileByteSource, url: URL) {
+    init(source: MediaByteSource, fileExtension: String) {
         self.source = source
-        self.url = url
+        self.fileExtension = fileExtension
     }
 
     mutating func parse() -> ParsedMetadata {
@@ -21,7 +21,7 @@ struct ID3MetadataParser {
             return ParsedMetadata(
                 identity: FormatIdentity(
                     family: .unknown,
-                    observedExtension: url.pathExtension.lowercased(),
+                    observedExtension: fileExtension,
                     detectedByMagic: false
                 ),
                 findings: [],
@@ -64,7 +64,7 @@ struct ID3MetadataParser {
         ParsedMetadata(
             identity: FormatIdentity(
                 family: .id3,
-                observedExtension: url.pathExtension.lowercased(),
+                observedExtension: fileExtension,
                 detectedByMagic: true,
                 brand: "ID3v2.\(majorVersion)"
             ),

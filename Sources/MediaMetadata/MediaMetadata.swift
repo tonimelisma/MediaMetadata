@@ -11,59 +11,162 @@ public enum MediaMetadataReader {
         MediaMetadataResult(extract(url: url))
     }
 
+    /// Reads media metadata from any ``MediaByteSource``.
+    ///
+    /// The URL-based entry point is a convenience over this one. Bytes that have no file
+    /// URL — a camera object reachable only over MTP, a zip member, an HTTP range reader,
+    /// an in-memory buffer — come in here instead.
+    ///
+    /// - Parameters:
+    ///   - source: where bytes come from. Read the ``MediaByteSource`` contract before
+    ///     writing a conformance: the difference between returning nil and throwing is the
+    ///     difference between "this file has no capture date" and "I could not read it",
+    ///     and only the source can tell them apart.
+    ///   - filenameHint: a filename or extension, used solely to report an observed
+    ///     extension and to disambiguate diagnostics. Format detection reads magic bytes,
+    ///     so this is advisory and may be omitted entirely.
+    ///
+    /// The call never throws, and it does not read the source after returning.
+    public static func read(source: MediaByteSource, filenameHint: String? = nil) -> MediaMetadataResult {
+        MediaMetadataResult(extract(source: source, fileExtension: normalizedExtension(filenameHint)))
+    }
+
+    /// Identifies a container from its first bytes, without parsing it.
+    ///
+    /// Costs one read of at most 12 bytes plus, for ISO-BMFF, a short box-header probe.
+    /// Useful for triaging a directory of unknown files, and for confirming that a
+    /// transport is returning the file it was asked for before spending a full parse on
+    /// it — a range-capable device that answers with the wrong bytes is otherwise
+    /// indistinguishable from a file with no metadata.
+    public static func identify(source: MediaByteSource, filenameHint: String? = nil) -> MediaFormat {
+        let fileExtension = normalizedExtension(filenameHint)
+        guard let magic = try? source.data(offset: 0, length: Int(min(source.size, 12))),
+              magic.count >= 4
+        else {
+            return MediaFormat(family: .unknown, fileExtension: fileExtension, detectedByMagic: false)
+        }
+        let family: MediaFormat.Family = if isTIFF(magic) {
+            .tiff
+        } else if isJPEG(magic) {
+            .jpeg
+        } else if isRIFF(magic) {
+            .riffAVI
+        } else if isISOBMFF(source: source, initialData: magic) {
+            .isoBMFF
+        } else if isID3(magic) {
+            .id3
+        } else {
+            .unknown
+        }
+        return MediaFormat(family: family, fileExtension: fileExtension, detectedByMagic: family != .unknown)
+    }
+
+    /// Lower-cased extension from a filename hint. `nil`, a bare name, or an empty hint all
+    /// yield an empty string, which is what the result reports as "no extension observed".
+    private static func normalizedExtension(_ hint: String?) -> String {
+        guard let hint, !hint.isEmpty else {
+            return ""
+        }
+        return (hint as NSString).pathExtension.lowercased()
+    }
+
     /// Internal entry point that produces the full evidence graph
     /// (findings, candidates, provenance, diagnostics, read metrics). The public
     /// ``read(url:)`` maps this into the typed field set; tests exercise it directly.
     static func extract(url: URL) -> ParsedMetadata {
         let clock = ContinuousClock()
         let readStarted = clock.now
+        let fileExtension = url.pathExtension.lowercased()
         do {
             let source = try FileByteSource(url: url)
-            defer { source.close() }
-            let result = read(url: url, source: source)
-            return result.withReadMetrics(
-                result.readMetrics.withSourceReadMetrics(
-                    source.readMetricsSnapshot(),
-                    fileSizeBytes: source.size,
-                    elapsedMilliseconds: elapsedMilliseconds(readStarted.duration(to: clock.now))
-                )
-            )
+            return extract(source: source, fileExtension: fileExtension, readStarted: readStarted, clock: clock)
         } catch {
-            return ParsedMetadata(
-                identity: FormatIdentity(
-                    family: .unknown,
-                    observedExtension: url.pathExtension.lowercased(),
-                    detectedByMagic: false
-                ),
-                findings: [],
-                timestamps: [],
-                diagnostics: [
-                    MetadataDiagnostic(
-                        severity: .warning,
-                        code: "readFailed",
-                        message: error.localizedDescription,
-                        parser: "MediaMetadata.FileByteSource",
-                        byteRange: nil
-                    ),
-                ],
-                provenance: [
-                    ParserProvenance(parser: "MediaMetadata.FileByteSource", status: .failed)
-                ],
-                readMetrics: MediaMetadataReadMetrics(
-                    parserName: "MediaMetadata.FileByteSource",
-                    fileSizeBytes: 0,
-                    elapsedMilliseconds: elapsedMilliseconds(readStarted.duration(to: clock.now))
-                )
+            return openFailureResult(
+                fileExtension: fileExtension,
+                error: error,
+                elapsedMilliseconds: elapsedMilliseconds(readStarted.duration(to: clock.now))
             )
         }
     }
 
-    private static func read(url: URL, source: FileByteSource) -> ParsedMetadata {
+    static func extract(source: MediaByteSource, fileExtension: String) -> ParsedMetadata {
+        let clock = ContinuousClock()
+        return extract(source: source, fileExtension: fileExtension, readStarted: clock.now, clock: clock)
+    }
+
+    /// Runs one parse and attaches what it cost.
+    ///
+    /// Every source is wrapped in `MeteredByteSource` first, which does two things no
+    /// conformance should have to: it counts the reads, so metrics mean the same thing for
+    /// a file and for a network reader, and it latches the first read failure.
+    ///
+    /// The latch is what makes `.readFailure` reachable. Parsers read defensively with
+    /// `try?` because containers legitimately point at ranges that are not there, so a
+    /// thrown transport error would otherwise be indistinguishable from a range past the
+    /// end of the file — and the parse would report a confident "no metadata present" for
+    /// a file it never managed to read. Consumers cache definitive answers, so that is a
+    /// durable wrong answer, not a transient one.
+    private static func extract(
+        source: MediaByteSource,
+        fileExtension: String,
+        readStarted: ContinuousClock.Instant,
+        clock: ContinuousClock
+    ) -> ParsedMetadata {
+        let metered = MeteredByteSource(wrapping: source)
+        defer { metered.close() }
+        var result = parse(source: metered, fileExtension: fileExtension)
+        if let failure = metered.readFailure {
+            result = result.markingReadFailure(failure)
+        }
+        return result.withReadMetrics(
+            result.readMetrics.withSourceReadMetrics(
+                metered.readMetricsSnapshot(),
+                fileSizeBytes: metered.size,
+                elapsedMilliseconds: elapsedMilliseconds(readStarted.duration(to: clock.now))
+            )
+        )
+    }
+
+    private static func openFailureResult(
+        fileExtension: String,
+        error: Error,
+        elapsedMilliseconds: Int
+    ) -> ParsedMetadata {
+        ParsedMetadata(
+            identity: FormatIdentity(
+                family: .unknown,
+                observedExtension: fileExtension,
+                detectedByMagic: false
+            ),
+            findings: [],
+            timestamps: [],
+            diagnostics: [
+                MetadataDiagnostic(
+                    severity: .warning,
+                    code: "readFailed",
+                    message: error.localizedDescription,
+                    parser: "MediaMetadata.FileByteSource",
+                    byteRange: nil
+                ),
+            ],
+            provenance: [
+                ParserProvenance(parser: "MediaMetadata.FileByteSource", status: .failed)
+            ],
+            readMetrics: MediaMetadataReadMetrics(
+                parserName: "MediaMetadata.FileByteSource",
+                fileSizeBytes: 0,
+                elapsedMilliseconds: elapsedMilliseconds
+            )
+        )
+    }
+
+    private static func parse(source: MediaByteSource, fileExtension: String) -> ParsedMetadata {
         guard let magic = try? source.data(offset: 0, length: Int(min(source.size, 12))),
-              !magic.isEmpty else {
+              !magic.isEmpty
+        else {
             return measureParser("MediaMetadata.FormatProbe") {
                 unsupportedResult(
-                    url: url,
+                    fileExtension: fileExtension,
                     code: "truncatedHeader",
                     message: "The file is too short to identify.",
                     parser: "MediaMetadata.FormatProbe"
@@ -73,7 +176,7 @@ public enum MediaMetadataReader {
         guard magic.count >= 4 else {
             return measureParser("MediaMetadata.FormatProbe") {
                 unsupportedResult(
-                    url: url,
+                    fileExtension: fileExtension,
                     code: "truncatedHeader",
                     message: "The file is too short to identify.",
                     parser: "MediaMetadata.FormatProbe"
@@ -82,7 +185,7 @@ public enum MediaMetadataReader {
         }
 
         if isTIFF(magic) {
-            var parser = TIFFMetadataParser(source: source, url: url, baseOffset: 0, family: .tiff)
+            var parser = TIFFMetadataParser(source: source, fileExtension: fileExtension, baseOffset: 0, family: .tiff)
             return measureParser("MediaMetadata.TIFFMetadataParser") {
                 parser.parse()
             }
@@ -94,7 +197,7 @@ public enum MediaMetadataReader {
                     ParsedMetadata(
                         identity: FormatIdentity(
                             family: .jpeg,
-                            observedExtension: url.pathExtension.lowercased(),
+                            observedExtension: fileExtension,
                             detectedByMagic: true
                         ),
                         findings: [],
@@ -114,28 +217,30 @@ public enum MediaMetadataReader {
                     )
                 }
             }
-            var parser = TIFFMetadataParser(source: source, url: url, baseOffset: exifOffset, family: .jpeg)
+            var parser = TIFFMetadataParser(
+                source: source, fileExtension: fileExtension, baseOffset: exifOffset, family: .jpeg
+            )
             return measureParser("MediaMetadata.TIFFMetadataParser") {
                 parser.parse()
             }
         }
 
         if isRIFF(magic) {
-            var parser = RIFFMetadataParser(source: source, url: url)
+            var parser = RIFFMetadataParser(source: source, fileExtension: fileExtension)
             return measureParser("MediaMetadata.RIFFMetadataParser") {
                 parser.parse()
             }
         }
 
         if isISOBMFF(source: source, initialData: magic) {
-            var parser = ISOBMFFMetadataParser(source: source, url: url)
+            var parser = ISOBMFFMetadataParser(source: source, fileExtension: fileExtension)
             return measureParser("MediaMetadata.ISOBMFFMetadataParser") {
                 parser.parse()
             }
         }
 
         if isID3(magic) {
-            var parser = ID3MetadataParser(source: source, url: url)
+            var parser = ID3MetadataParser(source: source, fileExtension: fileExtension)
             return measureParser("MediaMetadata.ID3MetadataParser") {
                 parser.parse()
             }
@@ -143,7 +248,7 @@ public enum MediaMetadataReader {
 
         return measureParser("MediaMetadata.FormatProbe") {
             unsupportedResult(
-                url: url,
+                fileExtension: fileExtension,
                 code: "unsupportedFormat",
                 message: "No metadata parser is registered for this file signature.",
                 parser: "MediaMetadata.FormatProbe"
@@ -184,7 +289,7 @@ public enum MediaMetadataReader {
         return Data(data[0..<4]) == Data("RIFF".utf8)
     }
 
-    private static func isISOBMFF(source: FileByteSource, initialData: Data) -> Bool {
+    private static func isISOBMFF(source: MediaByteSource, initialData: Data) -> Bool {
         guard initialData.count >= 8 else {
             return false
         }
@@ -211,7 +316,7 @@ public enum MediaMetadataReader {
         let end: UInt64
     }
 
-    private static func isoBoxProbe(source: FileByteSource, offset: UInt64, limit: UInt64) -> ISOBoxProbe? {
+    private static func isoBoxProbe(source: MediaByteSource, offset: UInt64, limit: UInt64) -> ISOBoxProbe? {
         guard let headerEnd = adding(offset, 8),
               headerEnd <= limit,
               let header = try? source.data(offset: offset, length: 8),
@@ -260,7 +365,7 @@ public enum MediaMetadataReader {
         data.count >= 3 && Data(data[0..<3]) == Data("ID3".utf8)
     }
 
-    private static func jpegEXIFTIFFOffset(source: FileByteSource) -> UInt64? {
+    private static func jpegEXIFTIFFOffset(source: MediaByteSource) -> UInt64? {
         var offset: UInt64 = 2
         while offset + 4 <= source.size {
             guard let markerData = try? source.data(offset: offset, length: 4),
@@ -292,11 +397,16 @@ public enum MediaMetadataReader {
         return nil
     }
 
-    private static func unsupportedResult(url: URL, code: String, message: String, parser: String) -> ParsedMetadata {
+    private static func unsupportedResult(
+        fileExtension: String,
+        code: String,
+        message: String,
+        parser: String
+    ) -> ParsedMetadata {
         ParsedMetadata(
             identity: FormatIdentity(
                 family: .unknown,
-                observedExtension: url.pathExtension.lowercased(),
+                observedExtension: fileExtension,
                 detectedByMagic: false
             ),
             findings: [],
@@ -332,6 +442,7 @@ struct ParsedMetadata: Equatable, Sendable {
     let provenance: [ParserProvenance]
     let video: RawVideoInfo?
     let readMetrics: MediaMetadataReadMetrics
+    let previews: [RawEmbeddedPreview]
 
     init(
         identity: FormatIdentity,
@@ -342,7 +453,8 @@ struct ParsedMetadata: Equatable, Sendable {
         diagnostics: [MetadataDiagnostic],
         provenance: [ParserProvenance] = [],
         video: RawVideoInfo? = nil,
-        readMetrics: MediaMetadataReadMetrics = .empty
+        readMetrics: MediaMetadataReadMetrics = .empty,
+        previews: [RawEmbeddedPreview] = []
     ) {
         self.identity = identity
         self.findings = findings
@@ -353,6 +465,39 @@ struct ParsedMetadata: Equatable, Sendable {
         self.provenance = provenance
         self.video = video
         self.readMetrics = readMetrics
+        self.previews = previews
+    }
+
+    /// Records that a read failed during this parse, which makes the outcome
+    /// `.readFailure` instead of a definitive answer.
+    ///
+    /// Adds a failed `ParserProvenance` entry rather than a flag, because that is already
+    /// how `ReadOutcome` is derived and a second mechanism answering the same question
+    /// would be one too many. The diagnostic carries the underlying error so a consumer
+    /// can tell a disconnected device from a truncated file without inspecting types.
+    func markingReadFailure(_ error: Error) -> ParsedMetadata {
+        ParsedMetadata(
+            identity: identity,
+            findings: findings,
+            timestamps: timestamps,
+            locations: locations,
+            camera: camera,
+            diagnostics: diagnostics + [
+                MetadataDiagnostic(
+                    severity: .warning,
+                    code: "sourceReadFailed",
+                    message: String(describing: error),
+                    parser: "MediaMetadata.MediaByteSource",
+                    byteRange: nil
+                ),
+            ],
+            provenance: provenance + [
+                ParserProvenance(parser: "MediaMetadata.MediaByteSource", status: .failed),
+            ],
+            video: video,
+            readMetrics: readMetrics,
+            previews: previews
+        )
     }
 
     func withReadMetrics(_ readMetrics: MediaMetadataReadMetrics) -> ParsedMetadata {
@@ -365,7 +510,8 @@ struct ParsedMetadata: Equatable, Sendable {
             diagnostics: diagnostics,
             provenance: provenance,
             video: video,
-            readMetrics: readMetrics
+            readMetrics: readMetrics,
+            previews: previews
         )
     }
 }
@@ -735,4 +881,17 @@ struct MetadataDiagnostic: Equatable, Sendable {
         self.parser = parser
         self.byteRange = byteRange
     }
+}
+
+
+/// An embedded image a container declares, verified to start with its codec's marker.
+///
+/// Internal evidence; ``EmbeddedPreview`` is the public projection.
+struct RawEmbeddedPreview: Equatable, Sendable {
+    let byteOffset: UInt64
+    let byteLength: Int
+    let pixelWidth: Int?
+    let pixelHeight: Int?
+    let encoding: String
+    let sourcePath: String
 }
