@@ -26,11 +26,17 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.4.1"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.5.0"),
 ]
 ```
 
 Then add `MediaMetadata` to your target's dependencies.
+
+### Requirements
+
+Swift 6 language mode. The package is value types and synchronous parsing, so strict
+concurrency costs it nothing — and it means the execution contract above is checked by the
+compiler rather than promised in prose.
 
 ### Platforms
 
@@ -91,10 +97,21 @@ getting this wrong writes a wrong answer that is never revisited.
 
 ### Making remote reads affordable
 
-A parse issues many small reads clustered in one or two regions — measured on a
-991-file corpus: 138 reads totalling 1,533 bytes inside a single 100 KB region for
-HEIF, 21 reads totalling 1,155 bytes inside 44 KB for TIFF. Free on a local file; on a
-transport with 40 ms latency that is ~5.9 s per file. Wrap the source:
+A parse is directed but fine-grained: it reads a container's index, then reads individual
+fields inside it. Measured on a 991-file corpus, that is 138 reads totalling 1,533 bytes
+inside a single 100 KB region for HEIF, and 21 reads for 1,155 bytes inside 44 KB for TIFF.
+
+**The package now buffers that internally**, so those collapse into one or two reads of your
+source without you doing anything. `readCost` reports both numbers:
+
+```swift
+result.readCost.readOperationCount   // what the parsers asked for
+result.readCost.transportReadCount   // what your source was actually asked to do
+```
+
+A large gap means the buffering is working. A ratio near 1 on a remote source means the
+container's metadata is genuinely far apart, and that is the case for adding a second,
+larger buffer sized to your own round-trip cost:
 
 ```swift
 let cached = CachingByteSource(wrapping: mySlowSource, chunkSize: 128 * 1024)
@@ -102,8 +119,8 @@ let result = MediaMetadataReader.read(source: cached, filenameHint: name)
 ```
 
 The chunk size is yours — it depends on latency and per-request overhead this package
-cannot see. `result.readCost` is how you check the cache is actually working. Local
-files need none of this; `FileByteSource` already sits on the page cache.
+cannot see. Local files need none of this; the internal buffer plus the page cache already
+make them cheap.
 
 ### Embedded previews
 

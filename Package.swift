@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -18,6 +18,9 @@ let package = Package(
         ),
     ],
     targets: [
+        // Swift 6 language mode. The package is value types and synchronous parsing, so
+        // strict concurrency costs nothing here — but it is what makes the execution
+        // contract compiler-checked for consumers rather than a convention in the README.
         .target(name: "MediaMetadata"),
         .testTarget(
             name: "MediaMetadataTests",

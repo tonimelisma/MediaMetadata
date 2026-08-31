@@ -174,15 +174,52 @@ final class MediaByteSourceTests: XCTestCase {
         XCTAssertEqual(clean.outcome, .parsed)
         XCTAssertNotNil(clean.timestamps.original, "the fixture must have a date for this test to mean anything")
 
-        // Fail at every read index the clean parse used. Every one must be transient:
-        // a definitive answer here would tell a consumer the file has no capture date,
-        // and consumers cache definitive answers.
-        for failAt in 0 ..< clean.readCost.readOperationCount {
+        // Fail at every read the *transport* is asked for, not every read the parser
+        // issues. Those numbers differ now that the package coalesces internally — the
+        // parser's many small reads are served from a few fetches — and it is the transport
+        // reads that can actually fail. Every one must still be transient: a definitive
+        // answer would tell a consumer this file has no capture date, and consumers cache
+        // definitive answers.
+        XCTAssertGreaterThan(clean.readCost.transportReadCount, 0)
+        for failAt in 0 ..< clean.readCost.transportReadCount {
             let result = MediaMetadataReader.read(
                 source: FailingByteSource(bytes: bytes, failAtRead: failAt), filenameHint: "a.arw"
             )
-            XCTAssertEqual(result.outcome, .readFailure, "failing at read \(failAt) must be transient")
-            XCTAssertTrue(result.outcome.shouldRetry, "failing at read \(failAt) must be retryable")
+            XCTAssertEqual(result.outcome, .readFailure, "failing at transport read \(failAt) must be transient")
+            XCTAssertTrue(result.outcome.shouldRetry, "failing at transport read \(failAt) must be retryable")
+        }
+    }
+
+    /// The failure guarantee, across every container family rather than just TIFF.
+    ///
+    /// This is the guard on the smell that makes it work at all: every read site in the
+    /// parsers uses `try?`, correctly, because containers do point at ranges that are not
+    /// there. That means a new parser is absence-shaped by default, and only the latch above
+    /// it makes a transport fault distinguishable. Asserting it per family is what would
+    /// catch a parser that ever read around the metered source.
+    func testEveryContainerFamilyReportsATransportFailureAsTransient() {
+        let families: [(name: String, hint: String, bytes: Data)] = [
+            ("tiff", "a.arw", Self.tiffFixture()),
+            ("jpeg", "a.jpg", Self.jpegFixture()),
+            ("isoBMFF", "a.mp4", Self.isoBMFFFixture()),
+            ("riff", "a.avi", Self.riffFixture()),
+        ]
+
+        for family in families {
+            let clean = MediaMetadataReader.read(
+                source: PatternedByteSource(bytes: family.bytes, pattern: .exact),
+                filenameHint: family.hint
+            )
+            XCTAssertNotEqual(clean.outcome, .readFailure, "\(family.name) fixture must parse cleanly")
+
+            let failed = MediaMetadataReader.read(
+                source: FailingByteSource(bytes: family.bytes, failAtRead: 0),
+                filenameHint: family.hint
+            )
+            XCTAssertEqual(
+                failed.outcome, .readFailure,
+                "\(family.name): a transport failure must never be reported as definitive"
+            )
         }
     }
 
@@ -226,6 +263,41 @@ final class MediaByteSourceTests: XCTestCase {
 
         XCTAssertEqual(result.outcome, .unsupported)
         XCTAssertTrue(result.outcome.isDefinitive)
+    }
+
+    // MARK: - Internal coalescing
+
+    /// The package's read pattern is fine-grained by nature — an index, then fields inside
+    /// it. That is free on a local file and is the entire cost on anything remote, so the
+    /// buffer is now internal rather than something every remote consumer reinvents.
+    func testAParseCollapsesManySmallReadsIntoFewTransportReads() {
+        let counting = CountingByteSource(bytes: Self.tiffFixture())
+        let result = MediaMetadataReader.read(source: counting, filenameHint: "a.arw")
+
+        XCTAssertGreaterThan(result.readCost.readOperationCount, 1, "a directed parse issues many small reads")
+        XCTAssertLessThanOrEqual(
+            result.readCost.transportReadCount, 2,
+            "those reads must collapse into one or two fetches without the consumer doing anything"
+        )
+        XCTAssertEqual(result.readCost.transportReadCount, counting.upstreamReads)
+    }
+
+    /// Coalescing must not change answers. This is the same invariant R8 asserts across
+    /// consumer-supplied chunk sizes, now also across the buffer the package added itself.
+    func testInternalCoalescingDoesNotChangeResults() {
+        let bytes = Self.tiffFixture()
+        let direct = MediaMetadataReader.read(
+            source: PatternedByteSource(bytes: bytes, pattern: .exact), filenameHint: "a.arw"
+        )
+        let throughConsumerCache = MediaMetadataReader.read(
+            source: CachingByteSource(
+                wrapping: PatternedByteSource(bytes: bytes, pattern: .exact), chunkSize: 7
+            ),
+            filenameHint: "a.arw"
+        )
+
+        XCTAssertEqual(direct.timestamps, throughConsumerCache.timestamps)
+        XCTAssertEqual(direct.outcome, throughConsumerCache.outcome)
     }
 
     // MARK: - R5: cost is reported for any source, not just files
@@ -406,6 +478,60 @@ final class MediaByteSourceTests: XCTestCase {
 
         data.append(preview)
         return data
+    }
+
+    /// JPEG with an APP1/Exif segment wrapping the same TIFF block.
+    private static func jpegFixture() -> Data {
+        let tiff = tiffFixture()
+        var data = Data([0xFF, 0xD8])
+        let payload = Data([0x45, 0x78, 0x69, 0x66, 0x00, 0x00]) + tiff
+        let length = UInt16(payload.count + 2)
+        data.append(contentsOf: [0xFF, 0xE1, UInt8(length >> 8), UInt8(length & 0xFF)])
+        data.append(payload)
+        data.append(contentsOf: [0xFF, 0xD9])
+        return data
+    }
+
+    /// ISO-BMFF with an `ftyp` and a minimal `moov`/`mvhd`.
+    private static func isoBMFFFixture() -> Data {
+        var mvhd = Data([0, 0, 0, 0])
+        mvhd.append(uint32BE(0))
+        mvhd.append(uint32BE(0))
+        mvhd.append(uint32BE(600))
+        mvhd.append(uint32BE(6_000))
+        mvhd.append(Data(repeating: 0, count: 80))
+        return box("ftyp", payload: Data("isom".utf8) + uint32BE(512) + Data("isom".utf8))
+            + box("moov", payload: box("mvhd", payload: mvhd))
+    }
+
+    /// RIFF/AVI with a `hdrl` list and an `avih` chunk.
+    private static func riffFixture() -> Data {
+        var avih = uint32LE(33_333)
+        avih.append(Data(repeating: 0, count: 52))
+        let hdrl = Data("hdrl".utf8) + riffChunk("avih", payload: avih)
+        let body = Data("AVI ".utf8) + riffChunk("LIST", payload: hdrl)
+        return Data("RIFF".utf8) + uint32LE(UInt32(body.count)) + body
+    }
+
+    private static func box(_ type: String, payload: Data) -> Data {
+        uint32BE(UInt32(payload.count + 8)) + Data(type.utf8) + payload
+    }
+
+    private static func riffChunk(_ id: String, payload: Data) -> Data {
+        Data(id.utf8) + uint32LE(UInt32(payload.count)) + payload
+    }
+
+    private static func uint32BE(_ value: UInt32) -> Data {
+        Data([
+            UInt8((value >> 24) & 0xFF),
+            UInt8((value >> 16) & 0xFF),
+            UInt8((value >> 8) & 0xFF),
+            UInt8(value & 0xFF),
+        ])
+    }
+
+    private static func uint32LE(_ value: UInt32) -> Data {
+        uint32(value)
     }
 
     private static func entry(tag: UInt16, type: UInt16, count: UInt32, value: UInt32) -> Data {

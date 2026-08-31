@@ -58,7 +58,20 @@ public struct MediaMetadataResult: Equatable, Sendable {
 /// file, a network reader, or a test double.
 public struct ReadCost: Equatable, Sendable {
     /// Range reads the parser issued.
+    ///
+    /// A directed parse is fine-grained — it reads an index, then individual fields inside
+    /// it — so this is normally in the tens or low hundreds even when the bytes touched
+    /// total a couple of kilobytes.
     public let readOperationCount: Int
+
+    /// Reads that actually reached your source, after the package's internal buffering.
+    ///
+    /// The number that matters on a transport where a read costs a round trip. Compare it
+    /// with ``readOperationCount``: a large gap means the buffering is doing its job, and a
+    /// ratio near 1 on a remote source means it is not — usually because the container's
+    /// metadata is scattered far apart, which is the case for wrapping the source in a
+    /// ``CachingByteSource`` with a chunk size matched to your own latency.
+    public let transportReadCount: Int
     /// Reads that returned nothing — a range past the end, or a failure.
     public let failedReadOperationCount: Int
     /// Bytes asked for across every read.
@@ -80,6 +93,7 @@ public struct ReadCost: Equatable, Sendable {
 
     public init(
         readOperationCount: Int = 0,
+        transportReadCount: Int = 0,
         failedReadOperationCount: Int = 0,
         bytesRequested: UInt64 = 0,
         bytesRead: UInt64 = 0,
@@ -90,6 +104,7 @@ public struct ReadCost: Equatable, Sendable {
         readWholeResource: Bool = false
     ) {
         self.readOperationCount = readOperationCount
+        self.transportReadCount = transportReadCount
         self.failedReadOperationCount = failedReadOperationCount
         self.bytesRequested = bytesRequested
         self.bytesRead = bytesRead
@@ -600,6 +615,7 @@ extension ReadCost {
     init(_ metrics: MediaMetadataReadMetrics) {
         self.init(
             readOperationCount: metrics.readOperationCount,
+            transportReadCount: metrics.transportReadCount,
             failedReadOperationCount: metrics.failedReadOperationCount,
             bytesRequested: metrics.byteRequestedCount,
             bytesRead: metrics.byteReadCount,

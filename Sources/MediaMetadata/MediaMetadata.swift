@@ -63,6 +63,15 @@ public enum MediaMetadataReader {
 
     /// Lower-cased extension from a filename hint. `nil`, a bare name, or an empty hint all
     /// yield an empty string, which is what the result reports as "no extension observed".
+    /// How much the internal buffer fetches per miss.
+    ///
+    /// Sized to the region a still-image parse touches — measured at ~44 KB for TIFF and
+    /// ~101 KB for HEIF — so a typical parse collapses to one or two transport reads. It is
+    /// not a substitute for a consumer-side `CachingByteSource` on a high-latency transport,
+    /// where a larger chunk sized to that transport's round-trip cost still pays; it is the
+    /// floor below which no consumer should have to think about this at all.
+    static let internalCoalesceChunkSize = 128 * 1024
+
     private static func normalizedExtension(_ hint: String?) -> String {
         guard let hint, !hint.isEmpty else {
             return ""
@@ -112,7 +121,22 @@ public enum MediaMetadataReader {
         readStarted: ContinuousClock.Instant,
         clock: ContinuousClock
     ) -> ParsedMetadata {
-        let metered = MeteredByteSource(wrapping: source)
+        // Layered so each level answers one question, and so the scattered-read pattern is
+        // paid for once here rather than by every consumer that has to work around it.
+        //
+        // A parse is directed but *fine-grained*: it reads a container's index, then reads
+        // individual fields inside it — 138 reads totalling 1,533 bytes inside a single
+        // 100 KB region for HEIF, 21 reads for 1,155 bytes for TIFF. On a local file the
+        // page cache hides that. On anything remote it is the entire cost, and leaving it
+        // to consumers meant every remote consumer reinventing the same buffer.
+        //
+        // Bottom to top: the transport, a counter for what the transport was actually made
+        // to do, a coalescing buffer, and a counter for what the parsers asked. Both counts
+        // reach `ReadCost`, so "is the buffering working" is a number rather than an
+        // inference.
+        let transport = TransportCountingByteSource(wrapping: source)
+        let coalesced = CachingByteSource(wrapping: transport, chunkSize: internalCoalesceChunkSize)
+        let metered = MeteredByteSource(wrapping: coalesced)
         defer { metered.close() }
         var result = parse(source: metered, fileExtension: fileExtension)
         if let failure = metered.readFailure {
@@ -120,7 +144,7 @@ public enum MediaMetadataReader {
         }
         return result.withReadMetrics(
             result.readMetrics.withSourceReadMetrics(
-                metered.readMetricsSnapshot(),
+                metered.readMetricsSnapshot(transportReadCount: transport.transportReadCount),
                 fileSizeBytes: metered.size,
                 elapsedMilliseconds: elapsedMilliseconds(readStarted.duration(to: clock.now))
             )
@@ -532,6 +556,7 @@ struct RawVideoInfo: Equatable, Sendable {
 struct MediaMetadataReadMetrics: Equatable, Sendable {
     struct SourceReadMetrics: Equatable, Sendable {
         let readOperationCount: Int
+        let transportReadCount: Int
         let failedReadOperationCount: Int
         let byteRequestedCount: UInt64
         let byteReadCount: UInt64
@@ -541,6 +566,7 @@ struct MediaMetadataReadMetrics: Equatable, Sendable {
 
         init(
             readOperationCount: Int = 0,
+            transportReadCount: Int = 0,
             failedReadOperationCount: Int = 0,
             byteRequestedCount: UInt64 = 0,
             byteReadCount: UInt64 = 0,
@@ -549,6 +575,7 @@ struct MediaMetadataReadMetrics: Equatable, Sendable {
             highestReadEndOffset: UInt64 = 0
         ) {
             self.readOperationCount = readOperationCount
+            self.transportReadCount = transportReadCount
             self.failedReadOperationCount = failedReadOperationCount
             self.byteRequestedCount = byteRequestedCount
             self.byteReadCount = byteReadCount
@@ -565,6 +592,7 @@ struct MediaMetadataReadMetrics: Equatable, Sendable {
     let fileSizeBytes: UInt64
     let elapsedMilliseconds: Int
     let readOperationCount: Int
+    let transportReadCount: Int
     let failedReadOperationCount: Int
     let byteRequestedCount: UInt64
     let byteReadCount: UInt64
@@ -580,6 +608,7 @@ struct MediaMetadataReadMetrics: Equatable, Sendable {
         fileSizeBytes: UInt64 = 0,
         elapsedMilliseconds: Int = 0,
         readOperationCount: Int = 0,
+        transportReadCount: Int = 0,
         failedReadOperationCount: Int = 0,
         byteRequestedCount: UInt64 = 0,
         byteReadCount: UInt64 = 0,
@@ -592,6 +621,7 @@ struct MediaMetadataReadMetrics: Equatable, Sendable {
         self.fileSizeBytes = fileSizeBytes
         self.elapsedMilliseconds = elapsedMilliseconds
         self.readOperationCount = readOperationCount
+        self.transportReadCount = transportReadCount
         self.failedReadOperationCount = failedReadOperationCount
         self.byteRequestedCount = byteRequestedCount
         self.byteReadCount = byteReadCount
@@ -613,6 +643,7 @@ struct MediaMetadataReadMetrics: Equatable, Sendable {
             fileSizeBytes: fileSizeBytes,
             elapsedMilliseconds: elapsedMilliseconds,
             readOperationCount: sourceMetrics.readOperationCount,
+            transportReadCount: sourceMetrics.transportReadCount,
             failedReadOperationCount: sourceMetrics.failedReadOperationCount,
             byteRequestedCount: sourceMetrics.byteRequestedCount,
             byteReadCount: sourceMetrics.byteReadCount,

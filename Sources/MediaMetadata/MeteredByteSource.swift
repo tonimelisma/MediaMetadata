@@ -70,9 +70,14 @@ final class MeteredByteSource: MediaByteSource {
         upstream.close()
     }
 
-    func readMetricsSnapshot() -> MediaMetadataReadMetrics.SourceReadMetrics {
+    /// - Parameter transportReadCount: reads that reached the underlying source, counted
+    ///   below the coalescing buffer. Passed in rather than measured here because this
+    ///   decorator deliberately sits *above* the buffer, where it can only see what the
+    ///   parsers asked for.
+    func readMetricsSnapshot(transportReadCount: Int) -> MediaMetadataReadMetrics.SourceReadMetrics {
         MediaMetadataReadMetrics.SourceReadMetrics(
             readOperationCount: readOperationCount,
+            transportReadCount: transportReadCount,
             failedReadOperationCount: failedReadOperationCount,
             byteRequestedCount: byteRequestedCount,
             byteReadCount: byteReadCount,
