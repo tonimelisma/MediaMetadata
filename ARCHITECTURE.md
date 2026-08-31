@@ -72,11 +72,17 @@ consumer happens to be asking first.
 
 **Caching is the package's, sizing is the consumer's.** A parse may issue many small reads
 inside one region — measured at 138 reads over 1.5 KB for HEIF. That pattern is the
-package's own, so mitigating it is the package's job: coalesce reads internally, and offer
-an aligned read-through `CachingByteSource` decorator. But the *chunk size* depends on
-transport latency the package cannot see, so it is a parameter the consumer supplies. Owning
-the mechanism and not the number is the correct split; refusing the mechanism would make
-every remote consumer reinvent it.
+package's own, so mitigating it is the package's job, and it does so on both levels: an
+internal buffer collapses a parse into one or two reads of whatever source it was given,
+and `CachingByteSource` is offered for consumers whose transport wants a larger chunk than
+the internal one. But the *chunk size* depends on transport latency the package cannot see,
+so that is a parameter the consumer supplies.
+
+Owning the mechanism and not the number is the correct split. Refusing the mechanism — which
+an earlier draft did, on the grounds that sizing is a transport concern — would have made
+every remote consumer reinvent a buffer for a read pattern they did not choose. `ReadCost`
+reports both counts so the split stays honest: what the parsers asked for, and what the
+source was actually made to do.
 
 **Embedded previews are located here and decoded there.** Finding a RAW file's embedded
 JPEG means walking the IFD chain — squarely this package's competence, and duplicated in
@@ -244,6 +250,9 @@ small examples that would be hard to obtain from real cameras.
 - Require tests for every promoted timestamp authority.
 - Runtime timestamp selection must use package evidence or filesystem mtime
   authority only.
+- **Swift 6 language mode.** The package is value types and synchronous parsing, so strict
+  concurrency costs nothing here — and it makes the execution contract compiler-checked for
+  consumers rather than a convention stated in prose.
 - **The core target imports `Foundation` and nothing else.** No graphics,
   media, or UI framework; no third-party dependency. This is the constraint
   that keeps the package usable on Linux, in a CLI, on a server, and in tests
