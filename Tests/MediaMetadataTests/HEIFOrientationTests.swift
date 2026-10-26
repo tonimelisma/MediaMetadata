@@ -150,6 +150,82 @@ final class HEIFOrientationTests: XCTestCase {
         XCTAssertEqual(result.camera?.orientation, .left)
     }
 
+    // MARK: - Stored dimensions from ispe
+
+    func testPrimaryIspeProvidesStoredDimensionsWithoutExif() throws {
+        // A HEIF with no embedded Exif still has stored dimensions in the primary ispe.
+        let fixture = heifFixture(
+            majorBrand: "heic",
+            properties: [ispeBox(width: 6192, height: 4128)],
+            primaryAssociations: [1],
+            exif: nil
+        )
+        let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
+
+        XCTAssertEqual(result.camera?.pixelWidth, 6192)
+        XCTAssertEqual(result.camera?.pixelHeight, 4128)
+    }
+
+    func testAVIFIspeProvidesStoredDimensions() throws {
+        let fixture = heifFixture(
+            majorBrand: "avif",
+            properties: [ispeBox(width: 1920, height: 1080)],
+            primaryAssociations: [1],
+            exif: nil
+        )
+        let result = MediaMetadataReader.read(url: try write(fixture, extension: "avif"))
+
+        XCTAssertEqual(result.camera?.pixelWidth, 1920)
+        XCTAssertEqual(result.camera?.pixelHeight, 1080)
+    }
+
+    func testIspeOnNonPrimaryItemIsIgnored() throws {
+        // ispe at property index 1 is associated only with item 2; the primary (item 1)
+        // has no properties, so no stored dimensions are reported.
+        let fixture = heifFixture(
+            majorBrand: "heic",
+            primaryItemID: 1,
+            properties: [ispeBox(width: 640, height: 480)],
+            associations: [(1, []), (2, [1])],
+            exif: nil
+        )
+        let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
+
+        XCTAssertNil(result.camera?.pixelWidth)
+        XCTAssertNil(result.camera?.pixelHeight)
+    }
+
+    func testRotatedHeifWithoutExifHasOrientationAndStoredDimensions() throws {
+        // The Sony ILCE-6700 shape: irot but no Exif Orientation. Orientation comes from
+        // the transform; dimensions come from ispe, kept as stored (unrotated).
+        let fixture = heifFixture(
+            majorBrand: "heic",
+            properties: [ispeBox(width: 6192, height: 4128), irotBox(angle: 3)],
+            primaryAssociations: [1, 2],
+            exif: nil
+        )
+        let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
+
+        XCTAssertEqual(result.camera?.orientation, .right)
+        XCTAssertEqual(result.camera?.pixelWidth, 6192)
+        XCTAssertEqual(result.camera?.pixelHeight, 4128)
+    }
+
+    func testExifPixelDimensionsPreferredOverIspe() throws {
+        // When both are present the Exif PixelXDimension wins, so files with embedded Exif
+        // are unchanged; ispe only fills the gap when Exif carries no dimensions.
+        let fixture = heifFixture(
+            majorBrand: "heic",
+            properties: [ispeBox(width: 100, height: 200)],
+            primaryAssociations: [1],
+            exif: ExifImage(orientation: 1, make: "ACME", pixelDimensions: (4032, 3024))
+        )
+        let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
+
+        XCTAssertEqual(result.camera?.pixelWidth, 4032)
+        XCTAssertEqual(result.camera?.pixelHeight, 3024)
+    }
+
     // MARK: - Fixture assembly
 
     /// Asserts the orientation for a primary item that carries exactly the given
@@ -175,6 +251,7 @@ final class HEIFOrientationTests: XCTestCase {
     private struct ExifImage {
         let orientation: UInt16
         let make: String
+        var pixelDimensions: (width: UInt32, height: UInt32)? = nil
     }
 
     /// Builds a minimal HEIF/AVIF file: `ftyp`, then `meta` holding `pitm`, the property
@@ -197,7 +274,9 @@ final class HEIFOrientationTests: XCTestCase {
         let iprp = box("iprp", payload: ipco + ipma)
 
         let ftyp = ftypBox(majorBrand: majorBrand)
-        let exifPayload = exif.map { exifItemPayload(orientation: $0.orientation, make: $0.make) }
+        let exifPayload = exif.map {
+            exifItemPayload(orientation: $0.orientation, make: $0.make, pixelDimensions: $0.pixelDimensions)
+        }
 
         func assembleMeta(exifBaseOffset: UInt64) -> Data {
             var children = [pitmBox(itemID: primaryItemID)]
@@ -310,19 +389,39 @@ final class HEIFOrientationTests: XCTestCase {
         return box("iloc", payload: payload)
     }
 
-    /// `Exif\0\0` prefix plus a little-endian TIFF carrying an Orientation tag (and Make).
-    private func exifItemPayload(orientation: UInt16, make: String) -> Data {
+    /// `Exif\0\0` prefix plus a little-endian TIFF carrying an Orientation tag and Make,
+    /// and — when `pixelDimensions` is set — an Exif sub-IFD with PixelX/YDimension.
+    private func exifItemPayload(
+        orientation: UInt16,
+        make: String,
+        pixelDimensions: (width: UInt32, height: UInt32)? = nil
+    ) -> Data {
+        let makeBytes = Data((make + "\u{0}").utf8)
+        let hasDimensions = pixelDimensions != nil
+        // Offsets are computed in Int (concrete type) to keep the Linux 6.0 type-checker
+        // fast. ifd0 holds Make + Orientation, plus an Exif-IFD pointer when dimensions
+        // are present; the Exif sub-IFD (2 entries) then precedes the Make string.
+        let ifd0EntryCount: Int = hasDimensions ? 3 : 2
+        let afterIFD0: Int = 8 + 2 + 12 * ifd0EntryCount + 4
+        let exifIFDSize: Int = 2 + 12 * 2 + 4
+        let makeOffset: Int = hasDimensions ? afterIFD0 + exifIFDSize : afterIFD0
+
         var tiff = Data("II".utf8)
         tiff.append(littleEndianUInt16(42))
         tiff.append(littleEndianUInt32(8))
-        let makeBytes = Data((make + "\u{0}").utf8)
-        // TIFF start → make string: ifd0 at 8, then entryCount (2) + 2 entries (24) +
-        // next-IFD offset (4). A literal keeps the Linux 6.0 type-checker fast here.
-        let makeOffset: UInt32 = 38
-        tiff.append(littleEndianUInt16(2))
+        tiff.append(littleEndianUInt16(UInt16(ifd0EntryCount)))
+        tiff.append(tiffEntry(tag: 0x010F, type: 2, count: UInt32(makeBytes.count), value: UInt32(makeOffset)))
         tiff.append(tiffEntry(tag: 0x0112, type: 3, count: 1, value: UInt32(orientation)))
-        tiff.append(tiffEntry(tag: 0x010F, type: 2, count: UInt32(makeBytes.count), value: makeOffset))
+        if hasDimensions {
+            tiff.append(tiffEntry(tag: 0x8769, type: 4, count: 1, value: UInt32(afterIFD0)))
+        }
         tiff.append(littleEndianUInt32(0))
+        if let dimensions = pixelDimensions {
+            tiff.append(littleEndianUInt16(2))
+            tiff.append(tiffEntry(tag: 0xA002, type: 4, count: 1, value: dimensions.width))
+            tiff.append(tiffEntry(tag: 0xA003, type: 4, count: 1, value: dimensions.height))
+            tiff.append(littleEndianUInt32(0))
+        }
         tiff.append(makeBytes)
 
         var payload = Data("Exif".utf8)
