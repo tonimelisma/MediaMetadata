@@ -31,11 +31,15 @@ public enum MediaMetadataReader {
     /// | isoBMFF | 1 | track-matrix orientation, structural kind (0.7.0) |
     /// | isoBMFF | 2 | Canon CR3 is a still, not a movie (0.7.1) |
     /// | unknown | 1 | Fujifilm RAF, Olympus ORF, Panasonic RW2 recognised as stills (0.7.1) |
+    /// | unknown | 2 | PNG, WebP and GIF read as families of their own (0.8.0) |
+    /// | png | 0 | New family (0.8.0) |
+    /// | webp | 0 | New family (0.8.0) |
+    /// | gif | 0 | New family (0.8.0) |
     public static func extractionRevision(for family: MediaFormat.Family) -> Int {
         switch family {
-        case .heif, .unknown: 1
-        case .isoBMFF: 2
-        case .tiff, .jpeg, .riffAVI, .riffWAV, .id3: 0
+        case .heif: 1
+        case .isoBMFF, .unknown: 2
+        case .tiff, .jpeg, .png, .webp, .gif, .riffAVI, .riffWAV, .id3: 0
         }
     }
 
@@ -84,6 +88,10 @@ public enum MediaMetadataReader {
     /// transport is returning the file it was asked for before spending a full parse on
     /// it — a range-capable device that answers with the wrong bytes is otherwise
     /// indistinguishable from a file with no metadata.
+    ///
+    /// A RIFF file is identified by its form type, as a full parse does: `AVI `, `WAVE` and
+    /// `WEBP` each name their family, and any other form type is
+    /// ``MediaFormat/Family/unknown``.
     public static func identify(source: MediaByteSource, filenameHint: String? = nil) -> MediaFormat {
         let fileExtension = normalizedExtension(filenameHint)
         guard let magic = try? source.data(offset: 0, length: Int(min(source.size, 12))),
@@ -95,8 +103,12 @@ public enum MediaMetadataReader {
             .tiff
         } else if isJPEG(magic) {
             .jpeg
-        } else if isRIFF(magic) {
-            .riffAVI
+        } else if isPNG(magic) {
+            .png
+        } else if isGIF(magic) {
+            .gif
+        } else if let formType = riffFormType(magic) {
+            MediaFormat.Family(rawValue: FormatIdentity.Family(riffFormType: formType).rawValue) ?? .unknown
         } else if isISOBMFF(source: source, initialData: magic) {
             .isoBMFF
         } else if isID3(magic) {
@@ -113,18 +125,29 @@ public enum MediaMetadataReader {
     }
 
     /// The type twelve bytes can prove, and nothing more: a TIFF might be an ARW until its
-    /// IFD0 is read, and RIFF and ISO BMFF headers do not say what they hold.
+    /// IFD0 is read, and an ISO BMFF header does not say what it holds. A RIFF form type
+    /// does, so AVI, WAV and WebP are named here.
     private static func identifiedFileType(family: MediaFormat.Family, magic: Data) -> MediaFileType? {
         switch family {
         case .jpeg:
             return .jpeg
+        case .png:
+            return .png
+        case .webp:
+            return .webp
+        case .gif:
+            return .gif
+        case .riffAVI:
+            return .avi
+        case .riffWAV:
+            return .wav
         case .id3:
             return .mp3
         case .tiff:
             return magic.count >= 11 && Data(magic[8..<11]) == Data([0x43, 0x52, 0x02]) ? .cr2 : nil
         case .unknown:
             return unparsedRawFileType(magic).flatMap(MediaFileType.init(rawValue:))
-        case .heif, .isoBMFF, .riffAVI, .riffWAV:
+        case .heif, .isoBMFF:
             return nil
         }
     }
@@ -317,7 +340,28 @@ public enum MediaMetadataReader {
             }
         }
 
-        if isRIFF(magic) {
+        if isPNG(magic) {
+            var parser = PNGMetadataParser(source: source, fileExtension: fileExtension)
+            return measureParser(pngParserName) {
+                parser.parse()
+            }
+        }
+
+        if isGIF(magic) {
+            let parser = GIFMetadataParser(source: source, fileExtension: fileExtension)
+            return measureParser(gifParserName) {
+                parser.parse()
+            }
+        }
+
+        if let formType = riffFormType(magic) {
+            // WebP is RIFF too; its form type sends it to its own parser, never the AVI path.
+            if FormatIdentity.Family(riffFormType: formType) == .webp {
+                var parser = WebPMetadataParser(source: source, fileExtension: fileExtension)
+                return measureParser(webPParserName) {
+                    parser.parse()
+                }
+            }
             var parser = RIFFMetadataParser(source: source, fileExtension: fileExtension)
             return measureParser("MediaMetadata.RIFFMetadataParser") {
                 parser.parse()
@@ -400,11 +444,25 @@ public enum MediaMetadataReader {
         data.count >= 2 && data[0] == 0xFF && data[1] == 0xD8
     }
 
-    private static func isRIFF(_ data: Data) -> Bool {
-        guard data.count >= 12 else {
+    private static func isPNG(_ data: Data) -> Bool {
+        data.count >= 8 && Data(data.prefix(8)) == pngSignature
+    }
+
+    private static func isGIF(_ data: Data) -> Bool {
+        guard data.count >= 6 else {
             return false
         }
-        return Data(data[0..<4]) == Data("RIFF".utf8)
+        let header = Data(data.prefix(6))
+        return header == Data("GIF87a".utf8) || header == Data("GIF89a".utf8)
+    }
+
+    /// The four-character form type at bytes 8–11 of a RIFF file (`AVI `, `WAVE`, `WEBP`),
+    /// or `nil` when the bytes are not a RIFF header.
+    private static func riffFormType(_ data: Data) -> String? {
+        guard data.count >= 12, Data(data.prefix(4)) == Data("RIFF".utf8) else {
+            return nil
+        }
+        return String(data: Data(data[data.startIndex + 8 ..< data.startIndex + 12]), encoding: .isoLatin1)
     }
 
     private static func isISOBMFF(source: MediaByteSource, initialData: Data) -> Bool {
@@ -764,6 +822,9 @@ struct FormatIdentity: Equatable, Sendable {
         case tiff
         case jpeg
         case heif
+        case png
+        case webp
+        case gif
         case isoBMFF
         case riffAVI
         case riffWAV

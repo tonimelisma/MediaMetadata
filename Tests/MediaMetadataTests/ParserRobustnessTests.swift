@@ -61,6 +61,33 @@ final class ParserRobustnessTests: XCTestCase {
         }
     }
 
+    func testMutatedAndTruncatedStillImagesNeverCrashParsers() {
+        var rng = SplitMix64(seed: 0x9E3_79B9_7F4A_7C15)
+        let exif = StillImageFixtures.standardExif()
+        let seeds: [(String, Data)] = [
+            ("png", StillImageFixtures.png(width: 64, height: 48, exif: exif)),
+            ("png", StillImageFixtures.png(width: 64, height: 48, exif: StillImageFixtures.exifPrefix + exif)),
+            ("webp", StillImageFixtures.webpExtended(width: 64, height: 48, exif: exif)),
+            ("webp", StillImageFixtures.webpLossy(width: 64, height: 48)),
+            ("webp", StillImageFixtures.webpLossless(width: 64, height: 48)),
+            ("gif", StillImageFixtures.gif(width: 64, height: 48)),
+        ]
+        for (fileExtension, seed) in seeds {
+            for _ in 0..<500 {
+                var bytes = seed
+                // Leave the signature intact half the time so the mutation reaches the parser.
+                let firstMutable = Bool.random(using: &rng) ? min(12, bytes.count - 1) : 0
+                for _ in 0..<Int.random(in: 1...24, using: &rng) {
+                    bytes[Int.random(in: firstMutable..<bytes.count, using: &rng)] = UInt8.random(in: .min ... .max, using: &rng)
+                }
+                if Bool.random(using: &rng) {
+                    bytes = bytes.prefix(Int.random(in: 0..<bytes.count, using: &rng))
+                }
+                assertParseIsSafe(bytes, fileExtension: fileExtension, rng: rng)
+            }
+        }
+    }
+
     // MARK: - Invariants
 
     private func assertParseIsSafe(
@@ -104,7 +131,7 @@ final class ParserRobustnessTests: XCTestCase {
         return result
     }
 
-    private static let extensions = ["heic", "avif", "mp4", "mov", "tiff", "jpg", "wav", "avi", "mp3", "bin", ""]
+    private static let extensions = ["heic", "avif", "mp4", "mov", "tiff", "jpg", "png", "webp", "gif", "wav", "avi", "mp3", "bin", ""]
 
     private static let boxTypes: [[UInt8]] = [
         "ftyp", "meta", "moov", "trak", "mdia", "minf", "stbl", "udta", "mvhd", "mdhd",

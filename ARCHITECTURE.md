@@ -187,7 +187,9 @@ transport round trip per file.
   fallback so the open-ended codec set stays lossless yet typed. `identifier` is a
   stable, round-trippable string for storage.
 - `PixelGeometry` reports the **stored** raster size (how Exif, HEIF `ispe` and a
-  track header all record it) plus `Orientation`; `displayPixelWidth/Height` apply
+  track header all record it) plus `Orientation`. For PNG, WebP and GIF the container
+  header (`IHDR`, `VP8X`/`VP8 `/`VP8L`, the logical screen) is the size source and wins
+  over Exif dimensions, which are inherited from whatever the file was made from; `displayPixelWidth/Height` apply
   the quarter-turn rule. A movie's orientation comes from its track matrix, and only
   an exact rotation/mirror is translated — a scale or skew reports `nil`.
 - `MediaFormat.Kind` is decided structurally: a video track makes a movie, a
@@ -218,7 +220,11 @@ Parser layers, deliberately boring:
 
 1. `ByteSource`: safe random-access reads over file handles and in-memory data.
 2. `FormatProbe`: magic-byte and container-structure detection.
-3. `ContainerParser`: TIFF, JPEG, PNG, WebP, ISO BMFF, RIFF, ID3, Matroska later.
+3. `ContainerParser`: TIFF, JPEG, PNG, WebP, GIF, ISO BMFF, RIFF, ID3, Matroska later.
+   RIFF is dispatched by form type: `AVI ` and `WAVE` to the RIFF parser, `WEBP` to the
+   WebP parser, one mapping shared by `identify` and a full parse. PNG `eXIf` and WebP
+   `EXIF` hold a TIFF structure and are read by the TIFF parser at that offset, as a
+   JPEG's APP1 is.
 4. `MetadataInterpreter`: EXIF, GPS, XMP, QuickTime keys/user data, ID3 frames,
    Broadcast WAV fields later.
 5. `Normalizer`: raw findings to typed timestamp/location/camera candidates while

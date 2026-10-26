@@ -177,6 +177,10 @@ public struct MediaFormat: Equatable, Sendable {
         case tiff
         case jpeg
         case heif
+        case png
+        /// WebP: a RIFF container whose form type is `WEBP`.
+        case webp
+        case gif
         case isoBMFF
         case riffAVI
         case riffWAV
@@ -202,7 +206,7 @@ public struct MediaFormat: Equatable, Sendable {
         /// general-purpose container whose contents decide (ISO BMFF).
         init(family: Family) {
             switch family {
-            case .tiff, .jpeg, .heif:
+            case .tiff, .jpeg, .heif, .png, .webp, .gif:
                 self = .image
             case .riffAVI:
                 self = .video
@@ -373,6 +377,12 @@ extension MediaFileType {
             self = .jpeg
         case .tiff:
             self = .tiff
+        case .png:
+            self = .png
+        case .webp:
+            self = .webp
+        case .gif:
+            self = .gif
         case .riffAVI:
             self = .avi
         case .riffWAV:

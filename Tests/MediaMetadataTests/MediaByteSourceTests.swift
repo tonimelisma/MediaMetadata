@@ -149,6 +149,36 @@ final class MediaByteSourceTests: XCTestCase {
         }
     }
 
+    /// The same guarantee for the still-image families, whose answers are a size and the
+    /// Exif inside a chunk.
+    func testStillImageParsingIsIndependentOfReadGranularity() {
+        let fixtures: [(hint: String, bytes: Data)] = [
+            ("a.png", StillImageFixtures.png(width: 640, height: 480, exif: StillImageFixtures.standardExif())),
+            ("a.webp", StillImageFixtures.webpExtended(width: 640, height: 480, exif: StillImageFixtures.standardExif())),
+            ("a.webp", StillImageFixtures.webpLossy(width: 640, height: 480)),
+            ("a.webp", StillImageFixtures.webpLossless(width: 640, height: 480)),
+            ("a.gif", StillImageFixtures.gif(width: 640, height: 480)),
+        ]
+        for fixture in fixtures {
+            let exact = MediaMetadataReader.read(
+                source: PatternedByteSource(bytes: fixture.bytes, pattern: .exact), filenameHint: fixture.hint
+            )
+            XCTAssertEqual(exact.outcome, .parsed, fixture.hint)
+            for chunkSize in [1, 3, 16, 1024, 1_000_000] {
+                let cached = CachingByteSource(
+                    wrapping: PatternedByteSource(bytes: fixture.bytes, pattern: .exact),
+                    chunkSize: chunkSize
+                )
+                let chunked = MediaMetadataReader.read(source: cached, filenameHint: fixture.hint)
+                XCTAssertEqual(chunked.outcome, exact.outcome, "\(fixture.hint) chunk \(chunkSize)")
+                XCTAssertEqual(chunked.format, exact.format, "\(fixture.hint) chunk \(chunkSize)")
+                XCTAssertEqual(chunked.timestamps, exact.timestamps, "\(fixture.hint) chunk \(chunkSize)")
+                XCTAssertEqual(chunked.geometry, exact.geometry, "\(fixture.hint) chunk \(chunkSize)")
+                XCTAssertEqual(chunked.camera, exact.camera, "\(fixture.hint) chunk \(chunkSize)")
+            }
+        }
+    }
+
     // MARK: - R3: the cache collapses reads without changing answers
 
     func testCachingSourceCollapsesReadsIntoFewerFetches() {
@@ -203,6 +233,9 @@ final class MediaByteSourceTests: XCTestCase {
             ("jpeg", "a.jpg", Self.jpegFixture()),
             ("isoBMFF", "a.mp4", Self.isoBMFFFixture()),
             ("riff", "a.avi", Self.riffFixture()),
+            ("png", "a.png", StillImageFixtures.png(width: 8, height: 8, exif: StillImageFixtures.standardExif())),
+            ("webp", "a.webp", StillImageFixtures.webpExtended(width: 8, height: 8, exif: StillImageFixtures.standardExif())),
+            ("gif", "a.gif", StillImageFixtures.gif(width: 8, height: 8)),
         ]
 
         for family in families {
