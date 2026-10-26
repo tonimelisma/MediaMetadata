@@ -566,6 +566,30 @@ public struct CaptureTimestamps: Equatable, Sendable {
         Role.allCases.compactMap { role in self[role].map { (role, $0) } }
     }
 
+    /// The timestamps `entries` lists, put back by role: the inverse of ``entries``, so a
+    /// caller that stored them can ask this value's own selections (``captureWallClock``,
+    /// ``captureInstant``) again rather than restating them. A role given more than once
+    /// keeps its first entry.
+    public init(entries: [(role: Role, time: CaptureTime)]) {
+        var byRole: [Role: CaptureTime] = [:]
+        for entry in entries where byRole[entry.role] == nil {
+            byRole[entry.role] = entry.time
+        }
+        self.init(
+            original: byRole[.original],
+            digitized: byRole[.digitized],
+            tiffDateTime: byRole[.tiffDateTime],
+            gps: byRole[.gps],
+            quickTimeCreation: byRole[.quickTimeCreation],
+            quickTimeLocation: byRole[.quickTimeLocation],
+            quickTimeContentCreate: byRole[.quickTimeContentCreate],
+            containerCreation: byRole[.containerCreation],
+            id3Recording: byRole[.id3Recording],
+            waveOrigination: byRole[.waveOrigination],
+            riffRecording: byRole[.riffRecording]
+        )
+    }
+
     /// All present timestamps in declared order, for callers that want to scan them.
     /// ``entries`` carries the same values with their roles attached.
     public var all: [CaptureTime] {
