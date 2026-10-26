@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS (build + test)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
+
+  linux:
+    name: Linux (build + test — verifies the Foundation-only core)
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
+
+  guardrail:
+    name: Core target stays platform-neutral
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject platform frameworks in the core target
+        run: |
+          # ARCHITECTURE.md: Sources/MediaMetadata must import only Foundation — no
+          # AppKit/UIKit/ImageIO/AVFoundation/CoreGraphics etc. This keeps the parser a
+          # byte-level, framework-neutral library that builds anywhere Swift runs.
+          if grep -rnE '^[[:space:]]*import[[:space:]]+(AppKit|UIKit|Cocoa|ImageIO|AVFoundation|CoreMedia|CoreGraphics|CoreImage|VideoToolbox|Photos|Vision|UniformTypeIdentifiers)' Sources/MediaMetadata/; then
+            echo "::error::core target imports a platform framework; it must stay Foundation-only"
+            exit 1
+          fi
+          echo "OK: core target imports only platform-neutral modules"

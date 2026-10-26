@@ -316,7 +316,9 @@ final class HEIFOrientationTests: XCTestCase {
         tiff.append(littleEndianUInt16(42))
         tiff.append(littleEndianUInt32(8))
         let makeBytes = Data((make + "\u{0}").utf8)
-        let makeOffset = UInt32(8 + 2 + 2 * 12 + 4)
+        // TIFF start → make string: ifd0 at 8, then entryCount (2) + 2 entries (24) +
+        // next-IFD offset (4). A literal keeps the Linux 6.0 type-checker fast here.
+        let makeOffset: UInt32 = 38
         tiff.append(littleEndianUInt16(2))
         tiff.append(tiffEntry(tag: 0x0112, type: 3, count: 1, value: UInt32(orientation)))
         tiff.append(tiffEntry(tag: 0x010F, type: 2, count: UInt32(makeBytes.count), value: makeOffset))
