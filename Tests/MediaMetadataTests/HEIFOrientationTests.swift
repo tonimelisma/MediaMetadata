@@ -80,7 +80,7 @@ final class HEIFOrientationTests: XCTestCase {
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
         XCTAssertEqual(result.format.family, .heif)
-        XCTAssertEqual(result.camera?.orientation, .right)
+        XCTAssertEqual(result.geometry?.orientation, .right)
         XCTAssertEqual(result.camera?.make, "ACME")
     }
 
@@ -95,7 +95,7 @@ final class HEIFOrientationTests: XCTestCase {
         )
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
-        XCTAssertEqual(result.camera?.orientation, .right)
+        XCTAssertEqual(result.geometry?.orientation, .right)
         XCTAssertEqual(result.camera?.make, "Apple")
     }
 
@@ -114,7 +114,7 @@ final class HEIFOrientationTests: XCTestCase {
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
         XCTAssertEqual(result.format.family, .heif)
-        XCTAssertNil(result.camera?.orientation)
+        XCTAssertNil(result.geometry?.orientation)
     }
 
     func testTruncatedIrotBoxProducesNoOrientationAndNoCrash() throws {
@@ -131,7 +131,7 @@ final class HEIFOrientationTests: XCTestCase {
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
         XCTAssertEqual(result.outcome, .parsed)
-        XCTAssertNil(result.camera?.orientation)
+        XCTAssertNil(result.geometry?.orientation)
     }
 
     // MARK: - AVIF uses the same container
@@ -147,7 +147,7 @@ final class HEIFOrientationTests: XCTestCase {
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "avif"))
 
         XCTAssertEqual(result.format.brand, "avif")
-        XCTAssertEqual(result.camera?.orientation, .left)
+        XCTAssertEqual(result.geometry?.orientation, .left)
     }
 
     // MARK: - Stored dimensions from ispe
@@ -162,8 +162,8 @@ final class HEIFOrientationTests: XCTestCase {
         )
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
-        XCTAssertEqual(result.camera?.pixelWidth, 6192)
-        XCTAssertEqual(result.camera?.pixelHeight, 4128)
+        XCTAssertEqual(result.geometry?.pixelWidth, 6192)
+        XCTAssertEqual(result.geometry?.pixelHeight, 4128)
     }
 
     func testAVIFIspeProvidesStoredDimensions() throws {
@@ -175,8 +175,8 @@ final class HEIFOrientationTests: XCTestCase {
         )
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "avif"))
 
-        XCTAssertEqual(result.camera?.pixelWidth, 1920)
-        XCTAssertEqual(result.camera?.pixelHeight, 1080)
+        XCTAssertEqual(result.geometry?.pixelWidth, 1920)
+        XCTAssertEqual(result.geometry?.pixelHeight, 1080)
     }
 
     func testIspeOnNonPrimaryItemIsIgnored() throws {
@@ -191,8 +191,8 @@ final class HEIFOrientationTests: XCTestCase {
         )
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
-        XCTAssertNil(result.camera?.pixelWidth)
-        XCTAssertNil(result.camera?.pixelHeight)
+        XCTAssertNil(result.geometry?.pixelWidth)
+        XCTAssertNil(result.geometry?.pixelHeight)
     }
 
     func testRotatedHeifWithoutExifHasOrientationAndStoredDimensions() throws {
@@ -206,9 +206,9 @@ final class HEIFOrientationTests: XCTestCase {
         )
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
-        XCTAssertEqual(result.camera?.orientation, .right)
-        XCTAssertEqual(result.camera?.pixelWidth, 6192)
-        XCTAssertEqual(result.camera?.pixelHeight, 4128)
+        XCTAssertEqual(result.geometry?.orientation, .right)
+        XCTAssertEqual(result.geometry?.pixelWidth, 6192)
+        XCTAssertEqual(result.geometry?.pixelHeight, 4128)
     }
 
     func testExifPixelDimensionsPreferredOverIspe() throws {
@@ -222,8 +222,8 @@ final class HEIFOrientationTests: XCTestCase {
         )
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
 
-        XCTAssertEqual(result.camera?.pixelWidth, 4032)
-        XCTAssertEqual(result.camera?.pixelHeight, 3024)
+        XCTAssertEqual(result.geometry?.pixelWidth, 4032)
+        XCTAssertEqual(result.geometry?.pixelHeight, 3024)
     }
 
     // MARK: - Fixture assembly
@@ -245,7 +245,7 @@ final class HEIFOrientationTests: XCTestCase {
             largeIndexForm: largeIndexForm
         )
         let result = MediaMetadataReader.read(url: try write(fixture, extension: "heic"))
-        XCTAssertEqual(result.camera?.orientation, expected, file: file, line: line)
+        XCTAssertEqual(result.geometry?.orientation, expected, file: file, line: line)
     }
 
     private struct ExifImage {

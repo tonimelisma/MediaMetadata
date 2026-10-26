@@ -207,8 +207,8 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(video.durationSeconds ?? 0, 10.8, accuracy: 0.01)
         XCTAssertEqual(video.frameRate ?? 0, 30.0, accuracy: 0.05)
         XCTAssertEqual(video.codec, .motionJPEG)
-        XCTAssertEqual(publicResult.camera?.pixelWidth, 1440)
-        XCTAssertEqual(publicResult.camera?.pixelHeight, 1080)
+        XCTAssertEqual(publicResult.geometry?.pixelWidth, 1440)
+        XCTAssertEqual(publicResult.geometry?.pixelHeight, 1080)
         XCTAssertNil(publicResult.timestamps.riffRecording)
     }
 

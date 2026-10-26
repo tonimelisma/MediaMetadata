@@ -219,6 +219,11 @@ After finishing an increment, produce a report in this exact format:
 - Do not add platform-specific frameworks to the core `MediaMetadata` target.
 - Do not treat framework-detected format as truth.
 - Do not collapse timestamp evidence into a single "best" value. The public
-  contract exposes every date as its own typed field; resolving which one is
-  authoritative is the consumer's job, not the library's.
+  contract exposes every date as its own typed field. Opinionated selections are
+  welcome where the library's format knowledge is what makes them right, but they
+  must be purpose-named (`captureWallClock` for naming, `captureInstant` for
+  ordering), report the role they chose, publish their precedence, and never
+  replace the fields they choose from.
+- Raise `MediaMetadataReader.extractionRevision` in any change that makes the
+  same bytes produce a different result.
 - Do not run `git push --force` or rewrite shared history.
