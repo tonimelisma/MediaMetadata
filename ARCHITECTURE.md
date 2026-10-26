@@ -148,7 +148,7 @@ Public top-level shape (`Sources/MediaMetadata/MediaMetadataResult.swift`):
 ```swift
 public struct MediaMetadataResult {
     let outcome: ReadOutcome          // .parsed / .unsupported (definitive) | .readFailure (transient)
-    let format: MediaFormat           // family, kind (image/video/audio), extension, brand, magic-byte detection
+    let format: MediaFormat           // family, kind, fileType (incl. camera RAW, from bytes), extension, brand
     let timestamps: CaptureTimestamps // one named CaptureTime? per source, typed Role keys, + captureWallClock / captureInstant
     let locations: CaptureLocations   // one named GeoLocation? per source, typed Source keys — no order, no best-pick
     let camera: Camera?               // device identity only: make/model/lens/serial (text); nil when the file names none
@@ -157,9 +157,21 @@ public struct MediaMetadataResult {
 }
 ```
 
-`MediaMetadataReader.extractionRevision` rises whenever the same bytes can yield
-a different result, so a consumer that persists results can re-extract stale rows
-instead of writing a migration per parser fix.
+`MediaMetadataReader.extractionRevision(for:)` is kept per container family and
+rises when re-reading the same bytes would change a value already reported, so a
+consumer that persists results can find rows a re-read may improve instead of
+writing a migration per parser fix. It is per family because the consumer pays for a
+re-read in transport, not CPU: a single global number made every JPEG look stale
+for a HEIF fix, and for a cloud library a re-read is a download. New fields do not
+move it; the library reports when a re-read would help, and the consumer decides
+when it is worth the bytes.
+
+`MediaFormat.fileType` names the type from the bytes (an ISO brand, RAW evidence in
+a TIFF's IFD0), never from the extension; `MediaFileType(fileExtension:)` is the
+separate, explicitly name-based answer for a file nothing has read. RAW
+classification reads nothing beyond what a parse already reads — real ARWs keep
+their raw SubIFD just past the first 128 KB, and following it would cost a
+transport round trip per file.
 
 - `ReadOutcome` is the definitive-vs-transient signal: `.parsed`/`.unsupported`
   are definitive (`isDefinitive == true` — record and stop); `.readFailure` is

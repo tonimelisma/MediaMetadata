@@ -5,7 +5,7 @@ import XCTest
 final class RealFixtureGoldenTests: XCTestCase {
     func testAllRealFixturesMatchExifToolDerivedGoldens() throws {
         let corpus = try loadCorpus()
-        XCTAssertEqual(corpus.schemaVersion, 3)
+        XCTAssertEqual(corpus.schemaVersion, 4)
         XCTAssertEqual(corpus.fixtures.count, 17)
 
         for fixture in corpus.fixtures {
@@ -37,6 +37,8 @@ final class RealFixtureGoldenTests: XCTestCase {
         XCTAssertEqual(result.format.brand, expected.format.brand, context)
         XCTAssertEqual(result.format.detectedByMagic, expected.format.detectedByMagic, context)
         XCTAssertEqual(result.format.kind.rawValue, expected.format.kind, context)
+        XCTAssertEqual(result.format.fileType?.rawValue, expected.format.fileType, "\(context): fileType")
+        XCTAssertEqual(result.format.isCameraRaw, expected.format.isCameraRaw, "\(context): isCameraRaw")
 
         try assertTimestamps(result.timestamps, expected: expected.timestamps, context: context)
         assertLocations(result.locations, expected: expected.locations, context: context)
@@ -225,6 +227,8 @@ private struct GoldenSelections: Decodable {
 private struct GoldenFormat: Decodable {
     let family: String
     let kind: String
+    let fileType: String?
+    let isCameraRaw: Bool
     let `extension`: String
     let brand: String?
     let detectedByMagic: Bool

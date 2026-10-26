@@ -1,18 +1,50 @@
 import Foundation
 
 public enum MediaMetadataReader {
-    /// Increases whenever reading the same bytes can produce a different result.
+    /// How current this parser's reading of a given container family is.
     ///
     /// A catalog that stores what it extracted cannot otherwise tell a row the current
     /// parser would read differently from one it would read the same: a HEIF read before
     /// `irot` was understood has `nil` orientation, and so does a HEIF that genuinely has
-    /// none. Store this number beside each extracted row and re-extract any row whose stored
-    /// revision is lower — rather than writing a hand-targeted migration per parser fix.
+    /// none. Store ``extractionRevision(for:)`` of the row's family beside it; a row whose
+    /// stored number is lower than today's **may** read differently now.
     ///
-    /// It moves with *output*, not with the version number: a release that only changes
-    /// performance or documentation leaves it alone, and one that fixes what a field reports
-    /// raises it. Rows with no stored revision predate it and should be treated as stale.
-    public static let extractionRevision = 1
+    /// "May", not "must": whether a re-read is worth it is the consumer's call, because the
+    /// cost is in the transport, not here. Re-reading a local file costs a few kilobytes;
+    /// re-reading a cloud placeholder or a remote file means downloading it, and a catalog
+    /// that re-reads every stale row on upgrade can pull its whole library. Prefer refreshing
+    /// stale rows when their bytes are already at hand.
+    ///
+    /// What raises a family's number: re-reading the same bytes would change a value the
+    /// library already reported (a correction, or a field derived from more evidence). What
+    /// does not: a new field, which a consumer adopting it knows its old rows lack (the
+    /// release notes say which families need the bytes to backfill it), and performance or
+    /// documentation changes. Families move independently, so a HEIF fix does not make a
+    /// JPEG look stale.
+    ///
+    /// Revision 0 is the output of 0.6.0. A row stored before revisions existed, by 0.6.0 or
+    /// later, can be treated as 0.
+    ///
+    /// | Family | Revision | Changed |
+    /// |---|---|---|
+    /// | heif | 1 | `irot`/`imir` orientation (0.6.1), `ispe` size (0.6.2), AVIF family (0.7.0) |
+    /// | isoBMFF | 1 | track-matrix orientation, structural kind (0.7.0) |
+    /// | isoBMFF | 2 | Canon CR3 is a still, not a movie (0.7.1) |
+    /// | unknown | 1 | Fujifilm RAF, Olympus ORF, Panasonic RW2 recognised as stills (0.7.1) |
+    public static func extractionRevision(for family: MediaFormat.Family) -> Int {
+        switch family {
+        case .heif, .unknown: 1
+        case .isoBMFF: 2
+        case .tiff, .jpeg, .riffAVI, .riffWAV, .id3: 0
+        }
+    }
+
+    /// The highest ``extractionRevision(for:)`` of any family — for a consumer that stores a
+    /// single number. Prefer the per-family value: a single number makes every family look
+    /// stale whenever any one of them changes.
+    public static var extractionRevision: Int {
+        MediaFormat.Family.allCases.map(extractionRevision(for:)).max() ?? 0
+    }
 
     /// Reads media metadata from `url` and returns a fully typed, fixed field set.
     ///
@@ -72,7 +104,29 @@ public enum MediaMetadataReader {
         } else {
             .unknown
         }
-        return MediaFormat(family: family, fileExtension: fileExtension, detectedByMagic: family != .unknown)
+        return MediaFormat(
+            family: family,
+            fileExtension: fileExtension,
+            detectedByMagic: family != .unknown,
+            fileType: identifiedFileType(family: family, magic: magic)
+        )
+    }
+
+    /// The type twelve bytes can prove, and nothing more: a TIFF might be an ARW until its
+    /// IFD0 is read, and RIFF and ISO BMFF headers do not say what they hold.
+    private static func identifiedFileType(family: MediaFormat.Family, magic: Data) -> MediaFileType? {
+        switch family {
+        case .jpeg:
+            return .jpeg
+        case .id3:
+            return .mp3
+        case .tiff:
+            return magic.count >= 11 && Data(magic[8..<11]) == Data([0x43, 0x52, 0x02]) ? .cr2 : nil
+        case .unknown:
+            return unparsedRawFileType(magic).flatMap(MediaFileType.init(rawValue:))
+        case .heif, .isoBMFF, .riffAVI, .riffWAV:
+            return nil
+        }
     }
 
     /// Lower-cased extension from a filename hint. `nil`, a bare name, or an empty hint all
@@ -289,8 +343,34 @@ public enum MediaMetadataReader {
                 fileExtension: fileExtension,
                 code: "unsupportedFormat",
                 message: "No metadata parser is registered for this file signature.",
-                parser: "MediaMetadata.FormatProbe"
+                parser: "MediaMetadata.FormatProbe",
+                fileType: unparsedRawFileType(magic)
             )
+        }
+    }
+
+    /// Camera RAW formats recognisable from their signature that no parser here reads.
+    ///
+    /// Recognising one does not make it parsed — the outcome stays `.unsupported` and the
+    /// family `.unknown` — but it tells a consumer the file is a still of a known type
+    /// rather than an unidentified blob. Olympus ORF and Panasonic RW2 are TIFF-structured
+    /// but change the magic number, so the TIFF probe rightly does not claim them; Fujifilm
+    /// RAF has a container of its own.
+    private static func unparsedRawFileType(_ magic: Data) -> String? {
+        let bytes = Array(magic.prefix(12))
+        if bytes.count >= 12, Data(bytes) == Data("FUJIFILMCCD-".utf8) {
+            return "raf"
+        }
+        guard bytes.count >= 4 else {
+            return nil
+        }
+        switch (bytes[0], bytes[1], bytes[2], bytes[3]) {
+        case (0x49, 0x49, 0x52, 0x4F), (0x49, 0x49, 0x52, 0x53), (0x4D, 0x4D, 0x4F, 0x52):
+            return "orf"
+        case (0x49, 0x49, 0x55, 0x00):
+            return "rw2"
+        default:
+            return nil
         }
     }
 
@@ -439,13 +519,16 @@ public enum MediaMetadataReader {
         fileExtension: String,
         code: String,
         message: String,
-        parser: String
+        parser: String,
+        fileType: String? = nil
     ) -> ParsedMetadata {
         ParsedMetadata(
             identity: FormatIdentity(
                 family: .unknown,
                 observedExtension: fileExtension,
-                detectedByMagic: false
+                detectedByMagic: false,
+                kind: fileType == nil ? nil : .image,
+                fileType: fileType
             ),
             findings: [],
             timestamps: [],
@@ -701,13 +784,24 @@ struct FormatIdentity: Equatable, Sendable {
     let detectedByMagic: Bool
     let brand: String?
     let kind: Kind?
+    /// `MediaFileType.rawValue` when the bytes name a type the family and brand cannot — a
+    /// TIFF that is camera RAW, a RAW format with no parser. `nil` defers to that derivation.
+    let fileType: String?
 
-    init(family: Family, observedExtension: String, detectedByMagic: Bool, brand: String? = nil, kind: Kind? = nil) {
+    init(
+        family: Family,
+        observedExtension: String,
+        detectedByMagic: Bool,
+        brand: String? = nil,
+        kind: Kind? = nil,
+        fileType: String? = nil
+    ) {
         self.family = family
         self.observedExtension = observedExtension
         self.detectedByMagic = detectedByMagic
         self.brand = brand
         self.kind = kind
+        self.fileType = fileType
     }
 }
 

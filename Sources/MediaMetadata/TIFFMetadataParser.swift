@@ -108,7 +108,22 @@ struct TIFFMetadataParser {
         static let jpegInterchangeFormatLength: UInt16 = 0x0202
         static let imageWidth: UInt16 = 0x0100
         static let imageLength: UInt16 = 0x0101
+        static let photometricInterpretation: UInt16 = 0x0106
+        static let subIFDs: UInt16 = 0x014A
+        static let dngVersion: UInt16 = 0xC612
     }
+
+    /// PhotometricInterpretation values that mean raw sensor data rather than a picture:
+    /// a colour filter array (most RAWs) and DNG's linear raw.
+    private static let rawPhotometrics: Set<UInt64> = [32803, 34892]
+
+    /// Camera makers whose RAW format is named by who made it. Matched against the start of
+    /// the upper-cased `Make`, which vendors pad and suffix ("NIKON CORPORATION",
+    /// "RICOH IMAGING COMPANY, LTD.  ").
+    private static let rawFormatByMake: [(prefix: String, fileType: String)] = [
+        ("SONY", "arw"), ("NIKON", "nef"), ("CANON", "cr2"),
+        ("PENTAX", "pef"), ("RICOH", "pef"), ("SAMSUNG", "srw"),
+    ]
 
     private enum GPSTag {
         static let latitudeRef: UInt16 = 0x0001
@@ -260,9 +275,15 @@ struct TIFFMetadataParser {
 
         let camera = parseCameraMetadata(ifd0: ifd0, exif: exif, byteOrder: byteOrder)
         let gps = parseGPSMetadata(ifd0: ifd0, byteOrder: byteOrder)
+        let rawFileType = cameraRawFileType(ifd0: ifd0, byteOrder: byteOrder, make: camera?.make)
 
         return ParsedMetadata(
-            identity: identity,
+            identity: FormatIdentity(
+                family: identity.family,
+                observedExtension: identity.observedExtension,
+                detectedByMagic: identity.detectedByMagic,
+                fileType: rawFileType
+            ),
             findings: findings,
             timestamps: timestamps + [gps.timestamp].compactMap { $0 },
             locations: [gps.location].compactMap { $0 },
@@ -385,6 +406,44 @@ struct TIFFMetadataParser {
     /// TIFF chains its directories: each ends with the absolute offset of the next, and a
     /// zero terminates. IFD1 is where the EXIF thumbnail lives, so reaching it is what lets
     /// previews be reported at all.
+    /// Names the camera RAW format a top-level TIFF holds, or `nil` for an ordinary TIFF.
+    ///
+    /// Decided from IFD0 and the header alone, which the parse has already read — never by
+    /// following a SubIFD. On real Sony ARWs the raw SubIFD ends just past the first 128 KB,
+    /// outside the region a parse otherwise touches, so following it would cost a transport
+    /// round trip per file just to classify it. In order:
+    ///
+    /// 1. A `DNGVersion` tag is a DNG, whoever made the camera.
+    /// 2. `CR` and version 2 at offset 8 is a Canon CR2.
+    /// 3. A colour-filter-array or linear-raw PhotometricInterpretation in IFD0 is RAW
+    ///    sensor data (Pentax PEF keeps it there).
+    /// 4. A camera `Make` together with a SubIFDs tag is RAW (Sony ARW, Nikon NEF keep the
+    ///    raster in a SubIFD). A camera name alone is not enough: a TIFF exported from a RAW
+    ///    keeps the `Make` but has no SubIFDs.
+    private func cameraRawFileType(ifd0: [UInt16: IFDEntry], byteOrder: ByteOrder, make: String?) -> String? {
+        guard family == .tiff, baseOffset == 0 else {
+            return nil
+        }
+        if ifd0[Tag.dngVersion] != nil {
+            return "dng"
+        }
+        if let signature = data(relativeOffset: 8, length: 3),
+           signature == Data([0x43, 0x52, 0x02]) {
+            return "cr2"
+        }
+        let vendorFormat = make.map { $0.uppercased() }.flatMap { make in
+            Self.rawFormatByMake.first { make.hasPrefix($0.prefix) }?.fileType
+        }
+        if let photometric = ifd0[Tag.photometricInterpretation].flatMap({ numericValue(from: $0, byteOrder: byteOrder) }),
+           Self.rawPhotometrics.contains(photometric.value) {
+            return vendorFormat ?? "otherRaw"
+        }
+        if ifd0[Tag.subIFDs] != nil, let vendorFormat {
+            return vendorFormat
+        }
+        return nil
+    }
+
     private func nextIFDOffset(after offset: UInt64, entryCount: UInt16, byteOrder: ByteOrder) -> UInt64? {
         let pointerOffset = offset + 2 + UInt64(entryCount) * 12
         guard let data = data(relativeOffset: pointerOffset, length: 4),

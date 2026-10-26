@@ -224,6 +224,7 @@ After finishing an increment, produce a report in this exact format:
   must be purpose-named (`captureWallClock` for naming, `captureInstant` for
   ordering), report the role they chose, publish their precedence, and never
   replace the fields they choose from.
-- Raise `MediaMetadataReader.extractionRevision` in any change that makes the
-  same bytes produce a different result.
+- Raise `MediaMetadataReader.extractionRevision(for:)` for each family whose
+  already-reported values change for the same bytes, and add a row to its table.
+  Do not raise it for a new field or for a family the change does not touch.
 - Do not run `git push --force` or rewrite shared history.
