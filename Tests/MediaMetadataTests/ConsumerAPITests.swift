@@ -135,6 +135,26 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(CaptureTimestamps.Role.allCases.count, 11, "one role per CaptureTimestamps field")
     }
 
+    func testEntriesRoundTripAndTheirSelectionsMatch() {
+        let timestamps = CaptureTimestamps(
+            original: floating(2026, 4, 25, 14, 51, 34),
+            gps: absolute(1_700_000_000),
+            quickTimeCreation: withOffset(2026, 4, 25, 14, 51, 34, offset: -25_200)
+        )
+        let rebuilt = CaptureTimestamps(entries: timestamps.entries)
+        XCTAssertEqual(rebuilt, timestamps)
+        XCTAssertEqual(rebuilt.captureWallClock, timestamps.captureWallClock)
+        XCTAssertEqual(rebuilt.captureInstant, timestamps.captureInstant)
+        XCTAssertEqual(CaptureTimestamps(entries: []), CaptureTimestamps())
+    }
+
+    func testARoleGivenTwiceKeepsItsFirstEntry() {
+        let first = floating(2026, 1, 2, 3, 4, 5)
+        let timestamps = CaptureTimestamps(entries: [(.original, first), (.original, absolute(1_700_000_000))])
+        XCTAssertEqual(timestamps.original, first)
+        XCTAssertEqual(timestamps.entries.count, 1)
+    }
+
     func testLocationSourcesNameEveryField() {
         let here = GeoLocation(latitude: 60.17, longitude: 24.94)
         let locations = CaptureLocations(exifGPS: nil, quickTime: here, sonyNRTM: nil)

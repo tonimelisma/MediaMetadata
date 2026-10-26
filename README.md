@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.8.0"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.8.1"),
 ]
 ```
 
@@ -221,6 +221,9 @@ if let gps = result.timestamps.gps {
 for (role, time) in result.timestamps.entries { print(role.rawValue, time.precision) }
 let myOrder: [CaptureTimestamps.Role] = [.digitized, .original]
 let mine = myOrder.lazy.compactMap { result.timestamps[$0] }.first
+// Stored the entries? Put them back and ask the library's own selections again.
+let restored = CaptureTimestamps(entries: result.timestamps.entries)
+let sameInstant = restored.captureInstant
 
 // Each capture location is its own named field by source — no array, no order,
 // no single "best" pick. Pick the source you trust, or scan `entries`.
