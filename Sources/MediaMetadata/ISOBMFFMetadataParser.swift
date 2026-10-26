@@ -49,6 +49,20 @@ struct ISOBMFFMetadataParser {
         let length: UInt64
     }
 
+    /// A HEIF transformative item property (`irot`/`imir`) and where its payload byte
+    /// lives, held as evidence until the primary item's associations are resolved.
+    private struct HEIFTransformProperty: Equatable {
+        enum Kind: Equatable {
+            /// `irot`: rotation of `angle` × 90° in the anticlockwise direction (`angle` is 0...3).
+            case rotation(UInt8)
+            /// `imir`: mirror along an axis — 0 exchanges top and bottom, 1 exchanges left
+            /// and right (ISO/IEC 23008-12 §6.5.12, 2022 edition; verified against ImageIO).
+            case mirror(UInt8)
+        }
+        let kind: Kind
+        let byteRange: Range<UInt64>?
+    }
+
     private struct GoProMetadata {
         var creationEpoch: UInt64?
         var timeZoneMinutes: Int?
@@ -73,6 +87,9 @@ struct ISOBMFFMetadataParser {
     private var diagnostics: [MetadataDiagnostic] = []
     private var exifItemIDs = Set<UInt32>()
     private var itemExtents: [UInt32: [ItemExtent]] = [:]
+    private var primaryItemID: UInt32?
+    private var heifTransformProperties: [Int: HEIFTransformProperty] = [:]
+    private var heifItemPropertyAssociations: [UInt32: [Int]] = [:]
     private var rawVideo = RawVideoInfo()
     private var currentTrack = TrackScratch()
 
@@ -93,6 +110,7 @@ struct ISOBMFFMetadataParser {
     mutating func parse() -> ParsedMetadata {
         walkChildren(start: 0, end: source.size, path: "iso")
         parseHEIFEXIFItems()
+        applyHEIFTransformOrientation()
         return ParsedMetadata(
             identity: FormatIdentity(
                 family: inferredFamily(),
@@ -360,6 +378,10 @@ struct ISOBMFFMetadataParser {
                 parseItemInfo(child, path: "\(path).iinf")
             case "iloc":
                 parseItemLocation(child, path: "\(path).iloc")
+            case "pitm":
+                parsePrimaryItem(child)
+            case "iprp":
+                parseItemProperties(child, path: "\(path).iprp")
             case "meta":
                 parseMeta(child, path: "\(path).meta")
             case "uuid":
@@ -1029,6 +1051,168 @@ struct ISOBMFFMetadataParser {
         appendFinding(namespace: "iso.iloc", key: "itemLocationCount", value: String(itemCount), sourcePath: path, byteRange: box.start..<box.end)
     }
 
+    /// Records the primary item from `pitm`, naming the item whose transform
+    /// properties decide the displayed orientation.
+    private mutating func parsePrimaryItem(_ box: Box) {
+        guard let version = readUInt8(offset: box.payloadStart) else {
+            return
+        }
+        let idOffset = box.payloadStart + 4
+        if version == 0 {
+            primaryItemID = readUInt16(offset: idOffset).map(UInt32.init)
+        } else {
+            primaryItemID = readUInt32(offset: idOffset)
+        }
+    }
+
+    /// Walks `iprp`, collecting the ordered property container (`ipco`) and the
+    /// item→property associations (`ipma`).
+    private mutating func parseItemProperties(_ box: Box, path: String) {
+        var cursor = box.payloadStart
+        while cursor + 8 <= box.end, let child = readBox(at: cursor, limit: box.end) {
+            switch child.type {
+            case "ipco":
+                parseItemPropertyContainer(child, path: "\(path).ipco")
+            case "ipma":
+                parseItemPropertyAssociations(child)
+            default:
+                break
+            }
+            guard child.end > cursor else {
+                break
+            }
+            cursor = child.end
+        }
+    }
+
+    /// Indexes the transformative properties (`irot`/`imir`) inside `ipco` by their
+    /// 1-based position, which is how `ipma` refers to them. Non-transform
+    /// properties still consume an index but carry no payload we need.
+    private mutating func parseItemPropertyContainer(_ box: Box, path: String) {
+        var cursor = box.payloadStart
+        var index = 0
+        while cursor + 8 <= box.end, let child = readBox(at: cursor, limit: box.end) {
+            index += 1
+            guard index <= 10_000 else {
+                appendDiagnostic(code: "isoItemPropertyLimitExceeded", message: "ISO BMFF item-property count exceeds the safety limit.", byteRange: box.start..<box.end)
+                return
+            }
+            // `irot`/`imir` are plain boxes carrying a single payload byte; a box whose
+            // declared size overran its parent would have been rejected by `readBox`,
+            // and a byte past the end makes `readUInt8` return nil — either way the
+            // property is dropped rather than crashing.
+            if child.type == "irot", child.payloadStart < child.end,
+               let raw = readUInt8(offset: child.payloadStart) {
+                heifTransformProperties[index] = HEIFTransformProperty(
+                    kind: .rotation(raw & 0x03),
+                    byteRange: child.payloadStart..<(child.payloadStart + 1)
+                )
+            } else if child.type == "imir", child.payloadStart < child.end,
+                      let raw = readUInt8(offset: child.payloadStart) {
+                heifTransformProperties[index] = HEIFTransformProperty(
+                    kind: .mirror(raw & 0x01),
+                    byteRange: child.payloadStart..<(child.payloadStart + 1)
+                )
+            }
+            guard child.end > cursor else {
+                break
+            }
+            cursor = child.end
+        }
+    }
+
+    /// Parses `ipma`, recording each item's ordered list of property indices. Handles
+    /// both the 1-byte (7-bit index) and 2-byte (15-bit index) association forms and
+    /// masks off the essential bit; index 0 means "no property".
+    private mutating func parseItemPropertyAssociations(_ box: Box) {
+        guard let version = readUInt8(offset: box.payloadStart),
+              let flagsLowByte = readUInt8(offset: box.payloadStart + 3) else {
+            return
+        }
+        let usesLargeIndex = (flagsLowByte & 0x01) == 1
+        var cursor = box.payloadStart + 4
+        guard let entryCount = readUInt32(offset: cursor) else {
+            return
+        }
+        cursor += 4
+        guard entryCount <= 10_000 else {
+            appendDiagnostic(code: "isoItemPropertyAssociationLimitExceeded", message: "ISO BMFF item-property-association count exceeds the safety limit.", byteRange: box.start..<box.end)
+            return
+        }
+        for _ in 0..<entryCount {
+            let itemID: UInt32
+            if version < 1 {
+                guard let id = readUInt16(offset: cursor) else {
+                    return
+                }
+                itemID = UInt32(id)
+                cursor += 2
+            } else {
+                guard let id = readUInt32(offset: cursor) else {
+                    return
+                }
+                itemID = id
+                cursor += 4
+            }
+            guard let associationCount = readUInt8(offset: cursor) else {
+                return
+            }
+            cursor += 1
+            var indices: [Int] = []
+            for _ in 0..<associationCount {
+                if usesLargeIndex {
+                    guard let raw = readUInt16(offset: cursor) else {
+                        return
+                    }
+                    indices.append(Int(raw & 0x7FFF))
+                    cursor += 2
+                } else {
+                    guard let raw = readUInt8(offset: cursor) else {
+                        return
+                    }
+                    indices.append(Int(raw & 0x7F))
+                    cursor += 1
+                }
+            }
+            heifItemPropertyAssociations[itemID] = indices
+        }
+    }
+
+    /// Resolves the primary item's transform properties into an EXIF orientation and
+    /// lets it decide ``CameraMetadata/orientation``.
+    ///
+    /// HEIF readers apply `irot`/`imir` to the reconstructed image, so when the primary
+    /// item carries either, that transform — not the Exif `Orientation` tag — is what a
+    /// display sees; applying both would rotate twice. Runs after ``parseHEIFEXIFItems()``
+    /// so a transform value overrides any Exif orientation already merged, while a file
+    /// with no transform property keeps its Exif orientation untouched. Pixel dimensions
+    /// stay as stored, exactly as for Exif-oriented JPEGs.
+    private mutating func applyHEIFTransformOrientation() {
+        guard let primaryItemID,
+              let associations = heifItemPropertyAssociations[primaryItemID] else {
+            return
+        }
+        var transforms: [HEIFTransformProperty.Kind] = []
+        for index in associations {
+            guard let property = heifTransformProperties[index] else {
+                continue
+            }
+            switch property.kind {
+            case let .rotation(angle):
+                appendFinding(namespace: "heif.irot", key: "Rotation", value: String(angle), sourcePath: "iso.meta.iprp.ipco.\(index).Rotation", byteRange: property.byteRange)
+            case let .mirror(axis):
+                appendFinding(namespace: "heif.imir", key: "Mirror", value: String(axis), sourcePath: "iso.meta.iprp.ipco.\(index).Mirror", byteRange: property.byteRange)
+            }
+            transforms.append(property.kind)
+        }
+        guard !transforms.isEmpty,
+              let orientation = Self.exifOrientation(for: transforms) else {
+            return
+        }
+        appendFinding(namespace: "heif.transform", key: "Orientation", value: String(orientation), sourcePath: "iso.meta.iprp.Orientation", byteRange: nil)
+        mergeCamera(CameraMetadata(orientation: orientation), preferIncoming: true)
+    }
+
     private mutating func parseHEIFEXIFItems() {
         for itemID in exifItemIDs.sorted() {
             guard let extents = itemExtents[itemID] else {
@@ -1418,6 +1602,64 @@ struct ISOBMFFMetadataParser {
 
     private static func readUInt64(from data: Data, offset: Int) -> UInt64 {
         data[offset..<(offset + 8)].reduce(0) { ($0 << 8) | UInt64($1) }
+    }
+
+    /// A 2×2 integer transform of image coordinates (x rightward, y downward), used to
+    /// compose HEIF rotations and mirrors and then match the result to an EXIF orientation.
+    private struct OrientationMatrix: Equatable {
+        let a, b, c, d: Int   // rows: [[a, b], [c, d]]
+
+        func multiplied(by other: OrientationMatrix) -> OrientationMatrix {
+            OrientationMatrix(
+                a: a * other.a + b * other.c,
+                b: a * other.b + b * other.d,
+                c: c * other.a + d * other.c,
+                d: c * other.b + d * other.d
+            )
+        }
+    }
+
+    /// The eight EXIF orientations as the transform each applies to the stored image to
+    /// produce the displayed image. These are the eight elements of the dihedral group of
+    /// the square, so any composition of rotations and mirrors matches exactly one.
+    private static let exifOrientationMatrices: [(orientation: Int, matrix: OrientationMatrix)] = [
+        (1, OrientationMatrix(a: 1, b: 0, c: 0, d: 1)),
+        (2, OrientationMatrix(a: -1, b: 0, c: 0, d: 1)),
+        (3, OrientationMatrix(a: -1, b: 0, c: 0, d: -1)),
+        (4, OrientationMatrix(a: 1, b: 0, c: 0, d: -1)),
+        (5, OrientationMatrix(a: 0, b: 1, c: 1, d: 0)),
+        (6, OrientationMatrix(a: 0, b: -1, c: 1, d: 0)),
+        (7, OrientationMatrix(a: 0, b: -1, c: -1, d: 0)),
+        (8, OrientationMatrix(a: 0, b: 1, c: -1, d: 0)),
+    ]
+
+    private static func transformMatrix(_ kind: HEIFTransformProperty.Kind) -> OrientationMatrix {
+        switch kind {
+        case let .rotation(angle):
+            // `angle` × 90° in the anticlockwise direction about the image centre.
+            let rotate90Anticlockwise = OrientationMatrix(a: 0, b: 1, c: -1, d: 0)
+            var matrix = OrientationMatrix(a: 1, b: 0, c: 0, d: 1)
+            for _ in 0..<Int(angle % 4) {
+                matrix = rotate90Anticlockwise.multiplied(by: matrix)
+            }
+            return matrix
+        case let .mirror(axis):
+            // axis 0 exchanges top and bottom (EXIF 4); axis 1 exchanges left and right (EXIF 2).
+            return axis == 0
+                ? OrientationMatrix(a: 1, b: 0, c: 0, d: -1)
+                : OrientationMatrix(a: -1, b: 0, c: 0, d: 1)
+        }
+    }
+
+    /// Composes transform properties in the order `ipma` lists them (each applied after
+    /// the one before) and returns the matching EXIF orientation (1...8), or `nil` when
+    /// the composition is somehow not one of the eight.
+    private static func exifOrientation(for transforms: [HEIFTransformProperty.Kind]) -> Int? {
+        var matrix = OrientationMatrix(a: 1, b: 0, c: 0, d: 1)
+        for kind in transforms {
+            matrix = transformMatrix(kind).multiplied(by: matrix)
+        }
+        return exifOrientationMatrices.first { $0.matrix == matrix }?.orientation
     }
 
 }
