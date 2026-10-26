@@ -89,6 +89,7 @@ struct ISOBMFFMetadataParser {
     private var itemExtents: [UInt32: [ItemExtent]] = [:]
     private var primaryItemID: UInt32?
     private var heifTransformProperties: [Int: HEIFTransformProperty] = [:]
+    private var heifImageExtents: [Int: (width: Int, height: Int)] = [:]
     private var heifItemPropertyAssociations: [UInt32: [Int]] = [:]
     private var rawVideo = RawVideoInfo()
     private var currentTrack = TrackScratch()
@@ -110,6 +111,7 @@ struct ISOBMFFMetadataParser {
     mutating func parse() -> ParsedMetadata {
         walkChildren(start: 0, end: source.size, path: "iso")
         parseHEIFEXIFItems()
+        applyHEIFImageDimensions()
         applyHEIFTransformOrientation()
         return ParsedMetadata(
             identity: FormatIdentity(
@@ -1113,6 +1115,15 @@ struct ISOBMFFMetadataParser {
                     kind: .mirror(raw & 0x01),
                     byteRange: child.payloadStart..<(child.payloadStart + 1)
                 )
+            } else if child.type == "ispe",
+                      child.payloadStart + 12 <= child.end,
+                      let width = readUInt32(offset: child.payloadStart + 4),
+                      let height = readUInt32(offset: child.payloadStart + 8),
+                      width > 0, height > 0 {
+                // `ispe` is a FullBox: 4 bytes of version/flags precede the 32-bit
+                // stored width and height (the coded image size, before any transform).
+                // A UInt32 always fits in the 64-bit Int these platforms use.
+                heifImageExtents[index] = (Int(width), Int(height))
             }
             guard child.end > cursor else {
                 break
@@ -1175,6 +1186,31 @@ struct ISOBMFFMetadataParser {
                 }
             }
             heifItemPropertyAssociations[itemID] = indices
+        }
+    }
+
+    /// Fills the stored pixel dimensions from the primary item's `ispe` when the
+    /// embedded Exif did not supply them.
+    ///
+    /// `ispe` is the coded (stored, unrotated) size of the image item and is always
+    /// present, so it is the dimension source for HEIF/AVIF files that carry no Exif —
+    /// exactly the files this parser previously reported with `nil` dimensions. Exif
+    /// `PixelXDimension`/`PixelYDimension` is kept as the preferred source when present
+    /// (``mergeCamera(_:preferIncoming:)`` keeps the existing value), so files that have
+    /// both are unchanged. Runs after ``parseHEIFEXIFItems()`` for that reason.
+    private mutating func applyHEIFImageDimensions() {
+        guard let primaryItemID,
+              let associations = heifItemPropertyAssociations[primaryItemID] else {
+            return
+        }
+        for index in associations {
+            guard let extents = heifImageExtents[index] else {
+                continue
+            }
+            appendFinding(namespace: "heif.ispe", key: "ImageWidth", value: String(extents.width), sourcePath: "iso.meta.iprp.ipco.\(index).ImageWidth", byteRange: nil)
+            appendFinding(namespace: "heif.ispe", key: "ImageHeight", value: String(extents.height), sourcePath: "iso.meta.iprp.ipco.\(index).ImageHeight", byteRange: nil)
+            mergeCamera(CameraMetadata(pixelWidth: extents.width, pixelHeight: extents.height))
+            return
         }
     }
 
