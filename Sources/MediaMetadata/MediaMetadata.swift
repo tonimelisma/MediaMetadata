@@ -1,10 +1,24 @@
 import Foundation
 
 public enum MediaMetadataReader {
+    /// Increases whenever reading the same bytes can produce a different result.
+    ///
+    /// A catalog that stores what it extracted cannot otherwise tell a row the current
+    /// parser would read differently from one it would read the same: a HEIF read before
+    /// `irot` was understood has `nil` orientation, and so does a HEIF that genuinely has
+    /// none. Store this number beside each extracted row and re-extract any row whose stored
+    /// revision is lower — rather than writing a hand-targeted migration per parser fix.
+    ///
+    /// It moves with *output*, not with the version number: a release that only changes
+    /// performance or documentation leaves it alone, and one that fixes what a field reports
+    /// raises it. Rows with no stored revision predate it and should be treated as stale.
+    public static let extractionRevision = 1
+
     /// Reads media metadata from `url` and returns a fully typed, fixed field set.
     ///
     /// The library performs all byte-parsing: every date is a strongly typed
-    /// ``CaptureTime`` exposed as its own named field (no "best date" resolution),
+    /// ``CaptureTime`` exposed as its own named field (with purpose-named selections
+    /// alongside, never instead),
     /// locations and dimensions are numeric, and the result carries a
     /// definitive-vs-transient ``ReadOutcome``. The call never throws.
     public static func read(url: URL) -> MediaMetadataResult {
@@ -674,16 +688,26 @@ struct FormatIdentity: Equatable, Sendable {
         case unknown
     }
 
+    /// What a parser saw the file hold. `nil` lets the public projection fall back to what
+    /// the family implies, which is all most parsers know; ISO BMFF decides it structurally.
+    enum Kind: String, Equatable, Sendable {
+        case image
+        case video
+        case audio
+    }
+
     let family: Family
     let observedExtension: String
     let detectedByMagic: Bool
     let brand: String?
+    let kind: Kind?
 
-    init(family: Family, observedExtension: String, detectedByMagic: Bool, brand: String? = nil) {
+    init(family: Family, observedExtension: String, detectedByMagic: Bool, brand: String? = nil, kind: Kind? = nil) {
         self.family = family
         self.observedExtension = observedExtension
         self.detectedByMagic = detectedByMagic
         self.brand = brand
+        self.kind = kind
     }
 }
 

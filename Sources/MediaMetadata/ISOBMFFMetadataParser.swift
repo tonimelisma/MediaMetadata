@@ -93,6 +93,9 @@ struct ISOBMFFMetadataParser {
     private var heifItemPropertyAssociations: [UInt32: [Int]] = [:]
     private var rawVideo = RawVideoInfo()
     private var currentTrack = TrackScratch()
+    private var sawVideoTrack = false
+    private var sawAudioTrack = false
+    private var sawImageSequenceTrack = false
 
     /// Per-track scratch gathered while walking a `trak`, finalized in ``finalizeTrack()``.
     private struct TrackScratch {
@@ -118,7 +121,8 @@ struct ISOBMFFMetadataParser {
                 family: inferredFamily(),
                 observedExtension: fileExtension,
                 detectedByMagic: true,
-                brand: brand
+                brand: brand,
+                kind: structuralKind()
             ),
             findings: findings,
             timestamps: timestamps,
@@ -186,6 +190,17 @@ struct ISOBMFFMetadataParser {
 
     /// Adopts the first video track's codec and frame rate once its boxes are walked.
     private mutating func finalizeTrack() {
+        switch currentTrack.handler {
+        case "vide":
+            sawVideoTrack = true
+        case "soun":
+            sawAudioTrack = true
+        case "pict":
+            // An image sequence (animated HEIF/AVIF) is still a picture, not a movie.
+            sawImageSequenceTrack = true
+        default:
+            break
+        }
         guard currentTrack.handler == "vide" else {
             return
         }
@@ -575,7 +590,48 @@ struct ISOBMFFMetadataParser {
             sourcePath: "\(path).ImageHeight",
             byteRange: (dimensionOffset + 4)..<(dimensionOffset + 8)
         )
-        mergeCamera(CameraMetadata(pixelWidth: width, pixelHeight: height))
+        // The transformation matrix is the 36 bytes immediately before width/height in both
+        // header versions. Width/height describe the stored raster; the matrix is how it is
+        // shown — every portrait phone video is a landscape raster with a quarter turn.
+        let matrixOffset = dimensionOffset - 36
+        let orientation = trackOrientation(matrixOffset: matrixOffset)
+        if let orientation {
+            appendFinding(
+                namespace: "quicktime.track",
+                key: "Orientation",
+                value: String(orientation),
+                sourcePath: "\(path).Matrix",
+                byteRange: matrixOffset..<dimensionOffset
+            )
+        }
+        mergeCamera(CameraMetadata(orientation: orientation, pixelWidth: width, pixelHeight: height))
+    }
+
+    /// Translates a track's transformation matrix into an EXIF orientation, or `nil` when it
+    /// is not a pure quarter-turn rotation and/or mirror (a scale, skew or odd angle has no
+    /// EXIF equivalent, and reporting the nearest one would mislead).
+    ///
+    /// The matrix maps `[x y 1]` as a row vector — `x' = a·x + c·y`, `y' = b·x + d·y` in a
+    /// y-down raster — so as a column-vector transform its rows are `[a c]` and `[b d]`. The
+    /// common iPhone portrait matrix (`a=0 b=1 c=-1 d=0`, ExifTool "Rotation 90") lands on
+    /// orientation 6, a 90° clockwise turn, which is how it displays.
+    private func trackOrientation(matrixOffset: UInt64) -> Int? {
+        func unit(_ relative: UInt64) -> Int? {
+            guard let raw = readUInt32(offset: matrixOffset + relative) else {
+                return nil
+            }
+            switch Int32(bitPattern: raw) {
+            case 0x0001_0000: return 1
+            case -0x0001_0000: return -1
+            case 0: return 0
+            default: return nil
+            }
+        }
+        guard let a = unit(0), let b = unit(4), let c = unit(12), let d = unit(16) else {
+            return nil
+        }
+        let matrix = OrientationMatrix(a: a, b: c, c: b, d: d)
+        return Self.exifOrientationMatrices.first { $0.matrix == matrix }?.orientation
     }
 
     private mutating func parsePentaxTags(_ box: Box, path: String) {
@@ -1537,12 +1593,37 @@ struct ISOBMFFMetadataParser {
         )
     }
 
+    /// HEIF is the item-based image format of ISO/IEC 23008-12; AVIF and every other MIAF
+    /// profile are that format with a different codec, so they report the same family.
     private func inferredFamily() -> FormatIdentity.Family {
-        let ext = fileExtension
-        if ["heic", "heif", "hif", "avci", "avcs"].contains(ext) || ["heic", "heix", "hevc", "mif1", "msf1"].contains(brand ?? "") {
+        let heifExtensions: Set<String> = ["heic", "heics", "heif", "heifs", "hif", "avci", "avcs", "avif", "avifs"]
+        let heifBrands: Set<String> = [
+            "heic", "heix", "heim", "heis", "hevc", "hevx", "hevm", "hevs",
+            "mif1", "msf1", "miaf", "avif", "avis",
+        ]
+        if heifExtensions.contains(fileExtension) || heifBrands.contains(brand ?? "") {
             return .heif
         }
         return .isoBMFF
+    }
+
+    /// Decides still/movie/sound from what was actually in the file, not its name.
+    ///
+    /// A video track makes a movie even when a poster image item sits beside it; a primary
+    /// image item (or an image-sequence track) makes a still; a file whose only track is
+    /// sound is audio. `nil` when none of those was seen — a truncated or unusual file —
+    /// so the public kind falls back to what the family implies.
+    private func structuralKind() -> FormatIdentity.Kind? {
+        if sawVideoTrack {
+            return .video
+        }
+        if primaryItemID != nil || sawImageSequenceTrack {
+            return .image
+        }
+        if sawAudioTrack {
+            return .audio
+        }
+        return nil
     }
 
     private func startsWithChildBox(at offset: UInt64, limit: UInt64) -> Bool {

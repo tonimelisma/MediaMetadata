@@ -119,7 +119,8 @@ The package rejects framework-shaped shortcuts:
 - Do not interpret a missing framework value as proof that the file lacks the tag.
 - Do not read system timezone or locale from core parsing code.
 - Do not select one "best" timestamp while discarding the candidates that explain
-  the choice.
+  the choice. Selections are purpose-named (a wall clock for naming, an instant for
+  ordering), report the role they chose, and sit beside every named field.
 
 The central abstraction is evidence. Normalized metadata is derived from
 evidence, not substituted for it. This evidence model is **internal**: the public
@@ -128,22 +129,37 @@ contract is a fixed, fully typed field set derived from it.
 ## Public Model Principles
 
 The library does all byte-parsing and returns a fixed, strongly-typed field set.
-Callers never see raw metadata strings, JSON, or a candidate list — and the
-library never resolves a single "best date." Each capture/creation timestamp is
-exposed as its own named, typed field.
+Callers never see raw metadata strings, JSON, or a candidate list. Each
+capture/creation timestamp is exposed as its own named, typed field.
+
+The library is also opinionated where its format knowledge is the hard part, and
+it is explicit about it. "Which date is best" has no single answer — *what local
+time was this taken* (naming) and *what instant was this taken* (ordering) differ
+on the same file — so there is no `bestDate`. There are two purpose-named
+selections, `captureWallClock` and `captureInstant`, each returning the role it
+chose, with its precedence published as a constant. They are the Resolver layer
+below: a default a consumer can take or ignore, never the only source of truth.
+The same rule applies to geometry: the library knows that EXIF orientations 5–8
+turn the picture a quarter, so it reports the display size rather than leaving
+every consumer to rediscover that.
 
 Public top-level shape (`Sources/MediaMetadata/MediaMetadataResult.swift`):
 
 ```swift
 public struct MediaMetadataResult {
     let outcome: ReadOutcome          // .parsed / .unsupported (definitive) | .readFailure (transient)
-    let format: MediaFormat           // family, extension, brand, magic-byte detection
-    let timestamps: CaptureTimestamps // one named CaptureTime? per source (original, gps, containerCreation, …)
-    let locations: CaptureLocations   // one named GeoLocation? per source (exifGPS/quickTime/sonyNRTM) — no order, no best-pick
-    let camera: Camera?               // make/model/lens/serial (text), Orientation enum, Int dimensions
+    let format: MediaFormat           // family, kind (image/video/audio), extension, brand, magic-byte detection
+    let timestamps: CaptureTimestamps // one named CaptureTime? per source, typed Role keys, + captureWallClock / captureInstant
+    let locations: CaptureLocations   // one named GeoLocation? per source, typed Source keys — no order, no best-pick
+    let camera: Camera?               // device identity only: make/model/lens/serial (text); nil when the file names none
+    let geometry: PixelGeometry?      // stored pixel size + Orientation (Exif, HEIF irot/imir, or track matrix) + display size
     let video: VideoInfo?             // durationSeconds, frameRate, VideoCodec
 }
 ```
+
+`MediaMetadataReader.extractionRevision` rises whenever the same bytes can yield
+a different result, so a consumer that persists results can re-extract stale rows
+instead of writing a migration per parser fix.
 
 - `ReadOutcome` is the definitive-vs-transient signal: `.parsed`/`.unsupported`
   are definitive (`isDefinitive == true` — record and stop); `.readFailure` is
@@ -156,7 +172,15 @@ public struct MediaMetadataResult {
   `captureLocalComponents` for capture-local naming; it returns `nil` for
   `absolute` so UTC wall clocks cannot be mistaken for local capture time.
 - `VideoCodec` is an enum (`h264`, `hevc`, `proRes`, …) with an `.other(fourCC:)`
-  fallback so the open-ended codec set stays lossless yet typed.
+  fallback so the open-ended codec set stays lossless yet typed. `identifier` is a
+  stable, round-trippable string for storage.
+- `PixelGeometry` reports the **stored** raster size (how Exif, HEIF `ispe` and a
+  track header all record it) plus `Orientation`; `displayPixelWidth/Height` apply
+  the quarter-turn rule. A movie's orientation comes from its track matrix, and only
+  an exact rotation/mirror is translated — a scale or skew reports `nil`.
+- `MediaFormat.Kind` is decided structurally: a video track makes a movie, a
+  primary image item or image-sequence track makes a still, a sound-only file is
+  audio. The family alone cannot say — ISO BMFF is an MP4, an AVIF and an M4A.
 
 The internal evidence graph still exists and is the source of truth for the typed
 projection. It is reachable in-process via `MediaMetadataReader.extract(url:)`

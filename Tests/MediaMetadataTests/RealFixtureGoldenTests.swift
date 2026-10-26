@@ -5,7 +5,7 @@ import XCTest
 final class RealFixtureGoldenTests: XCTestCase {
     func testAllRealFixturesMatchExifToolDerivedGoldens() throws {
         let corpus = try loadCorpus()
-        XCTAssertEqual(corpus.schemaVersion, 2)
+        XCTAssertEqual(corpus.schemaVersion, 3)
         XCTAssertEqual(corpus.fixtures.count, 17)
 
         for fixture in corpus.fixtures {
@@ -36,10 +36,14 @@ final class RealFixtureGoldenTests: XCTestCase {
         XCTAssertEqual(result.format.fileExtension, expected.format.extension, context)
         XCTAssertEqual(result.format.brand, expected.format.brand, context)
         XCTAssertEqual(result.format.detectedByMagic, expected.format.detectedByMagic, context)
+        XCTAssertEqual(result.format.kind.rawValue, expected.format.kind, context)
 
         try assertTimestamps(result.timestamps, expected: expected.timestamps, context: context)
         assertLocations(result.locations, expected: expected.locations, context: context)
         assertCamera(result.camera, expected: expected.camera, context: context)
+        assertGeometry(result.geometry, expected: expected.geometry, context: context)
+        XCTAssertEqual(result.timestamps.captureWallClock?.role.rawValue, expected.selections.captureWallClock, "\(context): captureWallClock")
+        XCTAssertEqual(result.timestamps.captureInstant?.role.rawValue, expected.selections.captureInstant, "\(context): captureInstant")
         assertVideo(result.video, expected: expected.video, context: context)
 
         // Read-metrics guardrails remain enforced through the internal evidence graph.
@@ -132,13 +136,20 @@ final class RealFixtureGoldenTests: XCTestCase {
     }
 
     private func assertCamera(_ actual: Camera?, expected: GoldenCamera?, context: String) {
+        XCTAssertEqual(actual == nil, expected == nil, "\(context): camera presence")
         XCTAssertEqual(actual?.make, expected?.make, context)
         XCTAssertEqual(actual?.model, expected?.model, context)
         XCTAssertEqual(actual?.lensModel, expected?.lensModel, context)
         XCTAssertEqual(actual?.serialNumber, expected?.serialNumber, context)
-        XCTAssertEqual(actual?.orientation?.rawValue, expected?.orientation, context)
-        XCTAssertEqual(actual?.pixelWidth, expected?.pixelWidth, context)
-        XCTAssertEqual(actual?.pixelHeight, expected?.pixelHeight, context)
+    }
+
+    private func assertGeometry(_ actual: PixelGeometry?, expected: GoldenGeometry?, context: String) {
+        XCTAssertEqual(actual == nil, expected == nil, "\(context): geometry presence")
+        XCTAssertEqual(actual?.pixelWidth, expected?.pixelWidth, "\(context): pixelWidth")
+        XCTAssertEqual(actual?.pixelHeight, expected?.pixelHeight, "\(context): pixelHeight")
+        XCTAssertEqual(actual?.orientation?.rawValue, expected?.orientation, "\(context): orientation")
+        XCTAssertEqual(actual?.displayPixelWidth, expected?.displayPixelWidth, "\(context): displayPixelWidth")
+        XCTAssertEqual(actual?.displayPixelHeight, expected?.displayPixelHeight, "\(context): displayPixelHeight")
     }
 
     private func assertVideo(_ actual: VideoInfo?, expected: GoldenVideo?, context: String) {
@@ -148,21 +159,10 @@ final class RealFixtureGoldenTests: XCTestCase {
         case let (expected?, actual?):
             assertOptionalDoubleEqual(actual.durationSeconds, expected.durationSeconds, accuracy: 0.01, "\(context): duration")
             assertOptionalDoubleEqual(actual.frameRate, expected.frameRate, accuracy: 0.05, "\(context): frameRate")
-            XCTAssertEqual(actual.codec.map(Self.codecString), expected.codec, "\(context): codec")
+            XCTAssertEqual(actual.codec?.identifier, expected.codec, "\(context): codec")
+            XCTAssertEqual(actual.codec.flatMap { VideoCodec(identifier: $0.identifier) }, actual.codec, "\(context): codec round-trip")
         default:
             XCTFail("\(context): video presence mismatch")
-        }
-    }
-
-    private static func codecString(_ codec: VideoCodec) -> String {
-        switch codec {
-        case .h264: return "h264"
-        case .hevc: return "hevc"
-        case .proRes: return "proRes"
-        case .av1: return "av1"
-        case .vp9: return "vp9"
-        case .motionJPEG: return "motionJPEG"
-        case let .other(fourCC): return "other:\(fourCC)"
         }
     }
 
@@ -211,12 +211,20 @@ private struct GoldenFixture: Decodable {
     let format: GoldenFormat
     let timestamps: GoldenTimestamps
     let locations: GoldenLocations
+    let selections: GoldenSelections
     let camera: GoldenCamera?
+    let geometry: GoldenGeometry?
     let video: GoldenVideo?
+}
+
+private struct GoldenSelections: Decodable {
+    let captureWallClock: String?
+    let captureInstant: String?
 }
 
 private struct GoldenFormat: Decodable {
     let family: String
+    let kind: String
     let `extension`: String
     let brand: String?
     let detectedByMagic: Bool
@@ -260,9 +268,14 @@ private struct GoldenCamera: Decodable {
     let model: String?
     let lensModel: String?
     let serialNumber: String?
-    let orientation: Int?
+}
+
+private struct GoldenGeometry: Decodable {
     let pixelWidth: Int?
     let pixelHeight: Int?
+    let orientation: Int?
+    let displayPixelWidth: Int?
+    let displayPixelHeight: Int?
 }
 
 private struct GoldenVideo: Decodable {

@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.6.2"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.7.0"),
 ]
 ```
 
@@ -163,6 +163,7 @@ confirming a transport returned the file you asked for before spending a parse o
 ## Quick Start
 
 ```swift
+import Foundation
 import MediaMetadata
 
 let result = MediaMetadataReader.read(url: url)
@@ -176,12 +177,24 @@ case .readFailure:
     print("retry:", result.outcome.shouldRetry)        // true
 }
 
-// Detected container family, e.g. .tiff, .jpeg, .heif, .isoBMFF,
-// .riffWAV, .riffAVI, .id3, or .unknown.
-print(result.format.family, result.format.brand ?? "")
+// Detected container family (.tiff, .jpeg, .heif, .isoBMFF, .riffWAV, .riffAVI,
+// .id3, .unknown) and what it holds — decided from structure, so an AVIF is an
+// .image and an MP4 is a .video even though both are ISO BMFF.
+print(result.format.family, result.format.kind, result.format.brand ?? "")
 
-// Every capture/creation date is its own strongly typed field — no raw strings,
-// no "best date" guess. Each CaptureTime carries calendar fields, an optional
+// The two dates most callers want, each for its own purpose, with the role it came
+// from. There is no single "best date": the local time a photo was taken (to name or
+// folder it) and the instant it was taken (to sort it) are different questions.
+if let wall = result.timestamps.captureWallClock,
+   let local = wall.time.captureLocalComponents {
+    print("taken", local.year, local.month, local.day, "per", wall.role) // e.g. .original
+}
+if let moment = result.timestamps.captureInstant, let instant = moment.time.instant {
+    print("sort by", instant, "per", moment.role) // instant is always set on this selection
+}
+
+// Every capture/creation date is also its own strongly typed field, keyed by a
+// stable Role for callers with their own policy. Each CaptureTime carries calendar fields, an optional
 // UTC offset, an absolute `instant` when one can be computed, and a `precision`.
 // Use `captureLocalComponents` for capture-local naming; it is nil for absolute
 // (UTC-anchored) timestamps so they cannot be mistaken for local wall clock.
@@ -197,25 +210,39 @@ if let gps = result.timestamps.gps {
 }
 // Other named fields: digitized, tiffDateTime, containerCreation, quickTimeCreation,
 // quickTimeLocation, quickTimeContentCreate, id3Recording, waveOrigination, riffRecording.
+for (role, time) in result.timestamps.entries { print(role.rawValue, time.precision) }
+let myOrder: [CaptureTimestamps.Role] = [.digitized, .original]
+let mine = myOrder.lazy.compactMap { result.timestamps[$0] }.first
 
 // Each capture location is its own named field by source — no array, no order,
-// no single "best" pick. Pick the source you trust, or scan `all`.
+// no single "best" pick. Pick the source you trust, or scan `entries`.
 if let exif = result.locations.exifGPS {
     print(exif.latitude, exif.longitude, exif.altitudeMeters ?? 0)
 }
 if let quickTime = result.locations.quickTime { print(quickTime.latitude, quickTime.longitude) }
-for location in result.locations.all { print(location.latitude, location.longitude) }
+for (source, location) in result.locations.entries { print(source, location.latitude) }
 
-// Camera/device. Identity stays text; orientation is an enum, dimensions are Int.
+// Device identity — nil when the file names no device.
 if let camera = result.camera {
-    print(camera.make ?? "", camera.model ?? "", camera.orientation ?? .up)
-    print(camera.pixelWidth ?? 0, camera.pixelHeight ?? 0)
+    print(camera.make ?? "", camera.model ?? "", camera.lensModel ?? "")
+}
+
+// Size and orientation, for stills and movies. pixelWidth/Height are the stored
+// raster; the display size has already had the quarter-turn rule applied, so a
+// portrait iPhone photo (or video) lays out as portrait.
+if let geometry = result.geometry {
+    print(geometry.pixelWidth ?? 0, geometry.pixelHeight ?? 0, geometry.orientation ?? Orientation.up)
+    print(geometry.displayPixelWidth ?? 0, geometry.displayPixelHeight ?? 0)
 }
 
 // Video specifics.
 if let video = result.video {
-    print(video.durationSeconds ?? 0, video.frameRate ?? 0, video.codec ?? .other(fourCC: "????"))
+    print(video.durationSeconds ?? 0, video.frameRate ?? 0, video.codec?.identifier ?? "") // "hevc"
 }
+
+// Persisting results? Store this with each row and re-extract rows with a lower one:
+// it rises whenever the same bytes can produce a different answer.
+print(MediaMetadataReader.extractionRevision)
 ```
 
 Every call returns a complete, fully typed result — the library performs all
@@ -224,14 +251,34 @@ JSON. When a file cannot be read the result is `.readFailure` (retry); when its
 signature is not handled it is `.unsupported` (definitive); otherwise it is
 `.parsed` with the typed fields populated.
 
+## Migrating from 0.6
+
+0.7.0 reshapes the result around what callers actually do with it. The changes a
+compiler will point at:
+
+| 0.6 | 0.7 |
+|---|---|
+| `result.camera?.orientation` / `pixelWidth` / `pixelHeight` | `result.geometry?.orientation` / `pixelWidth` / `pixelHeight` |
+| `result.camera` non-nil for any file with dimensions | `result.camera` is identity only, `nil` when no device is named |
+| `Camera(make:…orientation:pixelWidth:pixelHeight:)` | `Camera(make:model:lensModel:serialNumber:)` + `PixelGeometry(…)` |
+| `String(describing: codec)` | `codec.identifier` (round-trips via `VideoCodec(identifier:)`) |
+
+Behaviour that changes for the same bytes (`extractionRevision` is now `1`; treat
+earlier rows as stale):
+
+- Movies report orientation from their track matrix, so portrait phone videos are
+  `.right` with a portrait display size; an unrotated movie is `.up`, not `nil`.
+- AVIF (and other MIAF brands) report the `.heif` family rather than `.isoBMFF`.
+- `format.kind` is new; prefer it to inferring still/movie from the family.
+
 ## Supported Formats
 
 | Format | Detection | Timestamps | Location | Camera | Video | Notes |
 |---|---|---|---|---|---|---|
-| TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, orientation, dimensions |
+| TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, orientation, dimensions, embedded previews |
 | JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment |
-| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir` transform properties |
-| ISO BMFF (MP4 / MOV) | ✅ | ✅ | ✅ | ✅ | ✅ | QuickTime metadata, GoPro GPMF, Sony NRTM; duration, frame rate, codec |
+| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe` |
+| ISO BMFF (MP4 / MOV) | ✅ | ✅ | ✅ | ✅ | ✅ | QuickTime metadata, GoPro GPMF, Sony NRTM; duration, frame rate, codec; rotation from the track matrix |
 | RIFF AVI | ✅ | ✅ | — | — | ✅ | `LIST.INFO` `ICRD` / `IDIT`; `avih`/`strh` duration, frame rate, codec |
 | RIFF WAV | ✅ | ✅ | — | — | — | `LIST.INFO` `ICRD`, Broadcast Wave `bext` origination date |
 | ID3v2 | ✅ | ✅ | — | — | — | `TDRC`, `TDOR`, legacy `TYER`/`TDAT`/`TIME` |
@@ -248,8 +295,10 @@ The library rejects framework-shaped shortcuts. Internally it builds a full
 evidence graph — every finding with its byte range, provenance, and the candidate
 list behind each value — and derives the public typed field set from it. Callers
 consume only that typed field set: each timestamp is its own named, strongly typed
-field (the library never collapses them into one "best" value), and timestamp
-expression is preserved separately from absolute instants.
+field, and timestamp expression is preserved separately from absolute instants.
+Where format knowledge is what makes a choice right — which dates are capture
+clocks, what orientation does to dimensions — the library makes it, names the
+purpose, and shows its working (the chosen role) rather than hiding the evidence.
 
 For the full architecture, product intent, parser design, fixture policy, and
 engineering guardrails, see [ARCHITECTURE.md](ARCHITECTURE.md).
