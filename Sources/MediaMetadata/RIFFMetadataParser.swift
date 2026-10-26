@@ -8,6 +8,23 @@ private let avihMinimumPayloadLength: UInt64 = 40
 /// Minimum `strh` payload used for stream type, handler, scale/rate, and length.
 private let strhMinimumPayloadLength: UInt64 = 36
 
+extension FormatIdentity.Family {
+    /// The family a RIFF form type names. The one place that decides it, so `identify` and
+    /// a full parse cannot disagree; a form type with no family here is ``unknown``.
+    init(riffFormType: String) {
+        switch riffFormType {
+        case "AVI ":
+            self = .riffAVI
+        case "WAVE":
+            self = .riffWAV
+        case "WEBP":
+            self = .webp
+        default:
+            self = .unknown
+        }
+    }
+}
+
 struct RIFFMetadataParser {
     private let source: MediaByteSource
     private let fileExtension: String
@@ -51,14 +68,7 @@ struct RIFFMetadataParser {
         }
 
         let formType = ascii(header[8..<12])
-        switch formType {
-        case "AVI ":
-            family = .riffAVI
-        case "WAVE":
-            family = .riffWAV
-        default:
-            family = .unknown
-        }
+        family = FormatIdentity.Family(riffFormType: formType)
         let identity = FormatIdentity(
             family: family,
             observedExtension: fileExtension,

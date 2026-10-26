@@ -3,7 +3,7 @@ import XCTest
 @testable import MediaMetadata
 
 /// Camera RAW recognised from bytes, canonical file types, audio-only roles, and the
-/// per-family extraction revision (0.7.1).
+/// per-family extraction revision (0.7.1, with 0.8.0's PNG, WebP and GIF families).
 final class RawAndFileTypeTests: XCTestCase {
     private var temporaryDirectory = FileManager.default.temporaryDirectory
 
@@ -186,7 +186,12 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .jpeg), 0)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .heif), 1)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .isoBMFF), 2)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .unknown), 1)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .unknown), 2, "PNG, WebP and GIF left it (0.8.0)")
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .png), 0)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .webp), 0)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .gif), 0)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .riffAVI), 0)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .riffWAV), 0)
         XCTAssertEqual(
             MediaMetadataReader.extractionRevision,
             MediaFormat.Family.allCases.map(MediaMetadataReader.extractionRevision(for:)).max()

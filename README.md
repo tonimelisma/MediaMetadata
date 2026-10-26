@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.7.1"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.8.0"),
 ]
 ```
 
@@ -177,8 +177,8 @@ case .readFailure:
     print("retry:", result.outcome.shouldRetry)        // true
 }
 
-// Detected container family (.tiff, .jpeg, .heif, .isoBMFF, .riffWAV, .riffAVI,
-// .id3, .unknown) and what it holds — decided from structure, so an AVIF is an
+// Detected container family (.tiff, .jpeg, .heif, .png, .webp, .gif, .isoBMFF,
+// .riffWAV, .riffAVI, .id3, .unknown) and what it holds — decided from structure, so an AVIF is an
 // .image and an MP4 is a .video even though both are ISO BMFF.
 print(result.format.family, result.format.kind, result.format.brand ?? "")
 
@@ -290,6 +290,26 @@ remain unsupported for metadata). `fileType` is a new field, so no revision move
 it: rows from before it can be labelled with `MediaFileType(fileExtension:)` until they
 are next read, and only TIFF-family rows need their bytes to tell a RAW from a TIFF.
 
+## Migrating to 0.8
+
+0.8.0 reads PNG, WebP and GIF from their bytes. Each is a family of its own —
+`MediaFormat.Family` gains `.png`, `.webp` and `.gif` — so an exhaustive `switch` over
+`Family` no longer compiles until it handles them (or adds a `default`). All three are
+`.image`, with `fileType` `.png`, `.webp` and `.gif`.
+
+Behaviour that changes for the same bytes: these files were `.unknown` and
+`.unsupported` with no `fileType`; they are now `.parsed`, with the stored size from the
+container header (PNG `IHDR`, WebP `VP8X`/`VP8 `/`VP8L`, GIF logical screen) and, for
+PNG `eXIf` and WebP `EXIF`, orientation, dates, camera and GPS. That is why
+`extractionRevision(for: .unknown)` rises to 2: a stored `.unknown` row may now read as
+one of the new families. The new families start at revision 0.
+
+`identify(source:filenameHint:)` now decides RIFF by its form type: `AVI ` is
+`.riffAVI`, `WAVE` is `.riffWAV`, `WEBP` is `.webp`, and any other form type is
+`.unknown` (previously every RIFF file identified as `.riffAVI`). Because the form type
+proves the type, `identify` now also reports `fileType` `.avi` and `.wav`. A full read of
+AVI and WAV is unchanged.
+
 
 ## Supported Formats
 
@@ -300,11 +320,14 @@ are next read, and only TIFF-family rows need their bytes to tell a RAW from a T
 | RAF, ORF, RW2 | ✅ | — | — | — | — | Recognised from their signature as stills; reported `.unsupported` |
 | JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment |
 | HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe` |
+| PNG | ✅ | ✅ | ✅ | ✅ | — | Size from `IHDR`; Exif from an `eXIf` chunk before `IDAT` (one after it is not read: the specification forbids it, and reaching it means walking the image data) |
+| WebP | ✅ | ✅ | ✅ | ✅ | — | Size from the `VP8X` canvas or the `VP8 `/`VP8L` bitstream header; Exif from the `EXIF` chunk |
+| GIF | ✅ | — | — | — | — | Logical screen size; GIF has no standard capture date |
 | ISO BMFF (MP4 / MOV) | ✅ | ✅ | ✅ | ✅ | ✅ | QuickTime metadata, GoPro GPMF, Sony NRTM; duration, frame rate, codec; rotation from the track matrix |
 | RIFF AVI | ✅ | ✅ | — | — | ✅ | `LIST.INFO` `ICRD` / `IDIT`; `avih`/`strh` duration, frame rate, codec |
 | RIFF WAV | ✅ | ✅ | — | — | — | `LIST.INFO` `ICRD`, Broadcast Wave `bext` origination date |
 | ID3v2 | ✅ | ✅ | — | — | — | `TDRC`, `TDOR`, legacy `TYER`/`TDAT`/`TIME` |
-| PNG, WebP, Matroska, XMP | — | — | — | — | — | Not yet implemented |
+| Matroska, XMP | — | — | — | — | — | Not yet implemented |
 
 ## Design Philosophy
 
