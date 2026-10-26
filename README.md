@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.7.0"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.7.1"),
 ]
 ```
 
@@ -182,6 +182,14 @@ case .readFailure:
 // .image and an MP4 is a .video even though both are ISO BMFF.
 print(result.format.family, result.format.kind, result.format.brand ?? "")
 
+// The file type a person would name — from the bytes, so a Sony RAW is .arw though
+// its family is .tiff, and a QuickTime movie is .mov whatever its extension says.
+// Before anything has read a file, MediaFileType(fileExtension:) labels it by name,
+// folding spellings together (jpg/jpe/jpeg → .jpeg, heic/heif/hif → .heif).
+if let type = result.format.fileType {
+    print(type.displayName, result.format.isCameraRaw) // "ARW true"
+}
+
 // The two dates most callers want, each for its own purpose, with the role it came
 // from. There is no single "best date": the local time a photo was taken (to name or
 // folder it) and the instant it was taken (to sort it) are different questions.
@@ -240,9 +248,11 @@ if let video = result.video {
     print(video.durationSeconds ?? 0, video.frameRate ?? 0, video.codec?.identifier ?? "") // "hevc"
 }
 
-// Persisting results? Store this with each row and re-extract rows with a lower one:
-// it rises whenever the same bytes can produce a different answer.
-print(MediaMetadataReader.extractionRevision)
+// Persisting results? Store the revision of the row's family beside it. A lower stored
+// number means a re-read *may* now give a different answer — not that one is due: re-read
+// when the bytes are cheap to reach (a local file), and remember that re-reading a cloud
+// placeholder or a remote file means downloading it.
+print(MediaMetadataReader.extractionRevision(for: result.format.family))
 ```
 
 Every call returns a complete, fully typed result — the library performs all
@@ -263,19 +273,31 @@ compiler will point at:
 | `Camera(make:…orientation:pixelWidth:pixelHeight:)` | `Camera(make:model:lensModel:serialNumber:)` + `PixelGeometry(…)` |
 | `String(describing: codec)` | `codec.identifier` (round-trips via `VideoCodec(identifier:)`) |
 
-Behaviour that changes for the same bytes (`extractionRevision` is now `1`; treat
-earlier rows as stale):
+Behaviour that changes for the same bytes. Each family's
+`extractionRevision(for:)` records which of these apply to it, so a consumer can
+re-read just the affected rows, and only where their bytes are already at hand:
 
 - Movies report orientation from their track matrix, so portrait phone videos are
   `.right` with a portrait display size; an unrotated movie is `.up`, not `nil`.
 - AVIF (and other MIAF brands) report the `.heif` family rather than `.isoBMFF`.
 - `format.kind` is new; prefer it to inferring still/movie from the family.
 
+0.7.1 adds `format.fileType` and `isCameraRaw` (camera RAW recognised from the
+bytes, without reading past what a parse already reads), `MediaFileType(fileExtension:)`,
+`Role.isAudioOnly`, and per-family revisions. Canon CR3 is now a still rather than a
+movie, and Fujifilm RAF, Olympus ORF and Panasonic RW2 are recognised as stills (they
+remain unsupported for metadata). `fileType` is a new field, so no revision moves for
+it: rows from before it can be labelled with `MediaFileType(fileExtension:)` until they
+are next read, and only TIFF-family rows need their bytes to tell a RAW from a TIFF.
+
+
 ## Supported Formats
 
 | Format | Detection | Timestamps | Location | Camera | Video | Notes |
 |---|---|---|---|---|---|---|
-| TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, orientation, dimensions, embedded previews |
+| TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, orientation, dimensions, embedded previews; DNG, CR2, ARW, NEF, PEF, SRW recognised from IFD0 |
+| CR3 | ✅ | — | — | — | — | Recognised from its `crx ` brand as a still; metadata not yet parsed |
+| RAF, ORF, RW2 | ✅ | — | — | — | — | Recognised from their signature as stills; reported `.unsupported` |
 | JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment |
 | HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe` |
 | ISO BMFF (MP4 / MOV) | ✅ | ✅ | ✅ | ✅ | ✅ | QuickTime metadata, GoPro GPMF, Sony NRTM; duration, frame rate, codec; rotation from the track matrix |

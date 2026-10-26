@@ -173,7 +173,7 @@ extension ReadOutcome {
 
 /// Detected container identity.
 public struct MediaFormat: Equatable, Sendable {
-    public enum Family: String, Equatable, Sendable {
+    public enum Family: String, Equatable, Sendable, CaseIterable {
         case tiff
         case jpeg
         case heif
@@ -224,19 +224,188 @@ public struct MediaFormat: Equatable, Sendable {
     public let detectedByMagic: Bool
     /// Container brand when available (e.g. ISO BMFF major brand, `ID3v2.4`).
     public let brand: String?
+    /// The file type the bytes identify — e.g. ``MediaFileType/arw`` for a Sony RAW, which
+    /// is a TIFF by family. `nil` when the bytes do not settle it (an ISO BMFF file that was
+    /// only identified, not parsed). Never taken from the extension when the bytes disagree.
+    public let fileType: MediaFileType?
+
+    /// `true` when the bytes identify camera RAW sensor data. A RAW is a still, so ``kind``
+    /// is ``Kind/image``; this says which kind of still.
+    public var isCameraRaw: Bool {
+        fileType?.isCameraRaw ?? false
+    }
 
     public init(
         family: Family,
         kind: Kind? = nil,
         fileExtension: String,
         detectedByMagic: Bool,
-        brand: String? = nil
+        brand: String? = nil,
+        fileType: MediaFileType? = nil
     ) {
+        var resolvedKind = kind ?? Kind(family: family)
+        // A type the bytes named can settle a kind the family could not — a Fujifilm RAF the
+        // library recognises but does not parse, an audio-only M4A brand — but a generic MP4
+        // brand says nothing about whether the file holds pictures or only sound.
+        if resolvedKind == .unknown, let fileType, fileType != .mp4 {
+            resolvedKind = fileType.kind
+        }
         self.family = family
-        self.kind = kind ?? Kind(family: family)
+        self.kind = resolvedKind
         self.fileExtension = fileExtension
         self.detectedByMagic = detectedByMagic
         self.brand = brand
+        self.fileType = fileType
+    }
+}
+
+/// The file type a user would name — JPEG, HEIF, ARW, MOV — one per format, not one per
+/// spelling of its extension.
+///
+/// Two ways to get one, for two moments in a catalog's life:
+/// - ``MediaFormat/fileType`` after a read, decided from the **bytes**: an ISO BMFF brand
+///   (`qt  ` is a MOV, `crx ` a Canon CR3), or a TIFF that turns out to be camera RAW. It
+///   wins over a misleading extension.
+/// - ``init(fileExtension:)`` before any read, when all a scanner has is a name. It folds
+///   spelling variants (`jpg`/`jpe`/`jpeg`, `tif`/`tiff`, `heic`/`heif`/`hif`) into one type.
+///
+/// ``rawValue`` is a stable lower-case identifier, safe to store. ``displayName`` is the
+/// conventional upper-case label. Neither is ever derived from a framework's type system.
+public enum MediaFileType: String, Equatable, Hashable, Sendable, CaseIterable {
+    case jpeg
+    /// HEIF in any of its spellings, including Apple's `.heic`.
+    case heif
+    case avif
+    case png
+    case webp
+    case gif
+    case tiff
+    // Camera RAW.
+    case dng
+    case arw
+    case cr2
+    case cr3
+    case nef
+    case orf
+    case rw2
+    case raf
+    case pef
+    case srw
+    /// Camera RAW sensor data (a colour-filter-array raster) from a vendor without a named
+    /// case here.
+    case otherRaw
+    // Movies.
+    case mov
+    case mp4
+    case m4v
+    case threeGPP = "3gp"
+    case avi
+    // Sound.
+    case m4a
+    case mp3
+    case wav
+
+    /// The type an extension conventionally names, or `nil` for one this table does not know.
+    /// Case- and dot-insensitive: `"JPG"`, `".jpe"` and `"jpeg"` are all ``jpeg``.
+    ///
+    /// This is a naming convention, not a detection: use it to label a file nothing has read
+    /// yet, and prefer ``MediaFormat/fileType`` once something has.
+    public init?(fileExtension: String) {
+        var key = fileExtension.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if key.hasPrefix(".") {
+            key.removeFirst()
+        }
+        guard let type = Self.byExtension[key] else {
+            return nil
+        }
+        self = type
+    }
+
+    /// The conventional label: `"JPEG"`, `"HEIF"`, `"ARW"`, `"3GP"`; `"RAW"` for ``otherRaw``.
+    public var displayName: String {
+        switch self {
+        case .threeGPP: "3GP"
+        case .otherRaw: "RAW"
+        default: rawValue.uppercased()
+        }
+    }
+
+    /// `true` for camera RAW formats — sensor data that must be developed to be viewed.
+    public var isCameraRaw: Bool {
+        switch self {
+        case .dng, .arw, .cr2, .cr3, .nef, .orf, .rw2, .raf, .pef, .srw, .otherRaw: true
+        default: false
+        }
+    }
+
+    /// Still, movie or sound.
+    public var kind: MediaFormat.Kind {
+        switch self {
+        case .mov, .mp4, .m4v, .threeGPP, .avi: .video
+        case .m4a, .mp3, .wav: .audio
+        default: .image
+        }
+    }
+
+    private static let byExtension: [String: MediaFileType] = {
+        var table: [String: MediaFileType] = [
+            "jpg": .jpeg, "jpe": .jpeg, "jfif": .jpeg,
+            "heic": .heif, "hif": .heif, "heics": .heif, "heifs": .heif,
+            "avifs": .avif,
+            "tif": .tiff,
+            "qt": .mov,
+            "3g2": .threeGPP,
+        ]
+        for type in allCases where type != .otherRaw && type != .threeGPP {
+            table[type.rawValue] = type
+        }
+        table["3gp"] = .threeGPP
+        return table
+    }()
+}
+
+extension MediaFileType {
+    /// The type the bytes already settled — a family that implies one, or an ISO BMFF brand.
+    /// `nil` when the bytes alone do not say (an unparsed ISO BMFF file, an unknown family).
+    init?(family: MediaFormat.Family, brand: String?, fileExtension: String) {
+        switch family {
+        case .jpeg:
+            self = .jpeg
+        case .tiff:
+            self = .tiff
+        case .riffAVI:
+            self = .avi
+        case .riffWAV:
+            self = .wav
+        case .id3:
+            self = .mp3
+        case .heif:
+            // AVIF's major brand is usually `avif`; a generic MIAF brand (`mif1`) leaves the
+            // codec unstated in the brand, and only then does the extension break the tie.
+            if brand == "avif" || brand == "avis" || (brand == "mif1" && fileExtension == "avif") {
+                self = .avif
+            } else {
+                self = .heif
+            }
+        case .isoBMFF:
+            // ISO BMFF requires an `ftyp`; a parsed file without one is QuickTime from before
+            // the MP4 family existed. (This initializer only runs after a parse — `identify`
+            // reads no brand and decides its type separately.)
+            guard let brand else {
+                self = .mov
+                return
+            }
+            switch brand {
+            case "qt  ": self = .mov
+            case "crx ": self = .cr3
+            case "M4A ", "M4B ", "M4P ": self = .m4a
+            case "M4V ", "M4VH", "M4VP": self = .m4v
+            default:
+                self = brand.hasPrefix("3g") ? .threeGPP : .mp4
+            }
+        case .unknown:
+            return nil
+        }
     }
 }
 
@@ -248,7 +417,11 @@ extension MediaFormat {
             kind: identity.kind.flatMap { Kind(rawValue: $0.rawValue) },
             fileExtension: identity.observedExtension,
             detectedByMagic: identity.detectedByMagic,
-            brand: identity.brand
+            brand: identity.brand,
+            // A parse has read enough to fall back on what the family and brand imply; a TIFF
+            // parser that found RAW evidence has already said so in `identity.fileType`.
+            fileType: identity.fileType.flatMap(MediaFileType.init(rawValue:))
+                ?? MediaFileType(family: family, brand: identity.brand, fileExtension: identity.observedExtension)
         )
     }
 }
@@ -345,6 +518,16 @@ public struct CaptureTimestamps: Equatable, Sendable {
         case id3Recording
         case waveOrigination
         case riffRecording
+
+        /// `true` for roles only sound files carry (ID3 tags, Broadcast Wave), so a consumer
+        /// that catalogs pictures and movies can drop them without naming them.
+        /// ``riffRecording`` is not one: RIFF also carries AVI video.
+        public var isAudioOnly: Bool {
+            switch self {
+            case .id3Recording, .waveOrigination: true
+            default: false
+            }
+        }
     }
 
     /// The timestamp a role names, or `nil` when the file does not express it.

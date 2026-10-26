@@ -1614,6 +1614,11 @@ struct ISOBMFFMetadataParser {
     /// sound is audio. `nil` when none of those was seen — a truncated or unusual file —
     /// so the public kind falls back to what the family implies.
     private func structuralKind() -> FormatIdentity.Kind? {
+        // Canon's CR3 is a still in a movie's clothing: its full-size raster, preview and
+        // thumbnail are each a `vide` track. The `crx ` brand is the only reliable tell.
+        if brand == "crx " {
+            return .image
+        }
         if sawVideoTrack {
             return .video
         }

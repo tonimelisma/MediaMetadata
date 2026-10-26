@@ -1,10 +1,10 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "fixtures": [
     {
       "path": "otos-catalog-state-robustness/Media/jpeg-exif-offset-date.jpg",
       "outcome": "parsed",
-      "format": {"family": "jpeg", "extension": "jpg", "brand": null, "detectedByMagic": true, "kind": "image"},
+      "format": {"family": "jpeg", "extension": "jpg", "brand": null, "detectedByMagic": true, "kind": "image", "fileType": "jpeg", "isCameraRaw": false},
       "timestamps": {
         "original": {"components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "precision": "localWithOffset"},
         "digitized": {"components": [2025, 6, 12, 16, 48, 36], "instant": "2025-06-13T00:48:36Z", "offsetSeconds": -28800, "precision": "localWithOffset"},
@@ -19,7 +19,7 @@
     {
       "path": "otos-catalog-state-robustness/Media/ios-heic-offset-date.heic",
       "outcome": "parsed",
-      "format": {"family": "heif", "extension": "heic", "brand": "heic", "detectedByMagic": true, "kind": "image"},
+      "format": {"family": "heif", "extension": "heic", "brand": "heic", "detectedByMagic": true, "kind": "image", "fileType": "heif", "isCameraRaw": false},
       "timestamps": {
         "original": {"components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "precision": "localWithOffset"},
         "digitized": {"components": [2024, 4, 25, 14, 51, 34], "instant": "2024-04-25T21:51:34Z", "offsetSeconds": -25200, "precision": "localWithOffset"},
@@ -35,7 +35,7 @@
     {
       "path": "otos-catalog-state-robustness/Media/mov-no-embedded-capture-date.mov",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video", "fileType": "mov", "isCameraRaw": false},
       "timestamps": {},
       "locations": {},
       "selections": {"captureWallClock": null, "captureInstant": null},
@@ -46,7 +46,7 @@
     {
       "path": "otos-catalog-state-robustness/Media/mp4-no-embedded-capture-date.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {},
       "locations": {},
       "selections": {"captureWallClock": null, "captureInstant": null},
@@ -57,7 +57,7 @@
     {
       "path": "videometa/IMG_5179.MOV",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video", "fileType": "mov", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2026, 4, 8, 18, 18, 2], "instant": "2026-04-08T18:18:02Z", "offsetSeconds": 0, "precision": "absolute"},
         "quickTimeCreation": {"components": [2026, 4, 8, 11, 18, 2], "instant": "2026-04-08T18:18:02Z", "offsetSeconds": -25200, "precision": "localWithOffset"}
@@ -71,7 +71,7 @@
     {
       "path": "videometa/apple.mov",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video", "fileType": "mov", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2026, 3, 18, 1, 11, 9], "instant": "2026-03-18T01:11:09Z", "offsetSeconds": 0, "precision": "absolute"},
         "quickTimeCreation": {"components": [2026, 3, 17, 20, 11, 8], "instant": "2026-03-18T01:11:08Z", "offsetSeconds": -18000, "precision": "localWithOffset"}
@@ -85,7 +85,7 @@
     {
       "path": "videometa/dji_inspire3_car_4k120_rec709.mov",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video", "fileType": "mov", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2023, 4, 7, 19, 47, 18], "instant": "2023-04-07T19:47:18Z", "offsetSeconds": 0, "precision": "absolute"}
       },
@@ -98,7 +98,7 @@
     {
       "path": "videometa/dji_ronin4d_4k_prores4444_25fps.mov",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video", "fileType": "mov", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2021, 12, 17, 3, 59, 55], "instant": "2021-12-17T03:59:55Z", "offsetSeconds": 0, "precision": "absolute"}
       },
@@ -111,7 +111,7 @@
     {
       "path": "videometa/exiftool_quicktime.mov",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mov", "brand": null, "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mov", "brand": null, "detectedByMagic": true, "kind": "video", "fileType": "mov", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2005, 8, 11, 14, 3, 54], "instant": "2005-08-11T14:03:54Z", "offsetSeconds": 0, "precision": "absolute"}
       },
@@ -124,7 +124,7 @@
     {
       "path": "videometa/google.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2025, 9, 15, 22, 23, 5], "instant": "2025-09-15T22:23:05Z", "offsetSeconds": 0, "precision": "absolute"}
       },
@@ -137,7 +137,7 @@
     {
       "path": "videometa/gopro_action.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "mp41", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "mp41", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2023, 8, 30, 7, 30, 32], "instant": "2023-08-30T07:30:32Z", "offsetSeconds": 0, "precision": "absolute"},
         "quickTimeCreation": {"components": [2023, 8, 30, 18, 30, 31], "instant": "2023-08-30T13:00:31Z", "offsetSeconds": 19800, "precision": "localWithOffset"}
@@ -151,7 +151,7 @@
     {
       "path": "videometa/minimal.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T10:30:00Z", "offsetSeconds": 0, "precision": "absolute"}
       },
@@ -164,7 +164,7 @@
     {
       "path": "videometa/nonfaststart.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {},
       "locations": {},
       "selections": {"captureWallClock": null, "captureInstant": null},
@@ -175,7 +175,7 @@
     {
       "path": "videometa/sony_a6700.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "XAVC", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "XAVC", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2026, 3, 18, 23, 39, 46], "instant": "2026-03-18T23:39:46Z", "offsetSeconds": 0, "precision": "absolute"},
         "quickTimeCreation": {"components": [2026, 3, 18, 16, 39, 46], "instant": "2026-03-18T23:39:46Z", "offsetSeconds": -25200, "precision": "localWithOffset"},
@@ -190,7 +190,7 @@
     {
       "path": "videometa/with_audio.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {},
       "locations": {},
       "selections": {"captureWallClock": null, "captureInstant": null},
@@ -201,7 +201,7 @@
     {
       "path": "videometa/with_gps.mp4",
       "outcome": "parsed",
-      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "isoBMFF", "extension": "mp4", "brand": "isom", "detectedByMagic": true, "kind": "video", "fileType": "mp4", "isCameraRaw": false},
       "timestamps": {
         "containerCreation": {"components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T10:30:00Z", "offsetSeconds": 0, "precision": "absolute"},
         "quickTimeCreation": {"components": [2024, 6, 15, 10, 30, 0], "instant": "2024-06-15T17:30:00Z", "offsetSeconds": -25200, "precision": "localWithOffset"}
@@ -215,7 +215,7 @@
     {
       "path": "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
       "outcome": "parsed",
-      "format": {"family": "riffAVI", "extension": "avi", "brand": "AVI ", "detectedByMagic": true, "kind": "video"},
+      "format": {"family": "riffAVI", "extension": "avi", "brand": "AVI ", "detectedByMagic": true, "kind": "video", "fileType": "avi", "isCameraRaw": false},
       "timestamps": {},
       "locations": {},
       "selections": {"captureWallClock": null, "captureInstant": null},
