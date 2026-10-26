@@ -98,34 +98,33 @@ extension ISOBMFFMetadataParser {
 
     static func parseLocalTimestampComponents(_ rawValue: String) -> CaptureDateComponents? {
         let normalized = normalizedTimestamp(rawValue)
-        let prefix = String(normalized.prefix(19))
-        guard prefix.count >= 10 else {
+        // Work on a fixed-size [Character] rather than String indices: `padding(toLength:)`
+        // counts differently from `index(offsetBy:)` when the value holds multi-scalar
+        // graphemes (reachable from an adversarial QuickTime creationdate string), which
+        // previously let the index walk past the end and trap.
+        var characters = Array(normalized.prefix(19))
+        guard characters.count >= 10 else {
             return nil
         }
-        let dateTime = prefix.padding(toLength: 19, withPad: "T00:00:00", startingAt: 0)
-        let yearStart = dateTime.startIndex
-        let yearEnd = dateTime.index(yearStart, offsetBy: 4)
-        let monthStart = dateTime.index(yearEnd, offsetBy: 1)
-        let monthEnd = dateTime.index(monthStart, offsetBy: 2)
-        let dayStart = dateTime.index(monthEnd, offsetBy: 1)
-        let dayEnd = dateTime.index(dayStart, offsetBy: 2)
-        let hourStart = dateTime.index(dayEnd, offsetBy: 1)
-        let hourEnd = dateTime.index(hourStart, offsetBy: 2)
-        let minuteStart = dateTime.index(hourEnd, offsetBy: 1)
-        let minuteEnd = dateTime.index(minuteStart, offsetBy: 2)
-        let secondStart = dateTime.index(minuteEnd, offsetBy: 1)
-        let secondEnd = dateTime.index(secondStart, offsetBy: 2)
-        guard dateTime[yearEnd] == "-",
-              dateTime[monthEnd] == "-",
-              dateTime[dayEnd] == "T",
-              dateTime[hourEnd] == ":",
-              dateTime[minuteEnd] == ":",
-              let year = Int(dateTime[yearStart..<yearEnd]),
-              let month = Int(dateTime[monthStart..<monthEnd]),
-              let day = Int(dateTime[dayStart..<dayEnd]),
-              let hour = Int(dateTime[hourStart..<hourEnd]),
-              let minute = Int(dateTime[minuteStart..<minuteEnd]),
-              let second = Int(dateTime[secondStart..<secondEnd]),
+        // Positions 10...18 are "T00:00:00"; keep whatever the value supplied in 0...9.
+        let timeDefaults = Array("T00:00:00")
+        while characters.count < 19 {
+            characters.append(timeDefaults[characters.count - 10])
+        }
+        func number(_ range: Range<Int>) -> Int? {
+            Int(String(characters[range]))
+        }
+        guard characters[4] == "-",
+              characters[7] == "-",
+              characters[10] == "T",
+              characters[13] == ":",
+              characters[16] == ":",
+              let year = number(0..<4),
+              let month = number(5..<7),
+              let day = number(8..<10),
+              let hour = number(11..<13),
+              let minute = number(14..<16),
+              let second = number(17..<19),
               (1...12).contains(month),
               (1...31).contains(day),
               (0...23).contains(hour),
