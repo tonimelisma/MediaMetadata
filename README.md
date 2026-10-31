@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.8.1"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.8.2"),
 ]
 ```
 
@@ -246,6 +246,9 @@ if let geometry = result.geometry {
     print(geometry.displayPixelWidth ?? 0, geometry.displayPixelHeight ?? 0)
 }
 
+// Live Photos: a still and its motion movie report the same Apple content identifier.
+if let identifier = result.contentIdentifier { print(identifier) }
+
 // Video specifics.
 if let video = result.video {
     print(video.durationSeconds ?? 0, video.frameRate ?? 0, video.codec?.identifier ?? "") // "hevc"
@@ -321,12 +324,12 @@ AVI and WAV is unchanged.
 | TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, orientation, dimensions, embedded previews; DNG, CR2, ARW, NEF, PEF, SRW recognised from IFD0 |
 | CR3 | ✅ | — | — | — | — | Recognised from its `crx ` brand as a still; metadata not yet parsed |
 | RAF, ORF, RW2 | ✅ | — | — | — | — | Recognised from their signature as stills; reported `.unsupported` |
-| JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment |
-| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe` |
+| JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment; Apple MakerNote content identifier |
+| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe`; Apple MakerNote content identifier |
 | PNG | ✅ | ✅ | ✅ | ✅ | — | Size from `IHDR`; Exif from an `eXIf` chunk before `IDAT` (one after it is not read: the specification forbids it, and reaching it means walking the image data) |
 | WebP | ✅ | ✅ | ✅ | ✅ | — | Size from the `VP8X` canvas or the `VP8 `/`VP8L` bitstream header; Exif from the `EXIF` chunk |
 | GIF | ✅ | — | — | — | — | Logical screen size; GIF has no standard capture date |
-| ISO BMFF (MP4 / MOV) | ✅ | ✅ | ✅ | ✅ | ✅ | QuickTime metadata, GoPro GPMF, Sony NRTM; duration, frame rate, codec; rotation from the track matrix |
+| ISO BMFF (MP4 / MOV) | ✅ | ✅ | ✅ | ✅ | ✅ | QuickTime metadata, GoPro GPMF, Sony NRTM; duration, frame rate, codec; rotation from the track matrix; `com.apple.quicktime.content.identifier` |
 | RIFF AVI | ✅ | ✅ | — | — | ✅ | `LIST.INFO` `ICRD` / `IDIT`; `avih`/`strh` duration, frame rate, codec |
 | RIFF WAV | ✅ | ✅ | — | — | — | `LIST.INFO` `ICRD`, Broadcast Wave `bext` origination date |
 | ID3v2 | ✅ | ✅ | — | — | — | `TDRC`, `TDOR`, legacy `TYER`/`TDAT`/`TIME` |

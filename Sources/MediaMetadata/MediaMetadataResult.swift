@@ -31,6 +31,11 @@ public struct MediaMetadataResult: Equatable, Sendable {
     public let readCost: ReadCost
     /// Images the container embeds, largest first — where they are, not their bytes.
     public let previews: [EmbeddedPreview]
+    /// Apple's content identifier, the value a Live Photo's still and its motion movie
+    /// share. A still carries it in its Apple MakerNote (tag `0x0011`); a movie carries it as
+    /// `com.apple.quicktime.content.identifier`. Two files that report the same value were
+    /// captured as one Live Photo. `nil` when the file carries none.
+    public let contentIdentifier: String?
 
     public init(
         outcome: ReadOutcome,
@@ -41,7 +46,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
         geometry: PixelGeometry? = nil,
         video: VideoInfo? = nil,
         readCost: ReadCost = ReadCost(),
-        previews: [EmbeddedPreview] = []
+        previews: [EmbeddedPreview] = [],
+        contentIdentifier: String? = nil
     ) {
         self.outcome = outcome
         self.format = format
@@ -52,6 +58,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.video = video
         self.readCost = readCost
         self.previews = previews
+        self.contentIdentifier = contentIdentifier
     }
 }
 
@@ -137,7 +144,8 @@ extension MediaMetadataResult {
             geometry: parsed.camera.flatMap(PixelGeometry.init),
             video: parsed.video.flatMap(VideoInfo.init),
             readCost: ReadCost(parsed.readMetrics),
-            previews: parsed.previews.map(EmbeddedPreview.init)
+            previews: parsed.previews.map(EmbeddedPreview.init),
+            contentIdentifier: ContentIdentifierEvidence.value(in: parsed.findings)
         )
     }
 }

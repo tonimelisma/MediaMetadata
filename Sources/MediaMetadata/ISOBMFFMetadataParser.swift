@@ -5,6 +5,7 @@ private let mdtaMetadataKeysOfInterest: Set<String> = [
     "com.android.manufacturer",
     "com.android.model",
     "com.apple.quicktime.camera.lens_model",
+    "com.apple.quicktime.content.identifier",
     "com.apple.quicktime.creationdate",
     "com.apple.quicktime.location.date",
     "com.apple.quicktime.location.ISO6709",
@@ -504,6 +505,10 @@ struct ISOBMFFMetadataParser {
         case "com.apple.quicktime.camera.lens_model":
             if case let .string(rawValue) = value {
                 recordCameraValue(rawValue, field: .lensModel, namespace: "quicktime.mdta", key: key, sourcePath: path)
+            }
+        case ContentIdentifierEvidence.quickTimeKey.key:
+            if case let .string(rawValue) = value {
+                appendFinding(namespace: ContentIdentifierEvidence.quickTimeKey.namespace, key: key, value: rawValue, sourcePath: path, byteRange: nil)
             }
         case "com.apple.quicktime.creationdate":
             if case let .string(rawValue) = value {
