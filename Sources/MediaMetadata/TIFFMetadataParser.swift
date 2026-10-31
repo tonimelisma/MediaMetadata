@@ -98,6 +98,9 @@ struct TIFFMetadataParser {
         static let offsetTime: UInt16 = 0x9010
         static let offsetTimeOriginal: UInt16 = 0x9011
         static let offsetTimeDigitized: UInt16 = 0x9012
+        static let subSecTime: UInt16 = 0x9290
+        static let subSecTimeOriginal: UInt16 = 0x9291
+        static let subSecTimeDigitized: UInt16 = 0x9292
         static let pixelWidth: UInt16 = 0xA002
         static let pixelHeight: UInt16 = 0xA003
         static let bodySerialNumber: UInt16 = 0xA431
@@ -120,6 +123,8 @@ struct TIFFMetadataParser {
         static let signature = Data("Apple iOS\0".utf8)
         static let headerLength: UInt64 = 14
         static let contentIdentifier: UInt16 = 0x0011
+        /// Shared by every frame of one burst, absent otherwise (`exiftool`'s `BurstUUID`).
+        static let burstIdentifier: UInt16 = 0x000B
     }
 
     /// PhotometricInterpretation values that mean raw sensor data rather than a picture:
@@ -219,6 +224,9 @@ struct TIFFMetadataParser {
         var offsetTime: RawField?
         var offsetTimeOriginal: RawField?
         var offsetTimeDigitized: RawField?
+        var subSecTime: RawField?
+        var subSecTimeOriginal: RawField?
+        var subSecTimeDigitized: RawField?
 
         if let exifPointerEntry = ifd0[Tag.exifIFDPointer],
            let exifOffset = longValue(from: exifPointerEntry),
@@ -274,15 +282,49 @@ struct TIFFMetadataParser {
                     byteRange: ascii.byteRange
                 )
             }
+            for (tag, key) in [
+                (Tag.subSecTime, "SubSecTime"),
+                (Tag.subSecTimeOriginal, "SubSecTimeOriginal"),
+                (Tag.subSecTimeDigitized, "SubSecTimeDigitized"),
+            ] {
+                guard let entry = parsedEXIF[tag], let ascii = asciiValue(from: entry) else {
+                    continue
+                }
+                let field = appendFinding(
+                    namespace: "exif",
+                    key: key,
+                    value: ascii.value,
+                    sourcePath: "tiff.ifd0.exif.\(key)",
+                    byteRange: ascii.byteRange
+                )
+                switch tag {
+                case Tag.subSecTime: subSecTime = field
+                case Tag.subSecTimeOriginal: subSecTimeOriginal = field
+                default: subSecTimeDigitized = field
+                }
+            }
             if let entry = parsedEXIF[Tag.makerNote] {
                 parseAppleMakerNote(entry)
             }
         }
 
+        // Each wall clock pairs with its own SubSec tag (EXIF 2.32 §4.6.5): SubSecTime with
+        // the TIFF DateTime, SubSecTimeOriginal with DateTimeOriginal, SubSecTimeDigitized
+        // with DateTimeDigitized. No tag lends its fraction to another role.
         let timestamps = [
-            timestampCandidate(role: .original, timestamp: dateTimeOriginal, offset: offsetTimeOriginal ?? offsetTime),
-            timestampCandidate(role: .digitized, timestamp: dateTimeDigitized, offset: offsetTimeDigitized ?? offsetTime),
-            timestampCandidate(role: .tiff, timestamp: tiffDateTime, offset: offsetTime),
+            timestampCandidate(
+                role: .original,
+                timestamp: dateTimeOriginal,
+                offset: offsetTimeOriginal ?? offsetTime,
+                subsecond: subSecTimeOriginal
+            ),
+            timestampCandidate(
+                role: .digitized,
+                timestamp: dateTimeDigitized,
+                offset: offsetTimeDigitized ?? offsetTime,
+                subsecond: subSecTimeDigitized
+            ),
+            timestampCandidate(role: .tiff, timestamp: tiffDateTime, offset: offsetTime, subsecond: subSecTime),
         ].compactMap { $0 }
 
         let camera = parseCameraMetadata(ifd0: ifd0, exif: exif, byteOrder: byteOrder)
@@ -575,8 +617,9 @@ struct TIFFMetadataParser {
         return entries
     }
 
-    /// Records the Live Photo content identifier from an Apple MakerNote. Any other vendor's
-    /// MakerNote is ignored: it fails the signature check before its IFD is read.
+    /// Records the Live Photo content identifier and the burst identifier from an Apple
+    /// MakerNote. Any other vendor's MakerNote is ignored: it fails the signature check before
+    /// its IFD is read.
     private mutating func parseAppleMakerNote(_ entry: IFDEntry) {
         let start = UInt64(entry.valueOrOffset)
         guard entry.count > UInt32(AppleMakerNote.headerLength),
@@ -595,8 +638,29 @@ struct TIFFMetadataParser {
             return
         }
         let path = "tiff.ifd0.exif.MakerNote.apple"
-        guard let ifd = parseIFD(offset: start + AppleMakerNote.headerLength, byteOrder: byteOrder, path: path),
-              let identifier = ifd[AppleMakerNote.contentIdentifier] else {
+        guard let ifd = parseIFD(offset: start + AppleMakerNote.headerLength, byteOrder: byteOrder, path: path) else {
+            return
+        }
+        if let burst = ifd[AppleMakerNote.burstIdentifier] {
+            let rebased = IFDEntry(
+                tag: burst.tag,
+                type: burst.type,
+                count: burst.count,
+                valueOrOffset: burst.count > 4 ? burst.valueOrOffset &+ entry.valueOrOffset : burst.valueOrOffset,
+                valueField: burst.valueField,
+                valueFieldOffset: burst.valueFieldOffset
+            )
+            if let ascii = asciiValue(from: rebased) {
+                _ = appendFinding(
+                    namespace: BurstIdentifierEvidence.namespace,
+                    key: BurstIdentifierEvidence.key,
+                    value: ascii.value,
+                    sourcePath: "\(path).BurstUUID",
+                    byteRange: ascii.byteRange
+                )
+            }
+        }
+        guard let identifier = ifd[AppleMakerNote.contentIdentifier] else {
             return
         }
         let rebased = IFDEntry(
@@ -914,7 +978,8 @@ struct TIFFMetadataParser {
     private func timestampCandidate(
         role: CaptureTimestampCandidate.Role,
         timestamp: RawField?,
-        offset: RawField?
+        offset: RawField?,
+        subsecond: RawField? = nil
     ) -> CaptureTimestampCandidate? {
         guard let timestamp,
               let components = CaptureDateComponents(exifTimestamp: timestamp.value) else {
@@ -927,6 +992,10 @@ struct TIFFMetadataParser {
         if let offset {
             evidenceIDs.append(offset.findingID)
         }
+        let fraction = subsecond.flatMap { Self.fractionalSecondDigits(from: $0.value) }
+        if let subsecond, fraction != nil {
+            evidenceIDs.append(subsecond.findingID)
+        }
 
         return CaptureTimestampCandidate(
             role: role,
@@ -935,8 +1004,16 @@ struct TIFFMetadataParser {
             instant: instant,
             offsetSeconds: offsetSeconds,
             authority: offsetSeconds == nil ? .localWithoutOffset : .localWithOffset,
-            evidenceIDs: evidenceIDs
+            evidenceIDs: evidenceIDs,
+            fractionalSecondDigits: fraction
         )
+    }
+
+    /// The leading decimal digits of an EXIF SubSec value, as written. EXIF pads with spaces
+    /// and NULs and allows any number of digits; a value with no leading digit says nothing.
+    static func fractionalSecondDigits(from value: String) -> String? {
+        let digits = value.prefix { $0.isASCII && $0.isNumber }
+        return digits.isEmpty ? nil : String(digits)
     }
 
     private mutating func appendDiagnostic(code: String, message: String, byteRange: Range<UInt64>?) {

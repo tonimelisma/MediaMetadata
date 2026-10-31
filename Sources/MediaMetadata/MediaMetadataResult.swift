@@ -36,6 +36,11 @@ public struct MediaMetadataResult: Equatable, Sendable {
     /// `com.apple.quicktime.content.identifier`. Two files that report the same value were
     /// captured as one Live Photo. `nil` when the file carries none.
     public let contentIdentifier: String?
+    /// Apple's burst identifier: every frame of one burst carries the same value in its Apple
+    /// MakerNote (tag `0x000B`), and a still outside a burst carries none. Two files with
+    /// different values, or one with and one without, are different captures. `nil` when the
+    /// file carries none.
+    public let burstIdentifier: String?
 
     public init(
         outcome: ReadOutcome,
@@ -47,7 +52,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
         video: VideoInfo? = nil,
         readCost: ReadCost = ReadCost(),
         previews: [EmbeddedPreview] = [],
-        contentIdentifier: String? = nil
+        contentIdentifier: String? = nil,
+        burstIdentifier: String? = nil
     ) {
         self.outcome = outcome
         self.format = format
@@ -59,6 +65,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.readCost = readCost
         self.previews = previews
         self.contentIdentifier = contentIdentifier
+        self.burstIdentifier = burstIdentifier
     }
 }
 
@@ -145,7 +152,8 @@ extension MediaMetadataResult {
             video: parsed.video.flatMap(VideoInfo.init),
             readCost: ReadCost(parsed.readMetrics),
             previews: parsed.previews.map(EmbeddedPreview.init),
-            contentIdentifier: ContentIdentifierEvidence.value(in: parsed.findings)
+            contentIdentifier: ContentIdentifierEvidence.value(in: parsed.findings),
+            burstIdentifier: BurstIdentifierEvidence.value(in: parsed.findings)
         )
     }
 }
@@ -743,6 +751,12 @@ public struct CaptureTime: Equatable, Sendable {
     public let instant: Date?
     /// Expression precision of the timestamp.
     public let precision: Precision
+    /// The fraction of ``second`` the file records, as the decimal digits it wrote — `"387"`
+    /// is .387 s. EXIF only: each wall clock's own SubSec tag (`SubSecTimeOriginal` for
+    /// ``CaptureTimestamps/original``). `nil` when the file records none. Kept as digits
+    /// because two frames shot within one second are told apart by exactly these; ``instant``
+    /// stays at whole seconds.
+    public let fractionalSecondDigits: String?
 
     public init(
         year: Int,
@@ -753,8 +767,10 @@ public struct CaptureTime: Equatable, Sendable {
         second: Int,
         utcOffsetSeconds: Int?,
         instant: Date?,
-        precision: Precision
+        precision: Precision,
+        fractionalSecondDigits: String? = nil
     ) {
+        self.fractionalSecondDigits = fractionalSecondDigits
         self.year = year
         self.month = month
         self.day = day
@@ -811,7 +827,8 @@ extension CaptureTime {
             second: components.second,
             utcOffsetSeconds: candidate.offsetSeconds,
             instant: candidate.instant,
-            precision: precision
+            precision: precision,
+            fractionalSecondDigits: candidate.fractionalSecondDigits
         )
     }
 }

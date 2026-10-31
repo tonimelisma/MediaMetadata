@@ -870,6 +870,20 @@ struct FormatIdentity: Equatable, Sendable {
 /// QuickTime metadata key. ``MediaMetadataResult/contentIdentifier`` is derived from the
 /// findings these name, so an identifier read by an embedded parser (HEIF's Exif item)
 /// arrives through the same merge as every other finding.
+/// Where Apple's burst identifier is read: the still's Apple MakerNote, tag `0x000B`.
+enum BurstIdentifierEvidence {
+    static let namespace = "apple.makernote"
+    static let key = "BurstUUID"
+
+    static func value(in findings: [MetadataFinding]) -> String? {
+        guard let finding = findings.first(where: { $0.namespace == namespace && $0.key == key }) else {
+            return nil
+        }
+        let value = finding.rawValue.trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: "\0")))
+        return value.isEmpty ? nil : value
+    }
+}
+
 enum ContentIdentifierEvidence {
     case appleMakerNote
     case quickTimeKey
@@ -958,6 +972,8 @@ struct CaptureTimestampCandidate: Equatable, Sendable {
     let offsetSeconds: Int?
     let authority: Authority
     let evidenceIDs: [Int]
+    /// The fraction of a second its own EXIF SubSec tag adds, digits as written.
+    let fractionalSecondDigits: String?
 
     init(
         role: Role,
@@ -966,8 +982,10 @@ struct CaptureTimestampCandidate: Equatable, Sendable {
         instant: Date?,
         offsetSeconds: Int?,
         authority: Authority,
-        evidenceIDs: [Int]
+        evidenceIDs: [Int],
+        fractionalSecondDigits: String? = nil
     ) {
+        self.fractionalSecondDigits = fractionalSecondDigits
         self.role = role
         self.rawTimestamp = rawTimestamp
         self.dateComponents = dateComponents

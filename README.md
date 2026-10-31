@@ -249,6 +249,11 @@ if let geometry = result.geometry {
 // Live Photos: a still and its motion movie report the same Apple content identifier.
 if let identifier = result.contentIdentifier { print(identifier) }
 
+// Two frames shot within one second: EXIF's SubSec digits, as written, tell them apart,
+// and every frame of one iPhone burst shares Apple's burst identifier.
+if let fraction = result.timestamps.original?.fractionalSecondDigits { print(fraction) } // "387"
+if let burst = result.burstIdentifier { print(burst) }
+
 // Video specifics.
 if let video = result.video {
     print(video.durationSeconds ?? 0, video.frameRate ?? 0, video.codec?.identifier ?? "") // "hevc"
