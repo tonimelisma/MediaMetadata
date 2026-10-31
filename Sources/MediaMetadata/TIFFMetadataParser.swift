@@ -102,6 +102,7 @@ struct TIFFMetadataParser {
         static let pixelHeight: UInt16 = 0xA003
         static let bodySerialNumber: UInt16 = 0xA431
         static let lensModel: UInt16 = 0xA434
+        static let makerNote: UInt16 = 0x927C
         /// Offset of an embedded JPEG. In IFD1 this is the EXIF thumbnail; Sony and others
         /// also put a large preview here in IFD0.
         static let jpegInterchangeFormat: UInt16 = 0x0201
@@ -111,6 +112,14 @@ struct TIFFMetadataParser {
         static let photometricInterpretation: UInt16 = 0x0106
         static let subIFDs: UInt16 = 0x014A
         static let dngVersion: UInt16 = 0xC612
+    }
+
+    /// Apple's MakerNote: `Apple iOS\0`, a two-byte version, a byte-order mark, then an IFD
+    /// whose value offsets count from the start of the MakerNote rather than the TIFF header.
+    private enum AppleMakerNote {
+        static let signature = Data("Apple iOS\0".utf8)
+        static let headerLength: UInt64 = 14
+        static let contentIdentifier: UInt16 = 0x0011
     }
 
     /// PhotometricInterpretation values that mean raw sensor data rather than a picture:
@@ -264,6 +273,9 @@ struct TIFFMetadataParser {
                     sourcePath: "tiff.ifd0.exif.OffsetTimeDigitized",
                     byteRange: ascii.byteRange
                 )
+            }
+            if let entry = parsedEXIF[Tag.makerNote] {
+                parseAppleMakerNote(entry)
             }
         }
 
@@ -561,6 +573,50 @@ struct TIFFMetadataParser {
             )
         }
         return entries
+    }
+
+    /// Records the Live Photo content identifier from an Apple MakerNote. Any other vendor's
+    /// MakerNote is ignored: it fails the signature check before its IFD is read.
+    private mutating func parseAppleMakerNote(_ entry: IFDEntry) {
+        let start = UInt64(entry.valueOrOffset)
+        guard entry.count > UInt32(AppleMakerNote.headerLength),
+              let header = data(relativeOffset: start, length: Int(AppleMakerNote.headerLength)),
+              header.count == Int(AppleMakerNote.headerLength),
+              header.prefix(AppleMakerNote.signature.count) == AppleMakerNote.signature else {
+            return
+        }
+        let byteOrder: ByteOrder
+        switch (header[12], header[13]) {
+        case (0x49, 0x49):
+            byteOrder = .littleEndian
+        case (0x4D, 0x4D):
+            byteOrder = .bigEndian
+        default:
+            return
+        }
+        let path = "tiff.ifd0.exif.MakerNote.apple"
+        guard let ifd = parseIFD(offset: start + AppleMakerNote.headerLength, byteOrder: byteOrder, path: path),
+              let identifier = ifd[AppleMakerNote.contentIdentifier] else {
+            return
+        }
+        let rebased = IFDEntry(
+            tag: identifier.tag,
+            type: identifier.type,
+            count: identifier.count,
+            valueOrOffset: identifier.count > 4 ? identifier.valueOrOffset &+ entry.valueOrOffset : identifier.valueOrOffset,
+            valueField: identifier.valueField,
+            valueFieldOffset: identifier.valueFieldOffset
+        )
+        guard let ascii = asciiValue(from: rebased) else {
+            return
+        }
+        _ = appendFinding(
+            namespace: ContentIdentifierEvidence.appleMakerNote.namespace,
+            key: ContentIdentifierEvidence.appleMakerNote.key,
+            value: ascii.value,
+            sourcePath: "\(path).ContentIdentifier",
+            byteRange: ascii.byteRange
+        )
     }
 
     private func asciiValue(from entry: IFDEntry) -> ASCIIValue? {

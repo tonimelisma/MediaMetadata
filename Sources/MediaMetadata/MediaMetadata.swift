@@ -866,6 +866,42 @@ struct FormatIdentity: Equatable, Sendable {
     }
 }
 
+/// Where a content identifier is read: a still's Apple MakerNote tag, or a movie's
+/// QuickTime metadata key. ``MediaMetadataResult/contentIdentifier`` is derived from the
+/// findings these name, so an identifier read by an embedded parser (HEIF's Exif item)
+/// arrives through the same merge as every other finding.
+enum ContentIdentifierEvidence {
+    case appleMakerNote
+    case quickTimeKey
+
+    var namespace: String {
+        switch self {
+        case .appleMakerNote: "apple.makernote"
+        case .quickTimeKey: "quicktime.mdta"
+        }
+    }
+
+    var key: String {
+        switch self {
+        case .appleMakerNote: "ContentIdentifier"
+        case .quickTimeKey: "com.apple.quicktime.content.identifier"
+        }
+    }
+
+    static func value(in findings: [MetadataFinding]) -> String? {
+        let sources: [ContentIdentifierEvidence] = [.appleMakerNote, .quickTimeKey]
+        for source in sources {
+            if let finding = findings.first(where: { $0.namespace == source.namespace && $0.key == source.key }) {
+                let value = finding.rawValue.trimmingCharacters(in: .whitespacesAndNewlines.union(CharacterSet(charactersIn: "\0")))
+                if !value.isEmpty {
+                    return value
+                }
+            }
+        }
+        return nil
+    }
+}
+
 struct MetadataFinding: Equatable, Sendable, Identifiable {
     let id: Int
     let namespace: String
