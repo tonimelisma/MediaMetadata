@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.8.2"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.9.1"),
 ]
 ```
 
@@ -254,6 +254,11 @@ if let identifier = result.contentIdentifier { print(identifier) }
 if let fraction = result.timestamps.original?.fractionalSecondDigits { print(fraction) } // "387"
 if let burst = result.burstIdentifier { print(burst) }
 
+// The clockwise turn that levels the picture as displayed, from an iPhone back camera's
+// gravity reading at capture. nil for front-camera pictures, whose mirroring the file does
+// not record, and for a camera pointed near straight up or down.
+if let turn = result.levelingTurnDegrees { print(turn) } // -15.8
+
 // Video specifics.
 if let video = result.video {
     print(video.durationSeconds ?? 0, video.frameRate ?? 0, video.codec?.identifier ?? "") // "hevc"
@@ -329,8 +334,8 @@ AVI and WAV is unchanged.
 | TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, orientation, dimensions, embedded previews; DNG, CR2, ARW, NEF, PEF, SRW recognised from IFD0 |
 | CR3 | ✅ | — | — | — | — | Recognised from its `crx ` brand as a still; metadata not yet parsed |
 | RAF, ORF, RW2 | ✅ | — | — | — | — | Recognised from their signature as stills; reported `.unsupported` |
-| JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment; Apple MakerNote content identifier |
-| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe`; Apple MakerNote content identifier |
+| JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment; Apple MakerNote content and burst identifiers, gravity at capture |
+| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe`; Apple MakerNote content and burst identifiers, gravity at capture |
 | PNG | ✅ | ✅ | ✅ | ✅ | — | Size from `IHDR`; Exif from an `eXIf` chunk before `IDAT` (one after it is not read: the specification forbids it, and reaching it means walking the image data) |
 | WebP | ✅ | ✅ | ✅ | ✅ | — | Size from the `VP8X` canvas or the `VP8 `/`VP8L` bitstream header; Exif from the `EXIF` chunk |
 | GIF | ✅ | — | — | — | — | Logical screen size; GIF has no standard capture date |
