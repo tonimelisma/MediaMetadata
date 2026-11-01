@@ -41,6 +41,17 @@ public struct MediaMetadataResult: Equatable, Sendable {
     /// different values, or one with and one without, are different captures. `nil` when the
     /// file carries none.
     public let burstIdentifier: String?
+    /// The turn, in degrees clockwise, that levels the picture as displayed (its
+    /// ``PixelGeometry/orientation`` applied), from the camera's own gravity reading at
+    /// capture. Within ±45°; a quarter turn or a flip of the picture keeps it level, a flip
+    /// reversing its sign. Read today from an iPhone or iPad back camera's Apple MakerNote
+    /// `AccelerationVector` (tag `0x0008`). `nil` when the file carries no reading, when it
+    /// is a front-camera picture (whose mirroring the file does not record), or when the
+    /// camera pointed near straight up or down.
+    ///
+    /// It is the camera's level, not the scene's: a picture taken lying down, or of a
+    /// sloping subject, is levelled to gravity all the same.
+    public let levelingTurnDegrees: Double?
 
     public init(
         outcome: ReadOutcome,
@@ -53,7 +64,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
         readCost: ReadCost = ReadCost(),
         previews: [EmbeddedPreview] = [],
         contentIdentifier: String? = nil,
-        burstIdentifier: String? = nil
+        burstIdentifier: String? = nil,
+        levelingTurnDegrees: Double? = nil
     ) {
         self.outcome = outcome
         self.format = format
@@ -66,6 +78,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.previews = previews
         self.contentIdentifier = contentIdentifier
         self.burstIdentifier = burstIdentifier
+        self.levelingTurnDegrees = levelingTurnDegrees
     }
 }
 
@@ -153,7 +166,12 @@ extension MediaMetadataResult {
             readCost: ReadCost(parsed.readMetrics),
             previews: parsed.previews.map(EmbeddedPreview.init),
             contentIdentifier: ContentIdentifierEvidence.value(in: parsed.findings),
-            burstIdentifier: BurstIdentifierEvidence.value(in: parsed.findings)
+            burstIdentifier: BurstIdentifierEvidence.value(in: parsed.findings),
+            levelingTurnDegrees: CaptureLevelEvidence.levelingTurn(
+                in: parsed.findings,
+                lensModel: parsed.camera?.lensModel,
+                orientation: parsed.camera?.orientation
+            )
         )
     }
 }

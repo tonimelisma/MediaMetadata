@@ -84,6 +84,7 @@ struct TIFFMetadataParser {
         static let short: UInt16 = 3
         static let long: UInt16 = 4
         static let rational: UInt16 = 5
+        static let signedRational: UInt16 = 10
     }
 
     private enum Tag {
@@ -125,6 +126,9 @@ struct TIFFMetadataParser {
         static let contentIdentifier: UInt16 = 0x0011
         /// Shared by every frame of one burst, absent otherwise (`exiftool`'s `BurstUUID`).
         static let burstIdentifier: UInt16 = 0x000B
+        /// Gravity at capture in the device's frame, three signed rationals in g
+        /// (`exiftool`'s `AccelerationVector`).
+        static let accelerationVector: UInt16 = 0x0008
     }
 
     /// PhotometricInterpretation values that mean raw sensor data rather than a picture:
@@ -617,9 +621,9 @@ struct TIFFMetadataParser {
         return entries
     }
 
-    /// Records the Live Photo content identifier and the burst identifier from an Apple
-    /// MakerNote. Any other vendor's MakerNote is ignored: it fails the signature check before
-    /// its IFD is read.
+    /// Records the Live Photo content identifier, the burst identifier and the gravity
+    /// reading from an Apple MakerNote. Any other vendor's MakerNote is ignored: it fails the
+    /// signature check before its IFD is read.
     private mutating func parseAppleMakerNote(_ entry: IFDEntry) {
         let start = UInt64(entry.valueOrOffset)
         guard entry.count > UInt32(AppleMakerNote.headerLength),
@@ -641,46 +645,55 @@ struct TIFFMetadataParser {
         guard let ifd = parseIFD(offset: start + AppleMakerNote.headerLength, byteOrder: byteOrder, path: path) else {
             return
         }
-        if let burst = ifd[AppleMakerNote.burstIdentifier] {
-            let rebased = IFDEntry(
-                tag: burst.tag,
-                type: burst.type,
-                count: burst.count,
-                valueOrOffset: burst.count > 4 ? burst.valueOrOffset &+ entry.valueOrOffset : burst.valueOrOffset,
-                valueField: burst.valueField,
-                valueFieldOffset: burst.valueFieldOffset
-            )
-            if let ascii = asciiValue(from: rebased) {
-                _ = appendFinding(
-                    namespace: BurstIdentifierEvidence.namespace,
-                    key: BurstIdentifierEvidence.key,
-                    value: ascii.value,
-                    sourcePath: "\(path).BurstUUID",
-                    byteRange: ascii.byteRange
-                )
+        // The MakerNote's value offsets count from its own start, not the TIFF header. A
+        // value of four bytes or fewer sits in the entry itself and has no offset to move.
+        func rebased(_ value: IFDEntry) -> IFDEntry {
+            let bytesPerValue: UInt64 = switch value.type {
+            case TIFFType.short: 2
+            case TIFFType.long: 4
+            case TIFFType.rational, TIFFType.signedRational: 8
+            default: 1
             }
+            return IFDEntry(
+                tag: value.tag,
+                type: value.type,
+                count: value.count,
+                valueOrOffset: UInt64(value.count) * bytesPerValue > 4
+                    ? value.valueOrOffset &+ entry.valueOrOffset
+                    : value.valueOrOffset,
+                valueField: value.valueField,
+                valueFieldOffset: value.valueFieldOffset
+            )
         }
-        guard let identifier = ifd[AppleMakerNote.contentIdentifier] else {
-            return
+        if let burst = ifd[AppleMakerNote.burstIdentifier], let ascii = asciiValue(from: rebased(burst)) {
+            _ = appendFinding(
+                namespace: BurstIdentifierEvidence.namespace,
+                key: BurstIdentifierEvidence.key,
+                value: ascii.value,
+                sourcePath: "\(path).BurstUUID",
+                byteRange: ascii.byteRange
+            )
         }
-        let rebased = IFDEntry(
-            tag: identifier.tag,
-            type: identifier.type,
-            count: identifier.count,
-            valueOrOffset: identifier.count > 4 ? identifier.valueOrOffset &+ entry.valueOrOffset : identifier.valueOrOffset,
-            valueField: identifier.valueField,
-            valueFieldOffset: identifier.valueFieldOffset
-        )
-        guard let ascii = asciiValue(from: rebased) else {
-            return
+        if let acceleration = ifd[AppleMakerNote.accelerationVector],
+           let gravity = signedRationalValues(from: rebased(acceleration), byteOrder: byteOrder),
+           gravity.values.count == 3 {
+            _ = appendFinding(
+                namespace: CaptureLevelEvidence.namespace,
+                key: CaptureLevelEvidence.key,
+                value: gravity.values.map { String($0) }.joined(separator: " "),
+                sourcePath: "\(path).AccelerationVector",
+                byteRange: gravity.byteRange
+            )
         }
-        _ = appendFinding(
-            namespace: ContentIdentifierEvidence.appleMakerNote.namespace,
-            key: ContentIdentifierEvidence.appleMakerNote.key,
-            value: ascii.value,
-            sourcePath: "\(path).ContentIdentifier",
-            byteRange: ascii.byteRange
-        )
+        if let identifier = ifd[AppleMakerNote.contentIdentifier], let ascii = asciiValue(from: rebased(identifier)) {
+            _ = appendFinding(
+                namespace: ContentIdentifierEvidence.appleMakerNote.namespace,
+                key: ContentIdentifierEvidence.appleMakerNote.key,
+                value: ascii.value,
+                sourcePath: "\(path).ContentIdentifier",
+                byteRange: ascii.byteRange
+            )
+        }
     }
 
     private func asciiValue(from entry: IFDEntry) -> ASCIIValue? {
@@ -763,6 +776,36 @@ struct TIFFMetadataParser {
                 return nil
             }
             values.append(Double(numerator) / Double(denominator))
+        }
+        return RationalValues(
+            values: values,
+            byteRange: absoluteRange(offset..<(offset + UInt64(byteCount)))
+        )
+    }
+
+    /// Signed rationals (TIFF type 10), always stored at an offset since each is 8 bytes.
+    private func signedRationalValues(from entry: IFDEntry, byteOrder: ByteOrder) -> RationalValues? {
+        guard entry.type == TIFFType.signedRational,
+              entry.count > 0,
+              entry.count <= 16 else {
+            return nil
+        }
+        let byteCount = Int(entry.count) * 8
+        let offset = UInt64(entry.valueOrOffset)
+        guard let bytes = data(relativeOffset: offset, length: byteCount),
+              bytes.count == byteCount else {
+            return nil
+        }
+        var values: [Double] = []
+        values.reserveCapacity(Int(entry.count))
+        for index in 0..<Int(entry.count) {
+            let valueOffset = index * 8
+            guard let numerator = byteOrder.uint32(bytes, offset: valueOffset),
+                  let denominator = byteOrder.uint32(bytes, offset: valueOffset + 4),
+                  denominator != 0 else {
+                return nil
+            }
+            values.append(Double(Int32(bitPattern: numerator)) / Double(Int32(bitPattern: denominator)))
         }
         return RationalValues(
             values: values,

@@ -866,10 +866,6 @@ struct FormatIdentity: Equatable, Sendable {
     }
 }
 
-/// Where a content identifier is read: a still's Apple MakerNote tag, or a movie's
-/// QuickTime metadata key. ``MediaMetadataResult/contentIdentifier`` is derived from the
-/// findings these name, so an identifier read by an embedded parser (HEIF's Exif item)
-/// arrives through the same merge as every other finding.
 /// Where Apple's burst identifier is read: the still's Apple MakerNote, tag `0x000B`.
 enum BurstIdentifierEvidence {
     static let namespace = "apple.makernote"
@@ -884,6 +880,64 @@ enum BurstIdentifierEvidence {
     }
 }
 
+/// Where the camera's level at capture is read, and what it means for the picture.
+///
+/// Apple's MakerNote `AccelerationVector` (tag `0x0008`) is gravity in g in the device's
+/// frame, Core Motion's convention: +x toward the right of the screen held upright, +y toward
+/// its top, +z out of the screen. Measured against photos of a plumb door frame taken on an
+/// iPhone 18 Pro, back camera held upright and landscape, each rolled both ways: the
+/// clockwise turn that levels the picture is `atan2(x, −y)` less the nearest quarter turn
+/// (how the phone was held), within about 1.5°.
+///
+/// The reading levels nothing when:
+/// - the picture was taken with the front camera, which iOS saves mirrored unless the user
+///   turned "Mirror Front Camera" off, and the file records neither. The same reading then
+///   calls for opposite turns. Apple's `CameraType` tag says "Back" on front-camera photos
+///   too, so the lens model is what names the camera;
+/// - the camera points near straight up or down, where gravity barely projects onto the
+///   picture and its angle there says little about roll.
+enum CaptureLevelEvidence {
+    static let namespace = "apple.makernote"
+    static let key = "AccelerationVector"
+    /// Gravity's share in the picture plane below which the camera is taken to point up or
+    /// down: 0.7 g is a camera tipped about 45° from level.
+    static let minimumPlanarGravity = 0.7
+
+    static func levelingTurn(in findings: [MetadataFinding], lensModel: String?, orientation: Int?) -> Double? {
+        guard let finding = findings.first(where: { $0.namespace == namespace && $0.key == key }),
+              isBackCamera(lensModel) else {
+            return nil
+        }
+        let components = finding.rawValue.split(separator: " ").compactMap { Double($0) }
+        guard components.count == 3 else {
+            return nil
+        }
+        let (x, y) = (components[0], components[1])
+        guard (x * x + y * y).squareRoot() >= minimumPlanarGravity else {
+            return nil
+        }
+        let angle = atan2(x, -y) * 180 / .pi
+        let turn = angle - (angle / 90).rounded() * 90
+        // A mirrored orientation shows the picture flipped, so its tilt reads the other way.
+        let mirrored = orientation.flatMap(Orientation.init(rawValue:))?.isMirrored ?? false
+        return mirrored ? -turn : turn
+    }
+
+    /// Apple names its cameras in the lens model: "iPhone 18 Pro back triple camera 6.93mm
+    /// f/1.48", "iPhone 18 Pro front camera 2.715mm f/1.9". A file naming neither is not
+    /// known to be a back camera.
+    static func isBackCamera(_ lensModel: String?) -> Bool {
+        guard let words = lensModel?.lowercased().split(separator: " ") else {
+            return false
+        }
+        return words.contains("back") && !words.contains("front")
+    }
+}
+
+/// Where a content identifier is read: a still's Apple MakerNote tag, or a movie's
+/// QuickTime metadata key. ``MediaMetadataResult/contentIdentifier`` is derived from the
+/// findings these name, so an identifier read by an embedded parser (HEIF's Exif item)
+/// arrives through the same merge as every other finding.
 enum ContentIdentifierEvidence {
     case appleMakerNote
     case quickTimeKey
