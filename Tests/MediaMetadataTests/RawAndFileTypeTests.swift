@@ -182,13 +182,13 @@ final class RawAndFileTypeTests: XCTestCase {
     }
 
     func testRevisionsMoveOnlyForTheFamiliesThatChanged() {
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .tiff), 0)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .jpeg), 0)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .heif), 1)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .isoBMFF), 2)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .tiff), 1)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .jpeg), 1)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .heif), 2)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .isoBMFF), 3)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .unknown), 2, "PNG, WebP and GIF left it (0.8.0)")
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .png), 0)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .webp), 0)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .png), 1)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .webp), 1)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .gif), 0)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .riffAVI), 0)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .riffWAV), 0)

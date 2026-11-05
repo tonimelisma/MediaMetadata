@@ -75,6 +75,33 @@ enum StillImageFixtures {
 
     static let exifPrefix = Data("Exif".utf8) + Data([0, 0])
 
+    // MARK: - HEIF
+
+    /// A minimal HEIF: `ftyp`, then `meta` naming one Exif item whose `iloc` extent points
+    /// into the `mdat` that follows, holding `exifItem` (an `Exif\0\0`-prefixed TIFF).
+    static func heif(exifItem: Data) -> Data {
+        let itemID: UInt16 = 1
+        let ftyp = box("ftyp", Data("heic".utf8) + be32(0) + Data("mif1heic".utf8))
+        let infe = box("infe", Data([2, 0, 0, 0]) + be16(itemID) + be16(0) + Data("Exif".utf8))
+        let iinf = box("iinf", Data([0, 0, 0, 0]) + be16(1) + infe)
+        func meta(exifOffset: UInt64) -> Data {
+            // iloc version 0: 8-byte offset and length, 8-byte base offset, one extent.
+            let iloc = box(
+                "iloc",
+                Data([0, 0, 0, 0]) + be16(0x8880) + be16(1) + be16(itemID) + be16(0)
+                    + be64(exifOffset) + be16(1) + be64(0) + be64(UInt64(exifItem.count))
+            )
+            return box("meta", Data([0, 0, 0, 0]) + iinf + iloc)
+        }
+        // The base-offset field is fixed-width, so meta's size does not depend on its value.
+        let exifOffset = UInt64(ftyp.count + meta(exifOffset: 0).count + 8)
+        return ftyp + meta(exifOffset: exifOffset) + box("mdat", exifItem)
+    }
+
+    static func box(_ type: String, _ payload: Data) -> Data {
+        be32(UInt32(8 + payload.count)) + Data(type.utf8) + payload
+    }
+
     // MARK: - PNG
 
     enum ExifPlacement {
@@ -166,6 +193,14 @@ enum StillImageFixtures {
 
     static func be32(_ value: UInt32) -> Data {
         Data([UInt8(value >> 24 & 0xFF), UInt8(value >> 16 & 0xFF), UInt8(value >> 8 & 0xFF), UInt8(value & 0xFF)])
+    }
+
+    static func be16(_ value: UInt16) -> Data {
+        Data([UInt8(value >> 8), UInt8(value & 0xFF)])
+    }
+
+    static func be64(_ value: UInt64) -> Data {
+        be32(UInt32(value >> 32)) + be32(UInt32(value & 0xFFFF_FFFF))
     }
 
     static func le16(_ value: UInt16) -> Data {

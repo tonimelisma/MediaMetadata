@@ -1402,27 +1402,11 @@ struct ISOBMFFMetadataParser {
         )
         timestamps.append(
             contentsOf: result.timestamps.map { timestamp in
-                CaptureTimestampCandidate(
-                    role: timestamp.role,
-                    rawTimestamp: timestamp.rawTimestamp,
-                    dateComponents: timestamp.dateComponents,
-                    instant: timestamp.instant,
-                    offsetSeconds: timestamp.offsetSeconds,
-                    authority: timestamp.authority,
-                    evidenceIDs: timestamp.evidenceIDs.map { idOffset + $0 }
-                )
+                timestamp.rebasingEvidence(by: idOffset)
             }
         )
         locations.append(contentsOf: result.locations.map { location in
-            CaptureLocationCandidate(
-                latitude: location.latitude,
-                longitude: location.longitude,
-                altitudeMeters: location.altitudeMeters,
-                rawValue: location.rawValue,
-                source: location.source,
-                origin: location.origin,
-                evidenceIDs: location.evidenceIDs.map { idOffset + $0 }
-            )
+            location.rebasingEvidence(by: idOffset)
         })
         if let embeddedCamera = result.camera {
             mergeCamera(embeddedCamera, preferIncoming: true)

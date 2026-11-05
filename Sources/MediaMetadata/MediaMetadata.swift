@@ -15,12 +15,12 @@ public enum MediaMetadataReader {
     /// that re-reads every stale row on upgrade can pull its whole library. Prefer refreshing
     /// stale rows when their bytes are already at hand.
     ///
-    /// What raises a family's number: re-reading the same bytes would change a value the
-    /// library already reported (a correction, or a field derived from more evidence). What
-    /// does not: a new field, which a consumer adopting it knows its old rows lack (the
-    /// release notes say which families need the bytes to backfill it), and performance or
-    /// documentation changes. Families move independently, so a HEIF fix does not make a
-    /// JPEG look stale.
+    /// What raises a family's number: re-reading the same bytes would report anything
+    /// different — a corrected value, a field derived from more evidence, or a field the
+    /// library newly reports. A stored row cannot tell "the file has none" from "the parser
+    /// did not look", so a new field is a change the revision must carry, or every consumer
+    /// would need a migration per field. What does not: performance or documentation
+    /// changes. Families move independently, so a HEIF fix does not make a JPEG look stale.
     ///
     /// Revision 0 is the output of 0.6.0. A row stored before revisions existed, by 0.6.0 or
     /// later, can be treated as 0.
@@ -35,11 +35,17 @@ public enum MediaMetadataReader {
     /// | png | 0 | New family (0.8.0) |
     /// | webp | 0 | New family (0.8.0) |
     /// | gif | 0 | New family (0.8.0) |
+    /// | heif | 2 | Embedded Exif keeps its sub-seconds (0.9.2); content identifier (0.8.2), sub-seconds and burst identifier (0.9.0), leveling turn (0.9.1) |
+    /// | jpeg | 1 | Content identifier (0.8.2), sub-seconds and burst identifier (0.9.0), leveling turn (0.9.1) |
+    /// | tiff | 1 | Sub-seconds (0.9.0) |
+    /// | png, webp | 1 | Embedded Exif keeps its sub-seconds (0.9.2) |
+    /// | isoBMFF | 3 | Content identifier (0.8.2) |
     public static func extractionRevision(for family: MediaFormat.Family) -> Int {
         switch family {
-        case .heif: 1
-        case .isoBMFF, .unknown: 2
-        case .tiff, .jpeg, .png, .webp, .gif, .riffAVI, .riffWAV, .id3: 0
+        case .isoBMFF: 3
+        case .heif, .unknown: 2
+        case .jpeg, .tiff, .png, .webp: 1
+        case .gif, .riffAVI, .riffWAV, .id3: 0
         }
     }
 
@@ -1048,6 +1054,23 @@ struct CaptureTimestampCandidate: Equatable, Sendable {
         self.authority = authority
         self.evidenceIDs = evidenceIDs
     }
+
+    /// This candidate unchanged except that its evidence IDs point `offset` further into a
+    /// merged findings list. A container that folds an embedded parse into its own (a HEIF
+    /// Exif item, a PNG `eXIf` chunk) copies the whole candidate this way, so a field added
+    /// later is carried rather than dropped.
+    func rebasingEvidence(by offset: Int) -> Self {
+        Self(
+            role: role,
+            rawTimestamp: rawTimestamp,
+            dateComponents: dateComponents,
+            instant: instant,
+            offsetSeconds: offsetSeconds,
+            authority: authority,
+            evidenceIDs: evidenceIDs.map { offset + $0 },
+            fractionalSecondDigits: fractionalSecondDigits
+        )
+    }
 }
 
 /// Complete wall-clock date-time components (`year`…`second`).
@@ -1127,6 +1150,20 @@ struct CaptureLocationCandidate: Equatable, Sendable {
         self.source = source
         self.origin = origin
         self.evidenceIDs = evidenceIDs
+    }
+
+    /// This candidate unchanged except that its evidence IDs point `offset` further into a
+    /// merged findings list (see ``CaptureTimestampCandidate/rebasingEvidence(by:)``).
+    func rebasingEvidence(by offset: Int) -> Self {
+        Self(
+            latitude: latitude,
+            longitude: longitude,
+            altitudeMeters: altitudeMeters,
+            rawValue: rawValue,
+            source: source,
+            origin: origin,
+            evidenceIDs: evidenceIDs.map { offset + $0 }
+        )
     }
 }
 
