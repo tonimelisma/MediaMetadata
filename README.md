@@ -327,6 +327,18 @@ proves the type, `identify` now also reports `fileType` `.avi` and `.wav`. A ful
 AVI and WAV is unchanged.
 
 
+## Migrating to 0.9.2
+
+0.9.2 changes what `extractionRevision(for:)` promises: it now rises for a newly reported
+field too, not only for a corrected value, because a stored row cannot tell "the file has
+none" from "the parser did not look". The fields added since 0.7.1 move it retroactively:
+`heif` 2, `jpeg` 1, `tiff` 1, `png` 1, `webp` 1, `isoBMFF` 3. A row stored at a lower
+number may lack `contentIdentifier`, `burstIdentifier`, `levelingTurnDegrees` or
+sub-second digits that a re-read would report.
+
+It also fixes HEIF, PNG and WebP files dropping the sub-second digits of their embedded
+Exif: `fractionalSecondDigits` was reported only for JPEG and TIFF.
+
 ## Supported Formats
 
 | Format | Detection | Timestamps | Location | Camera | Video | Notes |

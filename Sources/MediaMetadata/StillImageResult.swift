@@ -106,26 +106,10 @@ struct StillImageResult {
             )
         }
         let timestamps = (tiff?.timestamps ?? []).map { timestamp in
-            CaptureTimestampCandidate(
-                role: timestamp.role,
-                rawTimestamp: timestamp.rawTimestamp,
-                dateComponents: timestamp.dateComponents,
-                instant: timestamp.instant,
-                offsetSeconds: timestamp.offsetSeconds,
-                authority: timestamp.authority,
-                evidenceIDs: timestamp.evidenceIDs.map { idOffset + $0 }
-            )
+            timestamp.rebasingEvidence(by: idOffset)
         }
         let locations = (tiff?.locations ?? []).map { location in
-            CaptureLocationCandidate(
-                latitude: location.latitude,
-                longitude: location.longitude,
-                altitudeMeters: location.altitudeMeters,
-                rawValue: location.rawValue,
-                source: location.source,
-                origin: location.origin,
-                evidenceIDs: location.evidenceIDs.map { idOffset + $0 }
-            )
+            location.rebasingEvidence(by: idOffset)
         }
         return ParsedMetadata(
             identity: FormatIdentity(family: family, observedExtension: fileExtension, detectedByMagic: true),

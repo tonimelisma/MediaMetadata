@@ -44,6 +44,18 @@ final class SubsecondAndBurstTests: XCTestCase {
         XCTAssertEqual(timestamps.digitized?.fractionalSecondDigits, "604")
     }
 
+    func testAHEIFReportsTheSubsecondsOfItsExifItem() throws {
+        let file = StillImageFixtures.heif(exifItem: StillImageFixtures.exifPrefix + subsecondExif)
+        let original = try XCTUnwrap(read(file, extension: "heic").timestamps.original)
+        XCTAssertEqual(original.second, 5)
+        XCTAssertEqual(original.fractionalSecondDigits, "639")
+    }
+
+    func testAPNGReportsTheSubsecondsOfItsExifChunk() throws {
+        let file = StillImageFixtures.png(width: 4, height: 4, exif: subsecondExif)
+        XCTAssertEqual(try XCTUnwrap(read(file, extension: "png").timestamps.original).fractionalSecondDigits, "639")
+    }
+
     func testAFileWithoutSubsecondsReportsNone() throws {
         let url = try write(jpeg(exifEntries: [ascii(0x9003, "2026:09:22 11:55:06")]))
         XCTAssertNil(MediaMetadataReader.read(url: url).timestamps.original?.fractionalSecondDigits)
@@ -114,6 +126,20 @@ final class SubsecondAndBurstTests: XCTestCase {
         tiff += directory + values
         let app1 = Data("Exif".utf8) + Data([0, 0]) + tiff
         return Data([0xFF, 0xD8, 0xFF, 0xE1]) + be16(UInt16(app1.count + 2)) + app1 + Data([0xFF, 0xD9])
+    }
+
+    /// An Exif TIFF whose original wall clock carries the sub-seconds `639`.
+    private var subsecondExif: Data {
+        StillImageFixtures.exifTIFF(
+            ifd0: [],
+            exif: [(StillImageFixtures.dateTimeOriginalTag, .ascii("2026:10:04 15:23:05")), (0x9291, .ascii("639"))]
+        )
+    }
+
+    private func read(_ data: Data, extension fileExtension: String) throws -> MediaMetadataResult {
+        let url = directory.appendingPathComponent(UUID().uuidString).appendingPathExtension(fileExtension)
+        try data.write(to: url)
+        return MediaMetadataReader.read(url: url)
     }
 
     private func write(_ data: Data) throws -> URL {

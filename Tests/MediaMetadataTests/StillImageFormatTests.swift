@@ -178,10 +178,9 @@ final class StillImageFormatTests: XCTestCase {
 
     // MARK: - Families and revisions
 
-    func testNewFamiliesAreStillsWithTheirOwnRevision() {
+    func testNewFamiliesAreStills() {
         for family in [MediaFormat.Family.png, .webp, .gif] {
             XCTAssertEqual(MediaFormat.Kind(family: family), .image)
-            XCTAssertEqual(MediaMetadataReader.extractionRevision(for: family), 0)
         }
         XCTAssertEqual(MediaFileType(family: .png, brand: nil, fileExtension: "bin"), .png)
         XCTAssertEqual(MediaFileType(family: .webp, brand: nil, fileExtension: "bin"), .webp)

@@ -158,13 +158,14 @@ public struct MediaMetadataResult {
 ```
 
 `MediaMetadataReader.extractionRevision(for:)` is kept per container family and
-rises when re-reading the same bytes would change a value already reported, so a
-consumer that persists results can find rows a re-read may improve instead of
-writing a migration per parser fix. It is per family because the consumer pays for a
-re-read in transport, not CPU: a single global number made every JPEG look stale
-for a HEIF fix, and for a cloud library a re-read is a download. New fields do not
-move it; the library reports when a re-read would help, and the consumer decides
-when it is worth the bytes.
+rises when re-reading the same bytes would report anything different — a corrected
+value or a newly reported field — so a consumer that persists results can find rows a
+re-read may improve instead of writing a migration per parser fix or per new field. A
+new field moves it because a stored row cannot tell "the file has none" from "the
+parser did not look". It is per family because the consumer pays for a re-read in
+transport, not CPU: a single global number made every JPEG look stale for a HEIF fix,
+and for a cloud library a re-read is a download. The library reports when a re-read
+would help, and the consumer decides when it is worth the bytes.
 
 `MediaFormat.fileType` names the type from the bytes (an ISO brand, RAW evidence in
 a TIFF's IFD0), never from the extension; `MediaFileType(fileExtension:)` is the
