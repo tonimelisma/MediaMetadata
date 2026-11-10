@@ -474,8 +474,9 @@ extension MediaFormat {
 /// typed.
 ///
 /// There is no single "best date", because there is no single question: *what local
-/// time was this taken* (for naming) and *what instant was this taken* (for ordering)
-/// have different right answers from the same file. Each has its own selection —
+/// time was this taken* (to name it, label it, put it on a day and in a timeline) and
+/// *what instant was this taken* (to compare it across time zones) have different right
+/// answers from the same file. Each has its own selection —
 /// ``captureWallClock`` and ``captureInstant`` — which reports the role it chose and
 /// leaves every field here intact, so a caller with a different policy walks
 /// ``entries`` or subscripts by ``Role`` instead.
@@ -666,7 +667,15 @@ extension CaptureTimestamps {
     ]
 
     /// The local wall clock when and where the item was captured: what to name, folder and
-    /// label it by ("taken 14:51 on 25 April").
+    /// label it by ("taken 14:51 on 25 April"), the day it belongs to, and its place in a
+    /// timeline a person browses.
+    ///
+    /// A timeline orders by this rather than by ``captureInstant`` because its days are
+    /// these days: a photo taken at 08:00 in Tokyo belongs to that Tokyo morning wherever
+    /// it is viewed, and an order by instant would split a day's photos across days when
+    /// the viewer's zone is not the one they were taken in. Two clocks in different zones
+    /// order by their readings, as a camera's own clock would. A floating time (no offset)
+    /// has a wall clock but no instant, so only this selection can place it at all.
     ///
     /// The first role in ``wallClockPrecedence`` whose time has
     /// ``CaptureTime/captureLocalComponents`` — a floating or offset-bearing local time.
@@ -678,7 +687,8 @@ extension CaptureTimestamps {
             .first { $0.time.captureLocalComponents != nil }
     }
 
-    /// The absolute moment of capture: what to sort, deduplicate, or compare across zones by.
+    /// The absolute moment of capture: what to deduplicate, measure elapsed time, or compare
+    /// across zones by. A timeline orders by ``captureWallClock`` instead; see there.
     ///
     /// The first role in ``instantPrecedence`` whose time has an ``CaptureTime/instant``.
     /// This can be a different role from ``captureWallClock``: a floating Exif original pins
