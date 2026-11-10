@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.9.1"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.9.3"),
 ]
 ```
 
@@ -191,14 +191,15 @@ if let type = result.format.fileType {
 }
 
 // The two dates most callers want, each for its own purpose, with the role it came
-// from. There is no single "best date": the local time a photo was taken (to name or
-// folder it) and the instant it was taken (to sort it) are different questions.
+// from. There is no single "best date": the local time a photo was taken (to name,
+// folder, day and order it in a timeline) and the instant it was taken (to compare it
+// across time zones or deduplicate it) are different questions.
 if let wall = result.timestamps.captureWallClock,
    let local = wall.time.captureLocalComponents {
     print("taken", local.year, local.month, local.day, "per", wall.role) // e.g. .original
 }
 if let moment = result.timestamps.captureInstant, let instant = moment.time.instant {
-    print("sort by", instant, "per", moment.role) // instant is always set on this selection
+    print("compare by", instant, "per", moment.role) // instant is always set on this selection
 }
 
 // Every capture/creation date is also its own strongly typed field, keyed by a
@@ -338,6 +339,15 @@ sub-second digits that a re-read would report.
 
 It also fixes HEIF, PNG and WebP files dropping the sub-second digits of their embedded
 Exif: `fractionalSecondDigits` was reported only for JPEG and TIFF.
+
+## Migrating to 0.9.3
+
+0.9.3 changes no reading. It restates which selection answers which question:
+`captureWallClock` names a file and also gives its day and its place in a timeline a
+person browses, and `captureInstant` is for comparing across time zones, measuring elapsed
+time and deduplicating. A timeline ordered by instant puts a photo on the viewer's day
+rather than the day it was taken, and cannot place a floating time at all. A consumer
+that sorted by `captureInstant` keeps working; the library now recommends the wall clock.
 
 ## Supported Formats
 

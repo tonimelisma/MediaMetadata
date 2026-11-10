@@ -134,8 +134,8 @@ capture/creation timestamp is exposed as its own named, typed field.
 
 The library is also opinionated where its format knowledge is the hard part, and
 it is explicit about it. "Which date is best" has no single answer — *what local
-time was this taken* (naming) and *what instant was this taken* (ordering) differ
-on the same file — so there is no `bestDate`. There are two purpose-named
+time was this taken* (naming, days and timeline order) and *what instant was this
+taken* (comparison across zones) differ on the same file — so there is no `bestDate`. There are two purpose-named
 selections, `captureWallClock` and `captureInstant`, each returning the role it
 chose, with its precedence published as a constant. They are the Resolver layer
 below: a default a consumer can take or ignore, never the only source of truth.
