@@ -12,6 +12,7 @@ enum StillImageFixtures {
         case short(UInt16)
         case long(UInt32)
         case ascii(String)
+        case rational(UInt32, UInt32)
     }
 
     static let orientationTag: UInt16 = 0x0112
@@ -47,6 +48,10 @@ enum StillImageFixtures {
                     out += le16(tag) + le16(3) + le32(1) + le16(number) + le16(0)
                 case let .long(number):
                     out += le16(tag) + le16(4) + le32(1) + le32(number)
+                case let .rational(numerator, denominator):
+                    out += le16(tag) + le16(5) + le32(1) + le32(UInt32(dataOffset))
+                    dataArea += le32(numerator) + le32(denominator)
+                    dataOffset += 8
                 case let .ascii(text):
                     let bytes = Data(text.utf8) + Data([0])
                     if bytes.count <= 4 {

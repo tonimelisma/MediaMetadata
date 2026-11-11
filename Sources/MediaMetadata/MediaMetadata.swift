@@ -40,11 +40,12 @@ public enum MediaMetadataReader {
     /// | tiff | 1 | Sub-seconds (0.9.0) |
     /// | png, webp | 1 | Embedded Exif keeps its sub-seconds (0.9.2) |
     /// | isoBMFF | 3 | Content identifier (0.8.2) |
+    /// | heif | 3 | Exposure (0.9.4) |
+    /// | jpeg, tiff, png, webp | 2 | Exposure (0.9.4) |
     public static func extractionRevision(for family: MediaFormat.Family) -> Int {
         switch family {
-        case .isoBMFF: 3
-        case .heif, .unknown: 2
-        case .jpeg, .tiff, .png, .webp: 1
+        case .isoBMFF, .heif: 3
+        case .jpeg, .tiff, .png, .webp, .unknown: 2
         case .gif, .riffAVI, .riffWAV, .id3: 0
         }
     }
@@ -937,6 +938,82 @@ enum CaptureLevelEvidence {
             return false
         }
         return words.contains("back") && !words.contains("front")
+    }
+}
+
+/// Where the exposure is read: the Exif IFD's exposure tags, recorded by the TIFF parser as
+/// findings in this namespace. ``MediaMetadataResult/exposure`` is projected from them.
+enum ExposureEvidence {
+    static let namespace = "exif.exposure"
+    static let exposureTime = "ExposureTime"
+    static let fNumber = "FNumber"
+    static let exposureBias = "ExposureBiasValue"
+    static let focalLength = "FocalLength"
+    static let exposureProgram = "ExposureProgram"
+    static let photographicSensitivity = "PhotographicSensitivity"
+    static let standardOutputSensitivity = "StandardOutputSensitivity"
+    static let recommendedExposureIndex = "RecommendedExposureIndex"
+    static let isoSpeed = "ISOSpeed"
+    static let meteringMode = "MeteringMode"
+    static let flash = "Flash"
+    static let whiteBalance = "WhiteBalance"
+    static let focalLengthIn35mmFilm = "FocalLengthIn35mmFilm"
+
+    /// `PhotographicSensitivity` is a SHORT, so Exif 2.3 §4.6.5 has a camera write 65535
+    /// when the sensitivity is that or more and put the real value in the tag
+    /// `SensitivityType` names — `ISOSpeed`, `RecommendedExposureIndex` or
+    /// `StandardOutputSensitivity`, read in that order.
+    static let saturatedSensitivity = 65535
+
+    static func exposure(in findings: [MetadataFinding]) -> Exposure? {
+        func raw(_ key: String) -> String? {
+            findings.first { $0.namespace == namespace && $0.key == key }?.rawValue
+        }
+        func integer(_ key: String) -> Int? {
+            raw(key).flatMap { Int($0) }
+        }
+        func positive(_ key: String) -> Int? {
+            integer(key).flatMap { $0 > 0 ? $0 : nil }
+        }
+        func rational(_ key: String) -> (numerator: Int, denominator: Int)? {
+            guard let parts = raw(key)?.split(separator: "/"), parts.count == 2,
+                  let numerator = Int(parts[0]), let denominator = Int(parts[1]), denominator != 0 else {
+                return nil
+            }
+            return (numerator, denominator)
+        }
+        func positiveDecimal(_ key: String) -> Double? {
+            guard let value = rational(key), value.numerator > 0, value.denominator > 0 else {
+                return nil
+            }
+            return Double(value.numerator) / Double(value.denominator)
+        }
+
+        let reported = positive(photographicSensitivity)
+        let sensitivity: Int? = if let reported, reported < saturatedSensitivity {
+            reported
+        } else {
+            positive(isoSpeed) ?? positive(recommendedExposureIndex) ?? positive(standardOutputSensitivity)
+        }
+        let time = rational(exposureTime).flatMap { value in
+            value.numerator > 0 && value.denominator > 0
+                ? ExposureTime(numerator: value.numerator, denominator: value.denominator)
+                : nil
+        }
+        let bias = rational(exposureBias).map { Double($0.numerator) / Double($0.denominator) }
+        let exposure = Exposure(
+            exposureTime: time,
+            fNumber: positiveDecimal(fNumber),
+            isoSensitivity: sensitivity,
+            exposureBiasEV: bias,
+            focalLengthMillimeters: positiveDecimal(focalLength),
+            focalLengthIn35mmFilmMillimeters: positive(focalLengthIn35mmFilm),
+            flash: integer(flash).map(Flash.init(exifValue:)),
+            program: integer(exposureProgram).flatMap(ExposureProgram.init(rawValue:)),
+            meteringMode: integer(meteringMode).flatMap(MeteringMode.init(rawValue:)),
+            whiteBalance: integer(whiteBalance).flatMap(WhiteBalanceMode.init(rawValue:))
+        )
+        return exposure.isEmpty ? nil : exposure
     }
 }
 

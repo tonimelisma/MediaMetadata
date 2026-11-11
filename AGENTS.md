@@ -225,6 +225,8 @@ After finishing an increment, produce a report in this exact format:
   ordering), report the role they chose, publish their precedence, and never
   replace the fields they choose from.
 - Raise `MediaMetadataReader.extractionRevision(for:)` for each family whose
-  already-reported values change for the same bytes, and add a row to its table.
-  Do not raise it for a new field or for a family the change does not touch.
+  already-reported values change for the same bytes, or that newly reports a field,
+  and add a row to its table. A stored row cannot tell "the file has none" from "the
+  parser did not look", so a new field moves it too. Do not raise it for a family the
+  change does not touch.
 - Do not run `git push --force` or rewrite shared history.

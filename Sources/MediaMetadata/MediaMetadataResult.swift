@@ -52,6 +52,10 @@ public struct MediaMetadataResult: Equatable, Sendable {
     /// It is the camera's level, not the scene's: a picture taken lying down, or of a
     /// sloping subject, is levelled to gravity all the same.
     public let levelingTurnDegrees: Double?
+    /// How the picture was exposed — shutter, aperture, sensitivity, focal length, flash —
+    /// from a still's Exif. `nil` when the file records none of it, as a movie, a screenshot
+    /// or an exported still without Exif does.
+    public let exposure: Exposure?
 
     public init(
         outcome: ReadOutcome,
@@ -65,7 +69,8 @@ public struct MediaMetadataResult: Equatable, Sendable {
         previews: [EmbeddedPreview] = [],
         contentIdentifier: String? = nil,
         burstIdentifier: String? = nil,
-        levelingTurnDegrees: Double? = nil
+        levelingTurnDegrees: Double? = nil,
+        exposure: Exposure? = nil
     ) {
         self.outcome = outcome
         self.format = format
@@ -79,6 +84,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.contentIdentifier = contentIdentifier
         self.burstIdentifier = burstIdentifier
         self.levelingTurnDegrees = levelingTurnDegrees
+        self.exposure = exposure
     }
 }
 
@@ -171,7 +177,8 @@ extension MediaMetadataResult {
                 in: parsed.findings,
                 lensModel: parsed.camera?.lensModel,
                 orientation: parsed.camera?.orientation
-            )
+            ),
+            exposure: ExposureEvidence.exposure(in: parsed.findings)
         )
     }
 }
@@ -977,6 +984,151 @@ extension Camera {
             serialNumber: camera.serialNumber
         )
     }
+}
+
+/// How a still was exposed, from its Exif IFD (Exif 2.32 §4.6.5). Every field is what the
+/// camera wrote; a value the file does not record, or records as "unknown" (`0`), is `nil`.
+public struct Exposure: Equatable, Sendable {
+    /// `ExposureTime`: how long the shutter was open.
+    public let exposureTime: ExposureTime?
+    /// `FNumber`: the aperture, as the f-number (`2.8` for ƒ/2.8).
+    public let fNumber: Double?
+    /// ISO sensitivity: `PhotographicSensitivity`, or for 65535 and above the tag
+    /// `SensitivityType` names (`ISOSpeed`, then `RecommendedExposureIndex`, then
+    /// `StandardOutputSensitivity`). `nil` when only the saturated 65535 is recorded.
+    public let isoSensitivity: Int?
+    /// `ExposureBiasValue`: exposure compensation in EV, negative for darker.
+    public let exposureBiasEV: Double?
+    /// `FocalLength`: the lens's actual focal length in millimetres.
+    public let focalLengthMillimeters: Double?
+    /// `FocalLengthIn35mmFilm`: the equivalent focal length on a 35 mm frame.
+    public let focalLengthIn35mmFilmMillimeters: Int?
+    /// `Flash`: whether it fired and how it was set.
+    public let flash: Flash?
+    /// `ExposureProgram`: how the camera chose the exposure.
+    public let program: ExposureProgram?
+    /// `MeteringMode`: how the camera measured the light.
+    public let meteringMode: MeteringMode?
+    /// `WhiteBalance`: whether white balance was automatic or set by hand.
+    public let whiteBalance: WhiteBalanceMode?
+
+    public init(
+        exposureTime: ExposureTime? = nil,
+        fNumber: Double? = nil,
+        isoSensitivity: Int? = nil,
+        exposureBiasEV: Double? = nil,
+        focalLengthMillimeters: Double? = nil,
+        focalLengthIn35mmFilmMillimeters: Int? = nil,
+        flash: Flash? = nil,
+        program: ExposureProgram? = nil,
+        meteringMode: MeteringMode? = nil,
+        whiteBalance: WhiteBalanceMode? = nil
+    ) {
+        self.exposureTime = exposureTime
+        self.fNumber = fNumber
+        self.isoSensitivity = isoSensitivity
+        self.exposureBiasEV = exposureBiasEV
+        self.focalLengthMillimeters = focalLengthMillimeters
+        self.focalLengthIn35mmFilmMillimeters = focalLengthIn35mmFilmMillimeters
+        self.flash = flash
+        self.program = program
+        self.meteringMode = meteringMode
+        self.whiteBalance = whiteBalance
+    }
+
+    var isEmpty: Bool {
+        self == Exposure()
+    }
+}
+
+/// A shutter time as the camera wrote it: a fraction of seconds (`1/250`, `30/1`, `10/2500`),
+/// kept as written so a consumer shows the speed the camera chose rather than a rounding.
+public struct ExposureTime: Equatable, Sendable {
+    /// Both positive.
+    public let numerator: Int
+    public let denominator: Int
+
+    public init(numerator: Int, denominator: Int) {
+        self.numerator = numerator
+        self.denominator = denominator
+    }
+
+    /// The time in seconds.
+    public var seconds: Double {
+        Double(numerator) / Double(denominator)
+    }
+}
+
+/// The Exif `Flash` tag's bits (Exif 2.32 §4.6.5, Table 7).
+public struct Flash: Equatable, Sendable {
+    /// How the flash was set.
+    public enum Mode: Int, Equatable, Sendable {
+        /// Fires on every shot.
+        case on = 1
+        /// Never fires.
+        case off = 2
+        /// The camera decides.
+        case auto = 3
+    }
+
+    /// Bit 0: the flash fired.
+    public let fired: Bool
+    /// Bits 3–4; `nil` when the camera records the mode as unknown.
+    public let mode: Mode?
+    /// Bit 6: red-eye reduction was on.
+    public let redEyeReduction: Bool
+    /// Bit 5 clear: the camera has a flash at all.
+    public let hasFlashFunction: Bool
+
+    public init(fired: Bool, mode: Mode? = nil, redEyeReduction: Bool = false, hasFlashFunction: Bool = true) {
+        self.fired = fired
+        self.mode = mode
+        self.redEyeReduction = redEyeReduction
+        self.hasFlashFunction = hasFlashFunction
+    }
+
+    /// Decodes the tag's value.
+    public init(exifValue: Int) {
+        self.init(
+            fired: exifValue & 0x01 != 0,
+            mode: Mode(rawValue: (exifValue >> 3) & 0x03),
+            redEyeReduction: exifValue & 0x40 != 0,
+            hasFlashFunction: exifValue & 0x20 == 0
+        )
+    }
+}
+
+/// The Exif `ExposureProgram` tag: how the camera chose the exposure. `0` ("not defined") and
+/// values outside the specification are not reported.
+public enum ExposureProgram: Int, Equatable, Sendable {
+    case manual = 1
+    case normal = 2
+    case aperturePriority = 3
+    case shutterPriority = 4
+    /// Biased toward depth of field.
+    case creative = 5
+    /// Biased toward a fast shutter.
+    case action = 6
+    case portrait = 7
+    case landscape = 8
+}
+
+/// The Exif `MeteringMode` tag. `0` ("unknown") is not reported.
+public enum MeteringMode: Int, Equatable, Sendable {
+    case average = 1
+    case centerWeightedAverage = 2
+    case spot = 3
+    case multiSpot = 4
+    /// Evaluative or matrix metering.
+    case pattern = 5
+    case partial = 6
+    case other = 255
+}
+
+/// The Exif `WhiteBalance` tag: whether the camera set white balance itself.
+public enum WhiteBalanceMode: Int, Equatable, Sendable {
+    case auto = 0
+    case manual = 1
 }
 
 /// How big the picture is and which way up it goes — for a still or a movie.
