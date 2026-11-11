@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.9.3"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.9.4"),
 ]
 ```
 
@@ -239,6 +239,14 @@ if let camera = result.camera {
     print(camera.make ?? "", camera.model ?? "", camera.lensModel ?? "")
 }
 
+// How a still was exposed, from its Exif — nil when the file records none of it. A shutter
+// time keeps the fraction the camera wrote, so 1/250 stays 1/250.
+if let exposure = result.exposure {
+    if let time = exposure.exposureTime { print("\(time.numerator)/\(time.denominator) s") }
+    print(exposure.fNumber ?? 0, exposure.isoSensitivity ?? 0, exposure.focalLengthMillimeters ?? 0)
+    print(exposure.exposureBiasEV ?? 0, exposure.flash?.fired ?? false, exposure.program as Any)
+}
+
 // Size and orientation, for stills and movies. pixelWidth/Height are the stored
 // raster; the display size has already had the quarter-turn rule applied, so a
 // portrait iPhone photo (or video) lays out as portrait.
@@ -349,15 +357,24 @@ time and deduplicating. A timeline ordered by instant puts a photo on the viewer
 rather than the day it was taken, and cannot place a floating time at all. A consumer
 that sorted by `captureInstant` keeps working; the library now recommends the wall clock.
 
+## Migrating to 0.9.4
+
+0.9.4 adds `exposure`: shutter time, f-number, ISO sensitivity, exposure compensation,
+focal length and its 35 mm equivalent, flash, exposure program, metering mode and white
+balance, read from the Exif IFD of a JPEG, TIFF or RAW, and from the Exif a HEIF, PNG or
+WebP embeds. Because it is a newly reported field, `extractionRevision(for:)` rises for
+those families (jpeg, tiff, png and webp to 2, heif to 3): a stored row cannot tell a file
+without exposure from one read before the library looked.
+
 ## Supported Formats
 
 | Format | Detection | Timestamps | Location | Camera | Video | Notes |
 |---|---|---|---|---|---|---|
-| TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, orientation, dimensions, embedded previews; DNG, CR2, ARW, NEF, PEF, SRW recognised from IFD0 |
+| TIFF / RAW | ✅ | ✅ | ✅ | ✅ | — | EXIF date, GPS, camera, lens, exposure, orientation, dimensions, embedded previews; DNG, CR2, ARW, NEF, PEF, SRW recognised from IFD0 |
 | CR3 | ✅ | — | — | — | — | Recognised from its `crx ` brand as a still; metadata not yet parsed |
 | RAF, ORF, RW2 | ✅ | — | — | — | — | Recognised from their signature as stills; reported `.unsupported` |
-| JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment; Apple MakerNote content and burst identifiers, gravity at capture |
-| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item; orientation from `irot`/`imir`; stored size from `ispe`; Apple MakerNote content and burst identifiers, gravity at capture |
+| JPEG (EXIF) | ✅ | ✅ | ✅ | ✅ | — | APP1 EXIF segment, exposure included; Apple MakerNote content and burst identifiers, gravity at capture |
+| HEIF / AVIF | ✅ | ✅ | ✅ | ✅ | — | Embedded EXIF item, exposure included; orientation from `irot`/`imir`; stored size from `ispe`; Apple MakerNote content and burst identifiers, gravity at capture |
 | PNG | ✅ | ✅ | ✅ | ✅ | — | Size from `IHDR`; Exif from an `eXIf` chunk before `IDAT` (one after it is not read: the specification forbids it, and reaching it means walking the image data) |
 | WebP | ✅ | ✅ | ✅ | ✅ | — | Size from the `VP8X` canvas or the `VP8 `/`VP8L` bitstream header; Exif from the `EXIF` chunk |
 | GIF | ✅ | — | — | — | — | Logical screen size; GIF has no standard capture date |

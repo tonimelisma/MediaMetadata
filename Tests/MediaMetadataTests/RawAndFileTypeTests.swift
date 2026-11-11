@@ -182,13 +182,13 @@ final class RawAndFileTypeTests: XCTestCase {
     }
 
     func testRevisionsMoveOnlyForTheFamiliesThatChanged() {
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .tiff), 1)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .jpeg), 1)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .heif), 2)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .tiff), 2, "Exposure (0.9.4)")
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .jpeg), 2, "Exposure (0.9.4)")
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .heif), 3, "Exposure (0.9.4)")
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .isoBMFF), 3)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .unknown), 2, "PNG, WebP and GIF left it (0.8.0)")
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .png), 1)
-        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .webp), 1)
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .png), 2, "Exposure (0.9.4)")
+        XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .webp), 2, "Exposure (0.9.4)")
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .gif), 0)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .riffAVI), 0)
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .riffWAV), 0)

@@ -154,6 +154,7 @@ public struct MediaMetadataResult {
     let camera: Camera?               // device identity only: make/model/lens/serial (text); nil when the file names none
     let geometry: PixelGeometry?      // stored pixel size + Orientation (Exif, HEIF irot/imir, or track matrix) + display size
     let video: VideoInfo?             // durationSeconds, frameRate, VideoCodec
+    let exposure: Exposure?           // a still's Exif exposure: shutter (as written), ƒ, ISO, EV, focal length, flash, program, metering, white balance
 }
 ```
 

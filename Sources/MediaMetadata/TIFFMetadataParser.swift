@@ -107,6 +107,19 @@ struct TIFFMetadataParser {
         static let bodySerialNumber: UInt16 = 0xA431
         static let lensModel: UInt16 = 0xA434
         static let makerNote: UInt16 = 0x927C
+        static let exposureTime: UInt16 = 0x829A
+        static let fNumber: UInt16 = 0x829D
+        static let exposureProgram: UInt16 = 0x8822
+        static let photographicSensitivity: UInt16 = 0x8827
+        static let standardOutputSensitivity: UInt16 = 0x8831
+        static let recommendedExposureIndex: UInt16 = 0x8832
+        static let isoSpeed: UInt16 = 0x8833
+        static let exposureBias: UInt16 = 0x9204
+        static let meteringMode: UInt16 = 0x9207
+        static let flash: UInt16 = 0x9209
+        static let focalLength: UInt16 = 0x920A
+        static let whiteBalance: UInt16 = 0xA403
+        static let focalLengthIn35mmFilm: UInt16 = 0xA405
         /// Offset of an embedded JPEG. In IFD1 this is the EXIF thumbnail; Sony and others
         /// also put a large preview here in IFD0.
         static let jpegInterchangeFormat: UInt16 = 0x0201
@@ -310,6 +323,7 @@ struct TIFFMetadataParser {
             if let entry = parsedEXIF[Tag.makerNote] {
                 parseAppleMakerNote(entry)
             }
+            parseExposure(exif: parsedEXIF, byteOrder: byteOrder)
         }
 
         // Each wall clock pairs with its own SubSec tag (EXIF 2.32 §4.6.5): SubSecTime with
@@ -405,6 +419,109 @@ struct TIFFMetadataParser {
             pixelWidth: pixelWidth.flatMap { Int(exactly: $0.value) },
             pixelHeight: pixelHeight.flatMap { Int(exactly: $0.value) }
         )
+    }
+
+    /// Records the Exif exposure tags as findings in ``ExposureEvidence``'s namespace;
+    /// ``Exposure`` is projected from them, so an exposure read by an embedded parser (a
+    /// HEIF's Exif item, a PNG's `eXIf`) arrives through the same merge as every finding.
+    ///
+    /// A rational keeps its numerator and denominator as written (`1/250`, `28/10`), so a
+    /// consumer can show the shutter speed the camera chose rather than a rounded decimal.
+    private mutating func parseExposure(exif: [UInt16: IFDEntry], byteOrder: ByteOrder) {
+        let rationals: [(UInt16, String, Bool)] = [
+            (Tag.exposureTime, ExposureEvidence.exposureTime, false),
+            (Tag.fNumber, ExposureEvidence.fNumber, false),
+            (Tag.exposureBias, ExposureEvidence.exposureBias, true),
+            (Tag.focalLength, ExposureEvidence.focalLength, false),
+        ]
+        for (tag, key, signed) in rationals {
+            guard let entry = exif[tag], let rational = firstRational(from: entry, byteOrder: byteOrder, signed: signed) else {
+                continue
+            }
+            _ = appendFinding(
+                namespace: ExposureEvidence.namespace,
+                key: key,
+                value: "\(rational.numerator)/\(rational.denominator)",
+                sourcePath: "tiff.ifd0.exif.\(key)",
+                byteRange: rational.byteRange
+            )
+        }
+        let integers: [(UInt16, String)] = [
+            (Tag.exposureProgram, ExposureEvidence.exposureProgram),
+            (Tag.photographicSensitivity, ExposureEvidence.photographicSensitivity),
+            (Tag.standardOutputSensitivity, ExposureEvidence.standardOutputSensitivity),
+            (Tag.recommendedExposureIndex, ExposureEvidence.recommendedExposureIndex),
+            (Tag.isoSpeed, ExposureEvidence.isoSpeed),
+            (Tag.meteringMode, ExposureEvidence.meteringMode),
+            (Tag.flash, ExposureEvidence.flash),
+            (Tag.whiteBalance, ExposureEvidence.whiteBalance),
+            (Tag.focalLengthIn35mmFilm, ExposureEvidence.focalLengthIn35mmFilm),
+        ]
+        for (tag, key) in integers {
+            guard let entry = exif[tag], let integer = firstInteger(from: entry, byteOrder: byteOrder) else {
+                continue
+            }
+            _ = appendFinding(
+                namespace: ExposureEvidence.namespace,
+                key: key,
+                value: String(integer.value),
+                sourcePath: "tiff.ifd0.exif.\(key)",
+                byteRange: integer.byteRange
+            )
+        }
+    }
+
+    /// The first value of a SHORT or LONG entry. Exif lets `PhotographicSensitivity` carry
+    /// more than one value; the first is the one cameras mean.
+    private func firstInteger(from entry: IFDEntry, byteOrder: ByteOrder) -> NumericValue? {
+        guard entry.count >= 1 else {
+            return nil
+        }
+        switch entry.type {
+        case TIFFType.short:
+            if entry.count <= 2 {
+                guard let value = byteOrder.uint16(entry.valueField) else {
+                    return nil
+                }
+                return NumericValue(value: UInt64(value), byteRange: entry.valueFieldOffset..<(entry.valueFieldOffset + 2))
+            }
+            let offset = UInt64(entry.valueOrOffset)
+            guard let bytes = data(relativeOffset: offset, length: 2), let value = byteOrder.uint16(bytes) else {
+                return nil
+            }
+            return NumericValue(value: UInt64(value), byteRange: absoluteRange(offset..<(offset + 2)))
+        case TIFFType.long:
+            guard entry.count == 1 else {
+                return nil
+            }
+            return NumericValue(value: UInt64(entry.valueOrOffset), byteRange: entry.valueFieldOffset..<(entry.valueFieldOffset + 4))
+        default:
+            return nil
+        }
+    }
+
+    /// The first rational of a RATIONAL or SRATIONAL entry, as written. A zero denominator
+    /// is no value.
+    private func firstRational(
+        from entry: IFDEntry,
+        byteOrder: ByteOrder,
+        signed: Bool
+    ) -> (numerator: Int64, denominator: Int64, byteRange: Range<UInt64>?)? {
+        guard entry.type == (signed ? TIFFType.signedRational : TIFFType.rational), entry.count >= 1 else {
+            return nil
+        }
+        let offset = UInt64(entry.valueOrOffset)
+        guard let bytes = data(relativeOffset: offset, length: 8), bytes.count == 8,
+              let rawNumerator = byteOrder.uint32(bytes, offset: 0),
+              let rawDenominator = byteOrder.uint32(bytes, offset: 4) else {
+            return nil
+        }
+        let numerator = signed ? Int64(Int32(bitPattern: rawNumerator)) : Int64(rawNumerator)
+        let denominator = signed ? Int64(Int32(bitPattern: rawDenominator)) : Int64(rawDenominator)
+        guard denominator != 0 else {
+            return nil
+        }
+        return (numerator, denominator, absoluteRange(offset..<(offset + 8)))
     }
 
     private mutating func parseGPSMetadata(
