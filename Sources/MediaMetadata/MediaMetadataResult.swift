@@ -41,6 +41,11 @@ public struct MediaMetadataResult: Equatable, Sendable {
     /// different values, or one with and one without, are different captures. `nil` when the
     /// file carries none.
     public let burstIdentifier: String?
+    /// The frame's number in a camera's continuous-shooting sequence (a burst), as the camera
+    /// recorded it: 1 for the first frame, counting up. Read today from a Sony MakerNote
+    /// (`SequenceNumber`, tag `0xB04A`, while `ReleaseMode`, tag `0xB049`, is continuous).
+    /// `nil` for a single shot, a bracket, and a file that records no drive mode.
+    public let continuousShootingFrame: Int?
     /// The turn, in degrees clockwise, that levels the picture as displayed (its
     /// ``PixelGeometry/orientation`` applied), from the camera's own gravity reading at
     /// capture. Within ±45°; a quarter turn or a flip of the picture keeps it level, a flip
@@ -69,6 +74,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         previews: [EmbeddedPreview] = [],
         contentIdentifier: String? = nil,
         burstIdentifier: String? = nil,
+        continuousShootingFrame: Int? = nil,
         levelingTurnDegrees: Double? = nil,
         exposure: Exposure? = nil
     ) {
@@ -83,6 +89,7 @@ public struct MediaMetadataResult: Equatable, Sendable {
         self.previews = previews
         self.contentIdentifier = contentIdentifier
         self.burstIdentifier = burstIdentifier
+        self.continuousShootingFrame = continuousShootingFrame
         self.levelingTurnDegrees = levelingTurnDegrees
         self.exposure = exposure
     }
@@ -173,6 +180,7 @@ extension MediaMetadataResult {
             previews: parsed.previews.map(EmbeddedPreview.init),
             contentIdentifier: ContentIdentifierEvidence.value(in: parsed.findings),
             burstIdentifier: BurstIdentifierEvidence.value(in: parsed.findings),
+            continuousShootingFrame: ContinuousShootingEvidence.frame(in: parsed.findings),
             levelingTurnDegrees: CaptureLevelEvidence.levelingTurn(
                 in: parsed.findings,
                 lensModel: parsed.camera?.lensModel,
