@@ -322,6 +322,7 @@ struct TIFFMetadataParser {
             }
             if let entry = parsedEXIF[Tag.makerNote] {
                 parseAppleMakerNote(entry)
+                parseSonyMakerNote(entry, make: ifd0[Tag.make].flatMap { asciiValue(from: $0)?.value }, byteOrder: byteOrder)
             }
             parseExposure(exif: parsedEXIF, byteOrder: byteOrder)
         }
@@ -736,6 +737,49 @@ struct TIFFMetadataParser {
             )
         }
         return entries
+    }
+
+    /// A Sony MakerNote: an IFD in the TIFF's byte order whose value offsets count from the
+    /// TIFF header, after a 12-byte `SONY DSC ` or `SONY CAM ` header on some models and right
+    /// at the MakerNote's start on others (ILCE ARW). Only its drive mode is read.
+    private enum SonyMakerNote {
+        static let headers = [Data("SONY DSC \0\0\0".utf8), Data("SONY CAM \0\0\0".utf8)]
+        static let headerLength: UInt64 = 12
+        /// `exiftool`'s `ReleaseMode`: 0 normal, 2 continuous, 5, 6, 8 bracketing.
+        static let releaseMode: UInt16 = 0xB049
+        static let continuous: UInt64 = 2
+        /// `exiftool`'s `SequenceNumber`: the frame's number in a continuous sequence, 0 for a
+        /// single shot, 0xFFFF when not applicable.
+        static let sequenceNumber: UInt16 = 0xB04A
+        static let notApplicable: UInt64 = 0xFFFF
+    }
+
+    /// Records the frame number of a continuous-shooting capture from a Sony MakerNote. A
+    /// file from another maker, a single shot or a bracket records nothing.
+    private mutating func parseSonyMakerNote(_ entry: IFDEntry, make: String?, byteOrder: ByteOrder) {
+        guard let make, make.uppercased().hasPrefix("SONY") else {
+            return
+        }
+        var start = UInt64(entry.valueOrOffset)
+        if let header = data(relativeOffset: start, length: Int(SonyMakerNote.headerLength)),
+           SonyMakerNote.headers.contains(header) {
+            start += SonyMakerNote.headerLength
+        }
+        let path = "tiff.ifd0.exif.MakerNote.sony"
+        guard let ifd = parseIFD(offset: start, byteOrder: byteOrder, path: path),
+              let mode = ifd[SonyMakerNote.releaseMode].flatMap({ numericValue(from: $0, byteOrder: byteOrder) }),
+              mode.value == SonyMakerNote.continuous,
+              let frame = ifd[SonyMakerNote.sequenceNumber].flatMap({ numericValue(from: $0, byteOrder: byteOrder) }),
+              frame.value >= 1, frame.value < SonyMakerNote.notApplicable else {
+            return
+        }
+        _ = appendFinding(
+            namespace: ContinuousShootingEvidence.namespace,
+            key: ContinuousShootingEvidence.key,
+            value: String(frame.value),
+            sourcePath: "\(path).SequenceNumber",
+            byteRange: frame.byteRange
+        )
     }
 
     /// Records the Live Photo content identifier, the burst identifier and the gravity

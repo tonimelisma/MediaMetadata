@@ -155,6 +155,7 @@ public struct MediaMetadataResult {
     let geometry: PixelGeometry?      // stored pixel size + Orientation (Exif, HEIF irot/imir, or track matrix) + display size
     let video: VideoInfo?             // durationSeconds, frameRate, VideoCodec
     let exposure: Exposure?           // a still's Exif exposure: shutter (as written), ƒ, ISO, EV, focal length, flash, program, metering, white balance
+    let continuousShootingFrame: Int? // a camera burst frame's number in its sequence (Sony MakerNote drive mode), nil for a single shot
 }
 ```
 

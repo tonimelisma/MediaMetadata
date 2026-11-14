@@ -26,7 +26,7 @@ https://github.com/tonimelisma/MediaMetadata.git
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.9.4"),
+    .package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "0.9.5"),
 ]
 ```
 
@@ -263,6 +263,10 @@ if let identifier = result.contentIdentifier { print(identifier) }
 if let fraction = result.timestamps.original?.fractionalSecondDigits { print(fraction) } // "387"
 if let burst = result.burstIdentifier { print(burst) }
 
+// A camera's burst: a Sony frame shot in continuous drive reports its number in the
+// sequence, 1 for the first frame. nil for a single shot or a bracket.
+if let frame = result.continuousShootingFrame { print(frame) } // 3
+
 // The clockwise turn that levels the picture as displayed, from an iPhone back camera's
 // gravity reading at capture. nil for front-camera pictures, whose mirroring the file does
 // not record, and for a camera pointed near straight up or down.
@@ -365,6 +369,14 @@ balance, read from the Exif IFD of a JPEG, TIFF or RAW, and from the Exif a HEIF
 WebP embeds. Because it is a newly reported field, `extractionRevision(for:)` rises for
 those families (jpeg, tiff, png and webp to 2, heif to 3): a stored row cannot tell a file
 without exposure from one read before the library looked.
+
+## Migrating to 0.9.5
+
+0.9.5 adds `continuousShootingFrame`: the frame's number in a camera's continuous-shooting
+sequence, read from a Sony MakerNote (`SequenceNumber`, tag `0xB04A`, while `ReleaseMode`,
+tag `0xB049`, is continuous). A single shot, a bracket and another maker's file report
+`nil`. Because it is a newly reported field, `extractionRevision(for:)` rises for the
+families that carry Exif (jpeg, tiff, png and webp to 3, heif to 4).
 
 ## Supported Formats
 

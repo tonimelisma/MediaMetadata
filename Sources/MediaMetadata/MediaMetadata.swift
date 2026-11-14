@@ -44,8 +44,9 @@ public enum MediaMetadataReader {
     /// | jpeg, tiff, png, webp | 2 | Exposure (0.9.4) |
     public static func extractionRevision(for family: MediaFormat.Family) -> Int {
         switch family {
-        case .isoBMFF, .heif: 3
-        case .jpeg, .tiff, .png, .webp, .unknown: 2
+        case .heif: 4
+        case .isoBMFF, .jpeg, .tiff, .png, .webp: 3
+        case .unknown: 2
         case .gif, .riffAVI, .riffWAV, .id3: 0
         }
     }
@@ -874,6 +875,17 @@ struct FormatIdentity: Equatable, Sendable {
 }
 
 /// Where Apple's burst identifier is read: the still's Apple MakerNote, tag `0x000B`.
+/// The frame number a camera recorded for a continuous-shooting capture (a Sony MakerNote's
+/// `SequenceNumber` while its `ReleaseMode` is continuous).
+enum ContinuousShootingEvidence {
+    static let namespace = "sony.makernote"
+    static let key = "SequenceNumber"
+
+    static func frame(in findings: [MetadataFinding]) -> Int? {
+        findings.first { $0.namespace == namespace && $0.key == key }.flatMap { Int($0.rawValue) }
+    }
+}
+
 enum BurstIdentifierEvidence {
     static let namespace = "apple.makernote"
     static let key = "BurstUUID"
