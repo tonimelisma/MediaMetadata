@@ -25,6 +25,8 @@ Sources/
   MediaMetadata/       # Runtime parser target
 Tests/
   MediaMetadataTests/  # XCTest target with synthetic fixtures
+Scripts/               # Fixture tooling; cloud-setup.sh (cloud SessionStart hook)
+.claude/settings.json  # Claude Code project settings (SessionStart hook)
 Package.swift          # SPM manifest
 README.md              # Consumer-facing documentation
 ARCHITECTURE.md        # Design contract, non-goals, guardrails
@@ -45,6 +47,46 @@ For macOS-specific validation you may also run:
 ```sh
 xcodebuild -scheme MediaMetadata -destination 'platform=macOS' test
 ```
+
+## Cloud Sessions
+
+Claude Code cloud sessions (claude.ai/code) run in an Ubuntu 24.04 x86_64 VM
+with no macOS and no preinstalled Swift.
+
+- The SessionStart hook in `.claude/settings.json` runs
+  `Scripts/cloud-setup.sh`, which installs the Swift release CI's Linux job
+  uses (6.0.3, signature-checked from swift.org) into `/opt/swift-<version>`
+  and puts it on `PATH`. It acts only when `CLAUDE_CODE_REMOTE=true`, and a
+  second run is a fast no-op. When CI's `swift:` image moves, update the
+  default version in the script.
+- `swift build` and `swift test` run in the VM as usual.
+- The macOS-only `xcodebuild ... -destination 'platform=macOS' test` runs on
+  Toni's Mac through the Latchkey connector's `shell_run`: push the branch,
+  clone it into `$LATCHKEY_SCRATCH`, and run there with a scratch-local derived
+  data path, removing the clone afterwards:
+
+  ```sh
+  cd "$LATCHKEY_SCRATCH" && rm -rf MediaMetadata \
+    && git clone --depth 1 --branch <branch> https://github.com/tonimelisma/MediaMetadata.git \
+    && cd MediaMetadata \
+    && xcodebuild -scheme MediaMetadata -destination 'platform=macOS' \
+         -derivedDataPath "$LATCHKEY_SCRATCH/MediaMetadata-dd" test
+  ```
+
+Toni's standing rules (they live in his personal `~/.claude/CLAUDE.md`, which
+does not reach cloud sessions, so they are repeated here):
+
+- When it is already clear what Toni wants, do it. Never ask whether or how to
+  do it, or which piece to do first, and never end a turn with a go-ahead
+  question. Ask only for what only Toni can do (his accounts, devices,
+  approvals) or a real product choice he hasn't made yet.
+- Never end a turn while any item Toni asked for can still move forward
+  without him. When one item is blocked, go on to the next; stop only when
+  every item is done or truly blocked, and list just the Toni-only steps at
+  the end.
+- Live tests may write to Toni's real apps; every test removes what it made in
+  its own teardown, even when it fails, and confirms the removal. Never leave
+  test data behind.
 
 ## Code Style
 
