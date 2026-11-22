@@ -51,16 +51,6 @@ if [[ "${ID}" != "ubuntu" || "${VERSION_ID}" != "24.04" || "$(uname -m)" != "x86
     exit 0
 fi
 
-log "installing Swift ${swift_version} build dependencies"
-export DEBIAN_FRONTEND=noninteractive
-"${sudo_cmd[@]}" apt-get update -qq
-# Dependency list from swift.org's Ubuntu 24.04 install instructions.
-"${sudo_cmd[@]}" apt-get install -y -qq --no-install-recommends \
-    binutils ca-certificates curl git gnupg2 libc6-dev libcurl4-openssl-dev \
-    libedit2 libgcc-13-dev libncurses-dev libpython3-dev libsqlite3-0 \
-    libstdc++-13-dev libxml2-dev libz3-dev pkg-config tzdata unzip zlib1g-dev \
-    >/dev/null
-
 name="swift-${swift_version}-RELEASE-ubuntu24.04"
 url="https://download.swift.org/swift-${swift_version}-release/ubuntu2404/swift-${swift_version}-RELEASE/${name}.tar.gz"
 work="$(mktemp -d)"
@@ -90,8 +80,37 @@ unwrap_gzip() {
     fi
 }
 
-log "downloading ${url}"
-fetch "${url}" "${work}/swift.tar.gz"
+# The ~800 MB tarball is the slow part: when curl is already there, fetch it
+# while apt runs.
+tarball_pid=""
+if command -v curl >/dev/null; then
+    log "downloading ${url}"
+    fetch "${url}" "${work}/swift.tar.gz" &
+    tarball_pid=$!
+fi
+
+# Dependency list from swift.org's Ubuntu 24.04 install instructions.
+deps=(binutils ca-certificates curl git gnupg2 libc6-dev libcurl4-openssl-dev
+    libedit2 libgcc-13-dev libncurses-dev libpython3-dev libsqlite3-0
+    libstdc++-13-dev libxml2-dev libz3-dev pkg-config tzdata unzip zlib1g-dev)
+missing=()
+for pkg in "${deps[@]}"; do
+    dpkg-query -W -f='${Status}' "${pkg}" 2>/dev/null | grep -q "ok installed" \
+        || missing+=("${pkg}")
+done
+if (( ${#missing[@]} > 0 )); then
+    log "installing ${#missing[@]} build dependencies: ${missing[*]}"
+    export DEBIAN_FRONTEND=noninteractive
+    "${sudo_cmd[@]}" apt-get update -qq
+    "${sudo_cmd[@]}" apt-get install -y -qq --no-install-recommends "${missing[@]}" >/dev/null
+fi
+
+if [[ -n "${tarball_pid}" ]]; then
+    wait "${tarball_pid}"
+else
+    log "downloading ${url}"
+    fetch "${url}" "${work}/swift.tar.gz"
+fi
 fetch "${url}.sig" "${work}/swift.tar.gz.sig"
 fetch "https://www.swift.org/keys/all-keys.asc" "${work}/keys.asc" "BEGIN PGP PUBLIC KEY"
 
