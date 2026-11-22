@@ -19,6 +19,7 @@ install_root="/opt/swift-${swift_version}"
 swift_bin="${install_root}/usr/bin"
 
 log() { printf '[cloud-setup] %s\n' "$*" >&2; }
+trap 'log "failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
 
 if [[ "$(id -u)" -eq 0 ]]; then
     sudo_cmd=()
@@ -65,13 +66,28 @@ url="https://download.swift.org/swift-${swift_version}-release/ubuntu2404/swift-
 work="$(mktemp -d)"
 trap 'rm -rf "${work}"' EXIT
 
+# fetch URL DEST [EXPECT]: download, retrying until DEST starts with EXPECT.
+fetch() {
+    local attempt
+    for attempt in 1 2 3; do
+        if curl -fsSL --retry 3 -o "$2" "$1" \
+            && { [[ -z "${3:-}" ]] || head -c 64 "$2" | grep -q -- "$3"; }; then
+            return 0
+        fi
+        log "fetch ${1} attempt ${attempt} failed ($(wc -c < "$2" 2>/dev/null || echo 0) bytes)"
+        sleep 2
+    done
+    return 1
+}
+
 log "downloading ${url}"
-curl -fsSL --retry 3 -o "${work}/swift.tar.gz" "${url}"
-curl -fsSL --retry 3 -o "${work}/swift.tar.gz.sig" "${url}.sig"
-curl -fsSL --retry 3 -o "${work}/keys.asc" "https://www.swift.org/keys/all-keys.asc"
+fetch "${url}" "${work}/swift.tar.gz"
+fetch "${url}.sig" "${work}/swift.tar.gz.sig"
+fetch "https://www.swift.org/keys/all-keys.asc" "${work}/keys.asc" "BEGIN PGP PUBLIC KEY"
 
 export GNUPGHOME="${work}/gnupg"
 mkdir -m 700 "${GNUPGHOME}"
+log "importing $(wc -c < "${work}/keys.asc")-byte key file"
 gpg --batch --quiet --import "${work}/keys.asc"
 gpg --batch --quiet --verify "${work}/swift.tar.gz.sig" "${work}/swift.tar.gz"
 log "signature verified"
