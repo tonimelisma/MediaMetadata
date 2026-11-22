@@ -67,10 +67,14 @@ work="$(mktemp -d)"
 trap 'rm -rf "${work}"' EXIT
 
 # fetch URL DEST [EXPECT]: download, retrying until DEST starts with EXPECT.
+# Some www.swift.org CDN edges send the key file gzipped with no
+# Content-Encoding header; --compressed makes them label it, and a leftover
+# gzip body is unpacked by hand.
 fetch() {
     local attempt
     for attempt in 1 2 3; do
-        if curl -fsSL --retry 3 -o "$2" "$1" \
+        if curl -fsSL --retry 3 ${3:+--compressed} -o "$2" "$1" \
+            && { [[ -z "${3:-}" ]] || unwrap_gzip "$2"; } \
             && { [[ -z "${3:-}" ]] || head -c 64 "$2" | grep -q -- "$3"; }; then
             return 0
         fi
@@ -78,6 +82,12 @@ fetch() {
         sleep 2
     done
     return 1
+}
+
+unwrap_gzip() {
+    if [[ "$(head -c 2 "$1" | od -An -tx1 | tr -d ' \n')" == "1f8b" ]]; then
+        gzip -dc < "$1" > "$1.plain" && mv "$1.plain" "$1"
+    fi
 }
 
 log "downloading ${url}"
