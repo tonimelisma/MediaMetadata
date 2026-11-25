@@ -1,0 +1,111 @@
+name: Release
+
+# Tags main and publishes a GitHub release for the version the README install
+# snippet pins (`from: "X.Y.Z"`). Cloud sessions cannot push tags or write
+# releases, so this runs with GITHUB_TOKEN instead.
+#
+# - After CI passes on a push to main: releases the pinned version if it is new.
+#   A merged pin bump is therefore the release.
+# - repository_dispatch (type `release`, client_payload.version "X.Y.Z"): the
+#   same release, for a retry. The version must equal main's pin, and CI must
+#   have passed on main's head commit.
+#
+# Refuses a version below the latest tag. Idempotent: a version that is already
+# the latest tag finishes its release if one is missing, else does nothing.
+# Notes come from .github/release-notes/X.Y.Z.md at the tagged commit when that
+# file exists, else from GitHub's generated notes.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  repository_dispatch:
+    types: [release]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag and release the README version
+    if: >-
+      github.event_name == 'repository_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      EVENT_NAME: ${{ github.event_name }}
+      RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+      REQUESTED_VERSION: ${{ github.event.client_payload.version }}
+    steps:
+      - name: Tag and release
+        run: |
+          set -euo pipefail
+          semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+
+          if [[ "${EVENT_NAME}" == "repository_dispatch" ]]; then
+            if [[ ! "${REQUESTED_VERSION}" =~ ${semver} ]]; then
+              echo "::error::client_payload.version must be X.Y.Z"
+              exit 1
+            fi
+            sha="$(gh api "repos/${GH_REPO}/commits/main" --jq .sha)"
+            ci="$(gh api "repos/${GH_REPO}/actions/workflows/ci.yml/runs?head_sha=${sha}&event=push&per_page=1" \
+              --jq '.workflow_runs[0].conclusion // "none"')"
+            if [[ "${ci}" != "success" ]]; then
+              echo "::error::CI on main ${sha} has not passed (conclusion: ${ci})"
+              exit 1
+            fi
+          else
+            sha="${RUN_SHA}"
+          fi
+
+          version="$(gh api "repos/${GH_REPO}/contents/README.md?ref=${sha}" \
+              -H 'Accept: application/vnd.github.raw' \
+            | grep -oE 'MediaMetadata\.git", from: "[0-9]+\.[0-9]+\.[0-9]+"' \
+            | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+          if [[ -z "${version}" ]]; then
+            echo "::error::README.md at ${sha} has no MediaMetadata.git from: \"X.Y.Z\" pin"
+            exit 1
+          fi
+          if [[ "${EVENT_NAME}" == "repository_dispatch" && "${REQUESTED_VERSION}" != "${version}" ]]; then
+            echo "::error::requested ${REQUESTED_VERSION}, but README on main pins ${version}; bump the pin in a PR first"
+            exit 1
+          fi
+
+          latest="$(gh api "repos/${GH_REPO}/tags?per_page=100" --paginate --jq '.[].name' \
+            | grep -E "${semver}" | sort -V | tail -n 1 || true)"
+          echo "commit ${sha}, README pin ${version}, latest tag ${latest:-none}"
+
+          if [[ "${version}" == "${latest}" ]]; then
+            if gh api "repos/${GH_REPO}/releases/tags/${version}" >/dev/null 2>&1; then
+              echo "${version} is already tagged and released; nothing to do."
+              exit 0
+            fi
+            echo "${version} is tagged but has no release; creating it on the existing tag."
+            create_args=(--verify-tag)
+          elif [[ -n "${latest}" && "$(printf '%s\n%s\n' "${latest}" "${version}" | sort -V | tail -n 1)" != "${version}" ]]; then
+            echo "::error::${version} is not greater than the latest tag ${latest}"
+            exit 1
+          else
+            create_args=(--target "${sha}")
+          fi
+
+          notes="${RUNNER_TEMP}/notes.md"
+          if gh api "repos/${GH_REPO}/contents/.github/release-notes/${version}.md?ref=${sha}" \
+              -H 'Accept: application/vnd.github.raw' > "${notes}" 2>/dev/null; then
+            create_args+=(--notes-file "${notes}")
+          else
+            create_args+=(--generate-notes)
+          fi
+
+          gh release create "${version}" --title "${version}" "${create_args[@]}"
+          echo "Released ${version} at ${sha}."
