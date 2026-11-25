@@ -6,6 +6,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fixtures="${repo_root}/Tests/Fixtures"
 
 required_committed=(
+  "nom-exif/meta.mov"
   "otos-catalog-state-robustness/Media/ios-heic-offset-date.heic"
   "otos-catalog-state-robustness/Media/jpeg-exif-offset-date.jpg"
   "otos-catalog-state-robustness/Media/mov-no-embedded-capture-date.mov"
@@ -26,12 +27,5 @@ for fixture in "${required_committed[@]}"; do
 done
 
 "${repo_root}/Scripts/bootstrap-fixtures.sh"
-
-apple_fixture="${fixtures}/videometa/apple.mov"
-if [[ ! -f "${apple_fixture}" ]]; then
-  printf 'error: missing manual local fixture Tests/Fixtures/videometa/apple.mov\n' >&2
-  printf 'Copy the existing rights-reviewed local fixture into that path before running tests.\n' >&2
-  exit 1
-fi
 
 printf 'All 17 required local fixtures are present.\n'

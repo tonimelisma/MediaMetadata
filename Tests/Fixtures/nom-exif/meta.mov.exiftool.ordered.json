@@ -10,8 +10,8 @@
     "--System:all",
     "--ExifTool:all"
   ],
-  "exifToolVersion" : "13.55",
-  "fixture" : "videometa/apple.mov",
+  "exifToolVersion" : "12.76",
+  "fixture" : "nom-exif/meta.mov",
   "groups" : [
     {
       "name" : "QuickTime",
@@ -30,7 +30,7 @@
         },
         {
           "tag" : "MediaDataSize",
-          "value" : "109996386"
+          "value" : "765667"
         },
         {
           "tag" : "MediaDataOffset",
@@ -42,11 +42,11 @@
         },
         {
           "tag" : "CreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "ModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TimeScale",
@@ -54,7 +54,7 @@
         },
         {
           "tag" : "Duration",
-          "value" : "13.2433333333333"
+          "value" : "0.5"
         },
         {
           "tag" : "PreferredRate",
@@ -94,7 +94,7 @@
         },
         {
           "tag" : "NextTrackID",
-          "value" : "8"
+          "value" : "5"
         },
         {
           "tag" : "HandlerType",
@@ -111,11 +111,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackID",
@@ -123,7 +123,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "13.2433333333333"
+          "value" : "0.5"
         },
         {
           "tag" : "TrackLayer",
@@ -139,23 +139,23 @@
         },
         {
           "tag" : "ImageWidth",
-          "value" : "3840"
+          "value" : "720"
         },
         {
           "tag" : "ImageHeight",
-          "value" : "2160"
+          "value" : "1280"
         },
         {
           "tag" : "CleanApertureDimensions",
-          "value" : "3840 2160"
+          "value" : "720 1280"
         },
         {
           "tag" : "ProductionApertureDimensions",
-          "value" : "3840 2160"
+          "value" : "720 1280"
         },
         {
           "tag" : "EncodedPixelsDimensions",
-          "value" : "3840 2160"
+          "value" : "720 1280"
         },
         {
           "tag" : "MediaHeaderVersion",
@@ -163,11 +163,11 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaTimeScale",
@@ -175,7 +175,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "13.245"
+          "value" : "0.5"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -223,15 +223,15 @@
         },
         {
           "tag" : "CompressorID",
-          "value" : "hvc1"
+          "value" : "avc1"
         },
         {
           "tag" : "SourceImageWidth",
-          "value" : "3840"
+          "value" : "720"
         },
         {
           "tag" : "SourceImageHeight",
-          "value" : "2160"
+          "value" : "1280"
         },
         {
           "tag" : "XResolution",
@@ -243,7 +243,7 @@
         },
         {
           "tag" : "CompressorName",
-          "value" : "HEVC"
+          "value" : "H.264"
         },
         {
           "tag" : "BitDepth",
@@ -251,48 +251,7 @@
         },
         {
           "tag" : "VideoFrameRate",
-          "value" : "59.9471498678747"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "mdta"
-        }
-      ]
-    },
-    {
-      "name" : "VideoKeys",
-      "tags" : [
-        {
-          "tag" : "LensModel-eng-US",
-          "value" : "iPhone 15 Pro back camera 6.765mm f/1.78"
-        },
-        {
-          "tag" : "FocalLengthIn35mmFormat-eng-US",
-          "value" : "24"
-        },
-        {
-          "tag" : "CameraLensIrisfnumber-eng-US",
-          "value" : "F1.78"
-        },
-        {
-          "tag" : "Apple-maker-note74",
-          "value" : "2"
-        },
-        {
-          "tag" : "Apple-maker-note97",
-          "value" : "24"
-        },
-        {
-          "tag" : "LensModel",
-          "value" : "iPhone 15 Pro back camera 6.765mm f/1.78"
-        },
-        {
-          "tag" : "FocalLengthIn35mmFormat",
-          "value" : "24"
-        },
-        {
-          "tag" : "CameraLensIrisfnumber",
-          "value" : "F1.78"
+          "value" : "60"
         }
       ]
     },
@@ -305,11 +264,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackID",
@@ -317,7 +276,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "13.2433333333333"
+          "value" : "0.451666666666667"
         },
         {
           "tag" : "TrackLayer",
@@ -337,19 +296,19 @@
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaTimeScale",
-          "value" : "48000"
+          "value" : "44100"
         },
         {
           "tag" : "MediaDuration",
-          "value" : "13.2906666666667"
+          "value" : "0.510839002267574"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -397,7 +356,7 @@
         },
         {
           "tag" : "AudioChannels",
-          "value" : "2"
+          "value" : "1"
         },
         {
           "tag" : "AudioBitsPerSample",
@@ -405,7 +364,15 @@
         },
         {
           "tag" : "AudioSampleRate",
-          "value" : "48000"
+          "value" : "44100"
+        },
+        {
+          "tag" : "LayoutFlags",
+          "value" : "100"
+        },
+        {
+          "tag" : "AudioChannels",
+          "value" : "1"
         },
         {
           "tag" : "PurchaseFileFormat",
@@ -422,11 +389,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackID",
@@ -434,7 +401,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "13.2433333333333"
+          "value" : "0.5"
         },
         {
           "tag" : "TrackLayer",
@@ -449,20 +416,16 @@
           "value" : "1 0 0 0 1 0 0 0 1"
         },
         {
-          "tag" : "ContentDescribes",
-          "value" : "1"
-        },
-        {
           "tag" : "MediaHeaderVersion",
           "value" : "0"
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaTimeScale",
@@ -470,7 +433,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "13.245"
+          "value" : "0.5"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -543,11 +506,11 @@
         },
         {
           "tag" : "TrackCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "TrackID",
@@ -555,7 +518,7 @@
         },
         {
           "tag" : "TrackDuration",
-          "value" : "13.2433333333333"
+          "value" : "0.5"
         },
         {
           "tag" : "TrackLayer",
@@ -570,20 +533,16 @@
           "value" : "1 0 0 0 1 0 0 0 1"
         },
         {
-          "tag" : "ContentDescribes",
-          "value" : "1"
-        },
-        {
           "tag" : "MediaHeaderVersion",
           "value" : "0"
         },
         {
           "tag" : "MediaCreateDate",
-          "value" : "2026:03:18 01:11:09"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaModifyDate",
-          "value" : "2026:03:18 01:11:23"
+          "value" : "2024:02:02 08:09:57"
         },
         {
           "tag" : "MediaTimeScale",
@@ -591,362 +550,7 @@
         },
         {
           "tag" : "MediaDuration",
-          "value" : "13.245"
-        },
-        {
-          "tag" : "MediaLanguageCode",
-          "value" : "und"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "mhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "meta"
-        },
-        {
-          "tag" : "HandlerVendorID",
-          "value" : "appl"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "Core Media Metadata"
-        },
-        {
-          "tag" : "GenMediaVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "GenFlags",
-          "value" : "0 0 0"
-        },
-        {
-          "tag" : "GenGraphicsMode",
-          "value" : "64"
-        },
-        {
-          "tag" : "GenOpColor",
-          "value" : "32768 32768 32768"
-        },
-        {
-          "tag" : "GenBalance",
-          "value" : "0"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "dhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "alis"
-        },
-        {
-          "tag" : "HandlerVendorID",
-          "value" : "appl"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "Core Media Data Handler"
-        },
-        {
-          "tag" : "MetaFormat",
-          "value" : "mebx"
-        }
-      ]
-    },
-    {
-      "name" : "Track5",
-      "tags" : [
-        {
-          "tag" : "TrackHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackCreateDate",
-          "value" : "2026:03:18 01:11:09"
-        },
-        {
-          "tag" : "TrackModifyDate",
-          "value" : "2026:03:18 01:11:23"
-        },
-        {
-          "tag" : "TrackID",
-          "value" : "5"
-        },
-        {
-          "tag" : "TrackDuration",
-          "value" : "13.2433333333333"
-        },
-        {
-          "tag" : "TrackLayer",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackVolume",
-          "value" : "0"
-        },
-        {
-          "tag" : "MatrixStructure",
-          "value" : "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag" : "ContentDescribes",
-          "value" : "1"
-        },
-        {
-          "tag" : "MediaHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "MediaCreateDate",
-          "value" : "2026:03:18 01:11:09"
-        },
-        {
-          "tag" : "MediaModifyDate",
-          "value" : "2026:03:18 01:11:23"
-        },
-        {
-          "tag" : "MediaTimeScale",
-          "value" : "600"
-        },
-        {
-          "tag" : "MediaDuration",
-          "value" : "13.245"
-        },
-        {
-          "tag" : "MediaLanguageCode",
-          "value" : "und"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "mhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "meta"
-        },
-        {
-          "tag" : "HandlerVendorID",
-          "value" : "appl"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "Core Media Metadata"
-        },
-        {
-          "tag" : "GenMediaVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "GenFlags",
-          "value" : "0 0 0"
-        },
-        {
-          "tag" : "GenGraphicsMode",
-          "value" : "64"
-        },
-        {
-          "tag" : "GenOpColor",
-          "value" : "32768 32768 32768"
-        },
-        {
-          "tag" : "GenBalance",
-          "value" : "0"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "dhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "alis"
-        },
-        {
-          "tag" : "HandlerVendorID",
-          "value" : "appl"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "Core Media Data Handler"
-        },
-        {
-          "tag" : "MetaFormat",
-          "value" : "mebx"
-        }
-      ]
-    },
-    {
-      "name" : "Track6",
-      "tags" : [
-        {
-          "tag" : "TrackHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackCreateDate",
-          "value" : "2026:03:18 01:11:09"
-        },
-        {
-          "tag" : "TrackModifyDate",
-          "value" : "2026:03:18 01:11:23"
-        },
-        {
-          "tag" : "TrackID",
-          "value" : "6"
-        },
-        {
-          "tag" : "TrackDuration",
-          "value" : "13.2433333333333"
-        },
-        {
-          "tag" : "TrackLayer",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackVolume",
-          "value" : "0"
-        },
-        {
-          "tag" : "MatrixStructure",
-          "value" : "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag" : "MediaHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "MediaCreateDate",
-          "value" : "2026:03:18 01:11:09"
-        },
-        {
-          "tag" : "MediaModifyDate",
-          "value" : "2026:03:18 01:11:23"
-        },
-        {
-          "tag" : "MediaTimeScale",
-          "value" : "10000"
-        },
-        {
-          "tag" : "MediaDuration",
-          "value" : "13.2453"
-        },
-        {
-          "tag" : "MediaLanguageCode",
-          "value" : "und"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "mhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "meta"
-        },
-        {
-          "tag" : "HandlerVendorID",
-          "value" : "appl"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "Core Media Metadata"
-        },
-        {
-          "tag" : "GenMediaVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "GenFlags",
-          "value" : "0 0 0"
-        },
-        {
-          "tag" : "GenGraphicsMode",
-          "value" : "64"
-        },
-        {
-          "tag" : "GenOpColor",
-          "value" : "32768 32768 32768"
-        },
-        {
-          "tag" : "GenBalance",
-          "value" : "0"
-        },
-        {
-          "tag" : "HandlerClass",
-          "value" : "dhlr"
-        },
-        {
-          "tag" : "HandlerType",
-          "value" : "alis"
-        },
-        {
-          "tag" : "HandlerVendorID",
-          "value" : "appl"
-        },
-        {
-          "tag" : "HandlerDescription",
-          "value" : "Core Media Data Handler"
-        },
-        {
-          "tag" : "MetaFormat",
-          "value" : "mebx"
-        }
-      ]
-    },
-    {
-      "name" : "Track7",
-      "tags" : [
-        {
-          "tag" : "TrackHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackCreateDate",
-          "value" : "2026:03:18 01:11:09"
-        },
-        {
-          "tag" : "TrackModifyDate",
-          "value" : "2026:03:18 01:11:23"
-        },
-        {
-          "tag" : "TrackID",
-          "value" : "7"
-        },
-        {
-          "tag" : "TrackDuration",
-          "value" : "13.2433333333333"
-        },
-        {
-          "tag" : "TrackLayer",
-          "value" : "0"
-        },
-        {
-          "tag" : "TrackVolume",
-          "value" : "0"
-        },
-        {
-          "tag" : "MatrixStructure",
-          "value" : "1 0 0 0 1 0 0 0 1"
-        },
-        {
-          "tag" : "MediaHeaderVersion",
-          "value" : "0"
-        },
-        {
-          "tag" : "MediaCreateDate",
-          "value" : "2026:03:18 01:11:09"
-        },
-        {
-          "tag" : "MediaModifyDate",
-          "value" : "2026:03:18 01:11:23"
-        },
-        {
-          "tag" : "MediaTimeScale",
-          "value" : "600"
-        },
-        {
-          "tag" : "MediaDuration",
-          "value" : "13.245"
+          "value" : "0.5"
         },
         {
           "tag" : "MediaLanguageCode",
@@ -1014,32 +618,24 @@
       "name" : "Keys",
       "tags" : [
         {
-          "tag" : "LocationAccuracyHorizontal",
-          "value" : "4.946966"
-        },
-        {
-          "tag" : "FullFrameRatePlaybackIntent",
-          "value" : "1"
-        },
-        {
-          "tag" : "GPSCoordinates",
-          "value" : "31.0397 -104.8308 1233.381"
-        },
-        {
           "tag" : "Make",
           "value" : "Apple"
         },
         {
           "tag" : "Model",
-          "value" : "iPhone 15 Pro"
+          "value" : "iPhone X"
         },
         {
           "tag" : "Software",
-          "value" : "26.3.1"
+          "value" : "12.1.2"
+        },
+        {
+          "tag" : "GPSCoordinates",
+          "value" : "27.1281 100.2508 0"
         },
         {
           "tag" : "CreationDate",
-          "value" : "2026:03:17 20:11:08-05:00"
+          "value" : "2019:02:12 15:27:12+08:00"
         }
       ]
     },
@@ -1048,19 +644,19 @@
       "tags" : [
         {
           "tag" : "ImageSize",
-          "value" : "3840 2160"
+          "value" : "720 1280"
         },
         {
           "tag" : "Megapixels",
-          "value" : "8.2944"
+          "value" : "0.9216"
         },
         {
           "tag" : "AvgBitrate",
-          "value" : "66446344"
+          "value" : "12250672"
         },
         {
           "tag" : "GPSAltitude",
-          "value" : "1233.381"
+          "value" : "0"
         },
         {
           "tag" : "GPSAltitudeRef",
@@ -1068,11 +664,11 @@
         },
         {
           "tag" : "GPSLatitude",
-          "value" : "31.0397"
+          "value" : "27.1281"
         },
         {
           "tag" : "GPSLongitude",
-          "value" : "-104.8308"
+          "value" : "100.2508"
         },
         {
           "tag" : "Rotation",
@@ -1080,11 +676,7 @@
         },
         {
           "tag" : "GPSPosition",
-          "value" : "31.0397 -104.8308"
-        },
-        {
-          "tag" : "LensID",
-          "value" : "iPhone 15 Pro back camera 6.765mm f/1.78"
+          "value" : "27.1281 100.2508"
         }
       ]
     }

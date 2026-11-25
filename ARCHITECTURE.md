@@ -257,12 +257,12 @@ For each real fixture:
 - Keep fixture provenance: source device, app/camera model, acquisition date,
   privacy review, and why the fixture exists.
 
-The canonical local corpus contains 16 media files. Byte-identical imports are
-deduplicated before test wiring. Twelve files are committed; three public
+The canonical corpus contains 17 media files. Byte-identical imports are
+deduplicated before test wiring. Fourteen files are committed; three public
 DJI/GoPro samples are downloaded from recorded sources and verified by size and
-SHA-256; one legacy `apple.mov` fixture remains a manual rights-reviewed local
-prerequisite. Local golden runs require the full corpus and fail when it is
-incomplete. CI must not acquire the corpus implicitly.
+SHA-256. The golden test checks every file that is present and skips an
+absent downloaded sample with a warning, so CI checks the committed files.
+CI must not acquire the corpus implicitly.
 
 ExifTool evidence is stored in both grouped numeric JSON and ordered group/tag
 form. Generation fixes locale and timezone, records the tool version and exact

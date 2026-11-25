@@ -69,18 +69,18 @@
       "video": {"durationSeconds": 0.7833333, "frameRate": 60.0, "codec": "hevc"}
     },
     {
-      "path": "videometa/apple.mov",
+      "path": "nom-exif/meta.mov",
       "outcome": "parsed",
       "format": {"family": "isoBMFF", "extension": "mov", "brand": "qt  ", "detectedByMagic": true, "kind": "video", "fileType": "mov", "isCameraRaw": false},
       "timestamps": {
-        "containerCreation": {"components": [2026, 3, 18, 1, 11, 9], "instant": "2026-03-18T01:11:09Z", "offsetSeconds": 0, "precision": "absolute"},
-        "quickTimeCreation": {"components": [2026, 3, 17, 20, 11, 8], "instant": "2026-03-18T01:11:08Z", "offsetSeconds": -18000, "precision": "localWithOffset"}
+        "containerCreation": {"components": [2024, 2, 2, 8, 9, 57], "instant": "2024-02-02T08:09:57Z", "offsetSeconds": 0, "precision": "absolute"},
+        "quickTimeCreation": {"components": [2019, 2, 12, 15, 27, 12], "instant": "2019-02-12T07:27:12Z", "offsetSeconds": 28800, "precision": "localWithOffset"}
       },
-      "locations": {"quickTime": {"latitude": 31.0397, "longitude": -104.8308, "altitudeMeters": 1233.381}},
+      "locations": {"quickTime": {"latitude": 27.1281, "longitude": 100.2508, "altitudeMeters": 0.0}},
       "selections": {"captureWallClock": "quickTimeCreation", "captureInstant": "quickTimeCreation"},
-      "camera": {"make": "Apple", "model": "iPhone 15 Pro", "lensModel": "iPhone 15 Pro back camera 6.765mm f/1.78", "serialNumber": null},
-      "geometry": {"pixelWidth": 3840, "pixelHeight": 2160, "orientation": 1, "displayPixelWidth": 3840, "displayPixelHeight": 2160},
-      "video": {"durationSeconds": 13.2433333, "frameRate": 59.94715, "codec": "hevc"}
+      "camera": {"make": "Apple", "model": "iPhone X", "lensModel": null, "serialNumber": null},
+      "geometry": {"pixelWidth": 720, "pixelHeight": 1280, "orientation": 1, "displayPixelWidth": 720, "displayPixelHeight": 1280},
+      "video": {"durationSeconds": 0.5, "frameRate": 60.0, "codec": "h264"}
     },
     {
       "path": "videometa/dji_inspire3_car_4k120_rec709.mov",

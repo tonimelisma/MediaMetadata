@@ -22,6 +22,8 @@ jobs:
         run: swift build
       - name: Test
         run: swift test
+      - name: Test with xcodebuild
+        run: xcodebuild -scheme MediaMetadata -destination 'platform=macOS' test
 
   linux:
     name: Linux (build + test — verifies the Foundation-only core)
