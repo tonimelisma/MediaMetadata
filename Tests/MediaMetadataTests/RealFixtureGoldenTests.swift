@@ -16,11 +16,15 @@ final class RealFixtureGoldenTests: XCTestCase {
     private func assertFixture(_ expected: GoldenFixture) throws {
         let url = Self.fixturesURL.appendingPathComponent(expected.path)
         guard FileManager.default.fileExists(atPath: url.path) else {
-            // Large real camera samples are fetched locally (Scripts/bootstrap-fixtures.sh)
-            // and deliberately not committed, so they are absent on a clean checkout such as
-            // CI. Skip those rather than failing — the committed fixtures are always present
-            // and always run. Run Scripts/check-local-fixtures.sh to pull the full corpus.
-            print("warning: skipping absent local fixture \(expected.path)")
+            // Large real camera samples are downloaded (Scripts/bootstrap-fixtures.sh) and
+            // deliberately not committed, so they are absent on a clean checkout such as CI.
+            // Skip only those; any other fixture is committed, and its absence is a failure.
+            // Run Scripts/check-local-fixtures.sh to pull the full corpus.
+            if try Self.downloadableFixturePaths().contains(expected.path) {
+                print("warning: skipping absent local fixture \(expected.path)")
+            } else {
+                XCTFail("Missing committed fixture \(expected.path)")
+            }
             return
         }
 
@@ -190,6 +194,25 @@ final class RealFixtureGoldenTests: XCTestCase {
             throw GoldenTestError.invalidDate(value)
         }
         return date
+    }
+
+    /// Fixture paths, relative to `Tests/Fixtures`, that `Scripts/fixture-bootstrap.tsv`
+    /// downloads instead of committing (its `target` column).
+    private static func downloadableFixturePaths() throws -> Set<String> {
+        let manifestURL = fixturesURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Scripts/fixture-bootstrap.tsv")
+        let prefix = "Tests/Fixtures/"
+        let targets = try String(contentsOf: manifestURL, encoding: .utf8)
+            .split(separator: "\n")
+            .dropFirst()
+            .compactMap { line -> String? in
+                let columns = line.split(separator: "\t", omittingEmptySubsequences: false)
+                guard columns.count > 1, columns[1].hasPrefix(prefix) else { return nil }
+                return String(columns[1].dropFirst(prefix.count))
+            }
+        return Set(targets)
     }
 
     private static let fixturesURL = URL(fileURLWithPath: #filePath)

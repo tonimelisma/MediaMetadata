@@ -112,9 +112,10 @@ the parser behavior it is intended to cover.
 
 The golden corpus has 17 canonical media files: 14 committed and three public
 DJI/GoPro samples too large to commit. The golden test checks every file that
-is present and skips an absent one with a `warning: skipping absent local
-fixture` line, so a clean checkout (CI, a cloud session) checks the 14
-committed files. Fetch the other three for full coverage with:
+is present. It skips an absent download (one listed in
+`Scripts/fixture-bootstrap.tsv`) with a `warning: skipping absent local
+fixture` line, and fails on any other absent file, so a clean checkout (CI, a
+cloud session) checks the 14 committed files. Fetch the other three for full coverage with:
 
 ```sh
 Scripts/check-local-fixtures.sh
