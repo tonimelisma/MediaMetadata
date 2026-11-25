@@ -121,4 +121,4 @@ while IFS=$'\t' read -r id target kind locator source_page content_type size sha
   download_fixture "${id}" "${target}" "${kind}" "${locator}" "${source_page}" "${content_type}" "${size}" "${sha256}" "${description}"
 done < "${manifest}"
 
-printf '\nPublic fixture bootstrap complete. apple.mov remains a manual local prerequisite.\n'
+printf '\nPublic fixture bootstrap complete.\n'

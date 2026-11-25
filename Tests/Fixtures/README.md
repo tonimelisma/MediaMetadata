@@ -1,8 +1,9 @@
 # Real-Media Fixtures
 
-This directory consolidates fixtures from three user-owned repositories. The
-source-specific subdirectories preserve provenance, while byte-identical copies
-are stored only once.
+This directory consolidates fixtures from three user-owned repositories, one
+user-owned photo collection, and one permissively licensed third-party project.
+The source-specific subdirectories preserve provenance, while byte-identical
+copies are stored only once.
 
 These are development and test inputs only. They are not SwiftPM resources and
 are not included in the `MediaMetadata` runtime target.
@@ -27,7 +28,6 @@ The source repository documents these real-media origins:
 | `gopro_action.mp4` | [GoPro HERO12 shared clip](https://gopro.com/v/8GodrO3G8bNK4) | Bootstrap/local-only fixture |
 | `dji_inspire3_car_4k120_rec709.mov` | [DJI Inspire 3 sample](https://www.dji.com/inspire-3/samples) | Bootstrap/local-only fixture |
 | `dji_ronin4d_4k_prores4444_25fps.mov` | [DJI Ronin 4D sample](https://www.dji.com/ronin-4d/samples) | Bootstrap/local-only fixture |
-| `apple.mov` | Legacy local fixture; origin not documented in the source fixture record | Local-only fixture |
 
 Known metadata sensitivity is intentional in this corpus: the smartphone and
 GPS fixtures retain location-related metadata, and some ExifTool records retain
@@ -35,10 +35,13 @@ camera or lens serial fields. These values already exist in the source fixture
 repository and are preserved so the records remain valid comparison evidence.
 Do not treat these fixtures as anonymized media.
 
-The four local-only media files are ignored by Git here, matching their source
-repository policy. The DJI and GoPro files have public download records in
-`Scripts/fixture-bootstrap.tsv`; `apple.mov` is a manual local prerequisite
-because its source is not documented well enough for redistribution.
+The three local-only media files are ignored by Git here, matching their source
+repository policy, and have public download records in
+`Scripts/fixture-bootstrap.tsv`.
+
+The source repository also has a legacy `apple.mov` whose origin is not
+documented well enough to redistribute it. It is not part of this corpus;
+`nom-exif/meta.mov` covers the same iPhone QuickTime metadata.
 
 ### `gomediaimport/`
 
@@ -63,6 +66,26 @@ The source README records these files as user-provided and rights-clean. It
 also prohibits fixtures with sensitive subjects, locations, or private
 metadata.
 
+### `nom-exif/`
+
+- Source: `https://github.com/mindeng/nom-exif.git`
+- Imported from commit: `fe72efc28d45c11979895bb57da7495f2ff616a4`
+  (the file was added in `d6c6d93`, 2024-02-15)
+- Original path: `testdata/meta.mov`
+- SHA-256: `f5fa5c0b0b920f3280bc8ad01c407506d2c52ef9ca3490f48b90eca7f36aac6d`
+- License: MIT, Copyright (c) 2024 Min Deng; the full text is in
+  `nom-exif/LICENSE`, which must stay next to the file.
+- Contents: a 0.5 s, 720×1280 H.264 iPhone X recording (iOS 12.1.2) with the
+  Apple `Keys` metadata an iPhone writes: `Make`, `Model`, `Software`,
+  `CreationDate` with its UTC offset, and ISO 6709 `GPSCoordinates`. It locks
+  the iPhone QuickTime capture date, offset, location and camera path that the
+  undistributable `apple.mov` used to cover. It has no lens model, and its
+  container `CreateDate` (2024) postdates its capture `CreationDate` (2019)
+  because it was re-saved after capture.
+- Privacy review: the picture is a mountain lake landscape with no people,
+  and its location is a public scenic area. The file is already published in
+  the source repository.
+
 ### `sofian-kuvat/`
 
 - Source: user-owned family photos under
@@ -73,12 +96,13 @@ metadata.
 
 ## Privacy and Licensing Record
 
-This import copies files already maintained by the user in existing fixture
-repositories. It does not add media acquired from a new source. The Otos files
+Apart from `nom-exif/`, this import copies files already maintained by the user
+in existing fixture repositories. `nom-exif/meta.mov` is third-party media
+redistributed under its MIT license, as recorded above. The Otos files
 carry an explicit rights-clean statement. The `videometa` files retain the
 published acquisition information above; the committed files were already
 versioned in that source repository. No independent visual privacy or licensing
-review was performed during this mechanical import.
+review of the user-owned files was performed during this mechanical import.
 
 Before adding another real-media fixture, document its source device or app,
 acquisition date or source link, rights to redistribute it, privacy review, and
@@ -93,9 +117,8 @@ developer checkout with:
 Scripts/check-local-fixtures.sh
 ```
 
-That command verifies the 13 committed fixtures, downloads and SHA-256 verifies
-the three public DJI/GoPro fixtures when absent, and fails with instructions if
-the manual `videometa/apple.mov` prerequisite is missing. Tests do not skip an
+That command verifies the 14 committed fixtures and downloads and SHA-256
+verifies the three public DJI/GoPro fixtures when absent. Tests do not skip an
 incomplete corpus. CI must not download or bootstrap these files implicitly.
 
 Use `Scripts/bootstrap-fixtures.sh --list` to inspect the public download set.
