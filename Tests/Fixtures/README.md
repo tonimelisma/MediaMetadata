@@ -125,6 +125,9 @@ verifies the three public DJI/GoPro fixtures when absent. CI must not download o
 bootstrap these files implicitly.
 
 Use `Scripts/bootstrap-fixtures.sh --list` to inspect the public download set.
+The downloads reach `terra-1-g.djicdn.com` (DJI), `api.gopro.com` (resolves
+the GoPro share) and `media-cdn-vod-us-west-2.gopro.com` (serves the GoPro
+file); a network allowlist must include all three.
 
 ## Golden Records
 

@@ -272,3 +272,13 @@ After finishing an increment, produce a report in this exact format:
   parser did not look", so a new field moves it too. Do not raise it for a family the
   change does not touch.
 - Do not run `git push --force` or rewrite shared history.
+
+## Owner setup
+
+Steps only the repository owner can take. Nothing else in the process needs
+the owner.
+
+- Cloud environment network allowlist (only when the environment's network is
+  limited rather than unrestricted): `terra-1-g.djicdn.com`, `api.gopro.com`
+  and `media-cdn-vod-us-west-2.gopro.com`, so `Scripts/check-local-fixtures.sh`
+  can fetch the three large public samples.

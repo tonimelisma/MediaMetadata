@@ -45,12 +45,12 @@ def fetch(url):
     with urllib.request.urlopen(urllib.request.Request(url, headers=headers)) as response:
         return json.load(response)
 
-items = fetch(f"https://api.gopro.com/media/items/{collection_id}").get("items") or []
-if not items:
-    raise SystemExit("GoPro share page returned no media items")
-medium_id = (items[0].get("medium") or {}).get("id")
+media = (fetch(f"https://api.gopro.com/collections/{collection_id}/media").get("_embedded") or {}).get("media") or []
+if not media:
+    raise SystemExit("GoPro share collection returned no media")
+medium_id = media[0].get("id")
 if not medium_id:
-    raise SystemExit("GoPro share item has no medium id")
+    raise SystemExit("GoPro share medium has no id")
 embedded = fetch(f"https://api.gopro.com/media/{medium_id}/download").get("_embedded") or {}
 for label in ("source", "baked_source"):
     for variation in embedded.get("variations") or []:
