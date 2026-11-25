@@ -25,7 +25,10 @@ Sources/
   MediaMetadata/       # Runtime parser target
 Tests/
   MediaMetadataTests/  # XCTest target with synthetic fixtures
+  Fixtures/            # Real-media golden corpus (see its README.md)
 Scripts/               # Fixture tooling; cloud-setup.sh (cloud SessionStart hook)
+.github/workflows/     # ci.yml (macOS + Linux + guardrail), release.yml
+.github/release-notes/ # Optional X.Y.Z.md release notes, read by release.yml
 .claude/settings.json  # Claude Code project settings (SessionStart hook)
 Package.swift          # SPM manifest
 README.md              # Consumer-facing documentation
@@ -35,23 +38,25 @@ LICENSE                # MIT
 
 ## Build, Test, and Verify
 
-Use these commands unless the task specifically requires something else:
-
 ```sh
 swift build
 swift test
 ```
 
-For macOS-specific validation you may also run:
+CI (`.github/workflows/ci.yml`) runs on every pull request and every push to
+`main`:
 
-```sh
-xcodebuild -scheme MediaMetadata -destination 'platform=macOS' test
-```
+- **macOS** (`macos-15`): `swift build`, `swift test`, and
+  `xcodebuild -scheme MediaMetadata -destination 'platform=macOS' test`.
+- **Linux** (`swift:6.0` container): `swift build`, `swift test`.
+- **Guardrail**: the core target imports no platform framework.
+
+macOS coverage comes from CI; no step of this process uses a personal machine.
 
 ## Cloud Sessions
 
-Claude Code cloud sessions (claude.ai/code) run in an Ubuntu 24.04 x86_64 VM
-with no macOS and no preinstalled Swift.
+The whole process runs from a Claude Code cloud session (claude.ai/code): an
+Ubuntu 24.04 x86_64 VM with no macOS and no preinstalled Swift.
 
 - The SessionStart hook in `.claude/settings.json` runs
   `Scripts/cloud-setup.sh`, which installs the Swift release CI's Linux job
@@ -59,19 +64,25 @@ with no macOS and no preinstalled Swift.
   and puts it on `PATH`. It acts only when `CLAUDE_CODE_REMOTE=true`, and a
   second run is a fast no-op. When CI's `swift:` image moves, update the
   default version in the script.
-- `swift build` and `swift test` run in the VM as usual.
-- The macOS-only `xcodebuild ... -destination 'platform=macOS' test` runs on
-  Toni's Mac through the Latchkey connector's `shell_run`: push the branch,
-  clone it into `$LATCHKEY_SCRATCH`, and run there with a scratch-local derived
-  data path, removing the clone afterwards:
+- `swift build` and `swift test` run in the VM. The golden test skips the three
+  large public fixtures unless `Scripts/check-local-fixtures.sh` fetched them
+  (see Owner setup for the hosts a limited network must allow).
+- The GitHub proxy allows git fetch and push of branches, REST calls on this
+  repository, and `repository_dispatch` to it. It refuses tag pushes, remote
+  branch deletion, REST ref and release writes, GraphQL (so every `gh pr …`
+  and `gh release …` command fails; use `gh api` REST), repository settings,
+  Actions secrets, and other repositories. Work the proxy refuses runs in an
+  Actions workflow with `GITHUB_TOKEN`, third-party actions pinned by full
+  commit SHA.
+- This repository is public: workflow logs must never print secrets or
+  personal data.
 
-  ```sh
-  cd "$LATCHKEY_SCRATCH" && rm -rf MediaMetadata \
-    && git clone --depth 1 --branch <branch> https://github.com/tonimelisma/MediaMetadata.git \
-    && cd MediaMetadata \
-    && xcodebuild -scheme MediaMetadata -destination 'platform=macOS' \
-         -derivedDataPath "$LATCHKEY_SCRATCH/MediaMetadata-dd" test
-  ```
+Set these once per shell to keep the commands below short:
+
+```sh
+repo=repos/tonimelisma/MediaMetadata
+branch="$(git branch --show-current)"
+```
 
 Toni's standing rules (they live in his personal `~/.claude/CLAUDE.md`, which
 does not reach cloud sessions, so they are repeated here):
@@ -87,6 +98,38 @@ does not reach cloud sessions, so they are repeated here):
 - Live tests may write to Toni's real apps; every test removes what it made in
   its own teardown, even when it fails, and confirms the removal. Never leave
   test data behind.
+
+## Releases
+
+`.github/workflows/release.yml` tags and releases with `GITHUB_TOKEN`, because a
+cloud session cannot push tags or write releases.
+
+- **A merged version bump is the release.** Bump the README install pin
+  (`.package(url: "https://github.com/tonimelisma/MediaMetadata.git", from: "X.Y.Z")`)
+  in the pull request, and add `.github/release-notes/X.Y.Z.md` with the
+  user-visible changes (without it, GitHub's generated notes are used). Once
+  CI passes on the merge commit on `main`, the workflow tags that commit
+  `X.Y.Z` (no `v` prefix, matching existing tags) and creates the release.
+- Version choice: pre-1.0, a breaking public-API change bumps the minor
+  (`0.9.5` → `0.10.0`); a backward-compatible change bumps the patch. Release
+  only when `main` has user-visible changes since the latest tag.
+- The workflow refuses a pin below the latest tag. It is idempotent: a pin
+  equal to the latest tag finishes a missing release on the existing tag, or
+  does nothing.
+- Retry (same checks; the version must equal `main`'s pin and CI must have
+  passed on `main`'s head):
+
+  ```sh
+  gh api "$repo/dispatches" -f event_type=release -f 'client_payload[version]=X.Y.Z'
+  ```
+
+- Check the run and the result:
+
+  ```sh
+  gh api "$repo/actions/workflows/release.yml/runs?per_page=3" \
+    --jq '.workflow_runs[] | [.event, .status, .conclusion, .head_sha[0:7]] | @tsv'
+  gh api "$repo/releases/tags/X.Y.Z" --jq '[.tag_name, .html_url] | @tsv'
+  ```
 
 ## Code Style
 
@@ -134,6 +177,7 @@ in the final completion report.
 
 ### 1. Verify the working state
 
+- [ ] Work on a feature branch, never on `main`.
 - [ ] Run `git status` and note all modified, staged, and untracked files.
 - [ ] Run `git diff --stat` to confirm the scope of changes matches the task.
 - [ ] If unrelated changes are present, stop and ask the user how to proceed.
@@ -141,10 +185,10 @@ in the final completion report.
 ### 2. Run the full test suite
 
 - [ ] Run `swift build` and confirm it succeeds.
-- [ ] Run `swift test` and confirm all tests pass.
-- [ ] If fixture-based or golden tests exist, run them explicitly and confirm
-      they pass.
+- [ ] Run `swift test` and confirm all tests pass, including
+      `RealFixtureGoldenTests`.
 - [ ] If any test fails, fix it before proceeding. Do not ignore failures.
+- [ ] macOS (`swift test` and `xcodebuild … test`) is verified by CI in step 6.
 
 ### 3. Review changes for quality
 
@@ -152,6 +196,7 @@ in the final completion report.
 - [ ] Confirm no force unwraps were introduced unless unavoidable and documented.
 - [ ] Confirm platform-specific frameworks were not added to the core target.
 - [ ] Confirm new public API has DocC-style comments.
+- [ ] If a workflow changed, run `actionlint` on it.
 
 ### 4. Commit
 
@@ -162,32 +207,48 @@ in the final completion report.
 
 ### 5. Push and open a pull request
 
-- [ ] Push the branch to the remote.
-- [ ] Open a pull request with a clear title and description summarizing the
-      changes.
-- [ ] If CI is configured, wait for checks to pass. If checks fail, address them.
-- [ ] If CI is not configured, note this in the completion report.
+- [ ] Push the branch: `git push -u origin "$branch"`.
+- [ ] If the increment has user-visible changes, bump the README pin and add
+      `.github/release-notes/X.Y.Z.md` in this pull request (see Releases).
+- [ ] Open the pull request over REST (`gh pr create` needs GraphQL):
 
-### 6. Ensure the code reaches `main`
+  ```sh
+  gh api "$repo/pulls" -f title="…" -f head="$branch" -f base=main \
+    -f body="$(cat pr-body.md)" --jq '[.number, .html_url] | @tsv'
+  ```
 
-- [ ] Merge the pull request once it is approved and checks pass.
-- [ ] If merge is blocked by required reviews or failing checks, report the
+### 6. Wait for green CI, then merge
+
+- [ ] Poll the check runs on the pull request's head commit until every run
+      has completed and succeeded (macOS, Linux, guardrail):
+
+  ```sh
+  sha="$(git rev-parse HEAD)"
+  gh api "$repo/commits/$sha/check-runs" \
+    --jq '.check_runs[] | [.name, .status, .conclusion] | @tsv'
+  ```
+
+- [ ] If a check fails, read its log (`gh api "$repo/actions/jobs/<job id>/logs"`),
+      fix, push, and wait again.
+- [ ] Merge over REST, pinned to the commit CI checked:
+
+  ```sh
+  gh api -X PUT "$repo/pulls/<number>/merge" -f merge_method=merge -f sha="$sha"
+  ```
+
+- [ ] If the merge is refused (required review, failing checks), report the
       blocker and stop. Do not bypass protections.
-- [ ] After merge, verify `main` on the remote contains the merged commit,
-      e.g. `git fetch origin && git log origin/main --oneline -5`.
+- [ ] Verify `main` contains the merge:
+      `git fetch origin main && git log origin/main --oneline -5`.
 
 ### 7. Release a new version
 
-- [ ] Once `main` is healthy, choose the next semantic version. Pre-1.0, a
-      breaking public-API change bumps the minor (e.g. `0.1.0` → `0.2.0`);
-      backward-compatible changes bump the patch.
-- [ ] Update any user-facing version references in docs (e.g. the README install
-      snippet) to the new version.
-- [ ] Tag the merged `main` commit, matching the existing tag style
-      (`git tag X.Y.Z` — current tags have no `v` prefix), and push the tag.
-- [ ] Create a GitHub release for the tag with notes summarizing the
-      user-visible changes (`gh release create X.Y.Z`).
-- [ ] Confirm the release and tag are visible on the remote.
+- [ ] If the merged pull request bumped the pin, wait for CI on `main`, then
+      for the Release workflow, and confirm the tag and release exist (see
+      Releases). If it failed, read its log, fix, and retry with the dispatch.
+- [ ] If `main` has user-visible changes since the latest tag but no bump yet,
+      open a bump pull request and take it through steps 5–7.
+- [ ] With no user-visible changes since the latest tag, do not release; say so.
 
 ### 8. Preserve all work
 
@@ -201,16 +262,18 @@ in the final completion report.
 
 After the merged commit is confirmed on `origin/main`:
 
-- [ ] Delete the local feature branch.
-- [ ] Delete the remote feature branch if one was pushed.
+- [ ] GitHub deletes the merged remote branch automatically; confirm it with
+      `gh api "$repo/branches/$branch"` (expect 404). The proxy refuses
+      deleting it from the session.
+- [ ] Switch to `main` and delete the local feature branch.
 - [ ] Remove any worktrees created by the agent.
 - [ ] List any remaining dangling branches, stashes, or worktrees in the final
       report so the user can decide what to do with them.
 
 ### 10. Final verification
 
-- [ ] Run `swift build` and `swift test` on `main` after merge to confirm the
-      merged state is healthy.
+- [ ] On `main` (`git checkout main && git pull --ff-only`), run `swift build`
+      and `swift test`, and confirm CI on the merge commit is green.
 - [ ] Run `git status` to confirm the working tree is clean.
 
 ## Completion Report Template
@@ -230,7 +293,7 @@ After finishing an increment, produce a report in this exact format:
 | 4 | Commit | ✅ / ❌ |
 | 5 | Push and open PR | ✅ / ❌ |
 | 6 | Ensure code reaches main | ✅ / ❌ |
-| 7 | Release a new version | ✅ / ❌ |
+| 7 | Release a new version (or none due) | ✅ / ❌ |
 | 8 | Preserve all work | ✅ / ❌ |
 | 9 | Clean up agent artifacts | ✅ / ❌ |
 | 10 | Final verification | ✅ / ❌ |
@@ -247,6 +310,11 @@ After finishing an increment, produce a report in this exact format:
 
 - List any technical debt, fragile patterns, duplication, or potential bugs
   observed while working. Include file paths or function names when relevant.
+
+### Owner Setup
+
+- List every owner-only step: the Owner setup section at the end of this file,
+  plus any new one.
 
 ### Remaining Dangling Artifacts
 
@@ -272,11 +340,12 @@ After finishing an increment, produce a report in this exact format:
   parser did not look", so a new field moves it too. Do not raise it for a family the
   change does not touch.
 - Do not run `git push --force` or rewrite shared history.
+- Do not use a personal machine for any step; CI covers macOS.
 
 ## Owner setup
 
 Steps only the repository owner can take. Nothing else in the process needs
-the owner.
+the owner; this repository's workflows need no Actions secrets.
 
 - Cloud environment network allowlist (only when the environment's network is
   limited rather than unrestricted): `terra-1-g.djicdn.com`, `api.gopro.com`
