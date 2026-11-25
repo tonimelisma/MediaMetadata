@@ -108,18 +108,21 @@ Before adding another real-media fixture, document its source device or app,
 acquisition date or source link, rights to redistribute it, privacy review, and
 the parser behavior it is intended to cover.
 
-## Local Corpus Requirement
+## Full Corpus
 
-Real-fixture and golden tests require all 17 canonical media files. Prepare a
-developer checkout with:
+The golden corpus has 17 canonical media files: 14 committed and three public
+DJI/GoPro samples too large to commit. The golden test checks every file that
+is present and skips an absent one with a `warning: skipping absent local
+fixture` line, so a clean checkout (CI, a cloud session) checks the 14
+committed files. Fetch the other three for full coverage with:
 
 ```sh
 Scripts/check-local-fixtures.sh
 ```
 
 That command verifies the 14 committed fixtures and downloads and SHA-256
-verifies the three public DJI/GoPro fixtures when absent. Tests do not skip an
-incomplete corpus. CI must not download or bootstrap these files implicitly.
+verifies the three public DJI/GoPro fixtures when absent. CI must not download or
+bootstrap these files implicitly.
 
 Use `Scripts/bootstrap-fixtures.sh --list` to inspect the public download set.
 

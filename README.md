@@ -424,10 +424,11 @@ swift test
 ```
 
 Tests use synthetic fixtures for malformed inputs and parser edge cases, plus a
-required 16-file local corpus for ExifTool-backed semantic golden coverage. The
-fixture check downloads three public samples when absent; it is intentionally a
-local step, not a CI bootstrap step. See [Tests/Fixtures/README.md](Tests/Fixtures/README.md)
-for provenance, privacy notes, and golden regeneration instructions.
+17-file real-media corpus for ExifTool-backed semantic golden coverage: 14
+committed files, and three large public samples that the golden test skips when
+absent. `Scripts/check-local-fixtures.sh` downloads those three when absent; it
+is a manual step, not a CI bootstrap step. See
+[Tests/Fixtures/README.md](Tests/Fixtures/README.md) for provenance, privacy notes, and golden regeneration instructions.
 
 ## Contributing
 
