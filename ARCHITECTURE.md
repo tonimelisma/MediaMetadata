@@ -261,7 +261,8 @@ The canonical corpus contains 17 media files. Byte-identical imports are
 deduplicated before test wiring. Fourteen files are committed; three public
 DJI/GoPro samples are downloaded from recorded sources and verified by size and
 SHA-256. The golden test checks every file that is present and skips an
-absent downloaded sample with a warning, so CI checks the committed files.
+absent downloaded sample with a warning, and fails on an absent committed file,
+so CI checks the committed files.
 CI must not acquire the corpus implicitly.
 
 ExifTool evidence is stored in both grouped numeric JSON and ordered group/tag
