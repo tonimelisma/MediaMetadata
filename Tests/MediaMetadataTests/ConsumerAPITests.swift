@@ -19,6 +19,7 @@ final class ConsumerAPITests: XCTestCase {
 
     // MARK: - Movie track rotation
 
+    // Validates: MM-032
     func testIdentityTrackMatrixReportsUpright() throws {
         let geometry = try XCTUnwrap(try readMovie(matrix: .identity).geometry)
         XCTAssertEqual(geometry.orientation, .up)
@@ -26,6 +27,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(geometry.displayPixelHeight, 1080)
     }
 
+    // Validates: MM-032
     func testPortraitPhoneMatrixReportsRightAndSwapsDisplaySize() throws {
         // The iPhone portrait matrix (ExifTool "Rotation 90"): a=0 b=1 c=-1 d=0.
         let geometry = try XCTUnwrap(try readMovie(matrix: TrackMatrix(a: 0, b: 1, c: -1, d: 0)).geometry)
@@ -36,23 +38,27 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(geometry.displayPixelHeight, 1920)
     }
 
+    // Validates: MM-032
     func testUpsideDownMatrixReportsDown() throws {
         let geometry = try XCTUnwrap(try readMovie(matrix: TrackMatrix(a: -1, b: 0, c: 0, d: -1)).geometry)
         XCTAssertEqual(geometry.orientation, .down)
         XCTAssertEqual(geometry.displayPixelWidth, 1920)
     }
 
+    // Validates: MM-032
     func testRotation270MatrixReportsLeft() throws {
         let geometry = try XCTUnwrap(try readMovie(matrix: TrackMatrix(a: 0, b: -1, c: 1, d: 0)).geometry)
         XCTAssertEqual(geometry.orientation, .left)
         XCTAssertEqual(geometry.displayPixelWidth, 1080)
     }
 
+    // Validates: MM-032
     func testMirroredMatrixReportsUpMirrored() throws {
         let geometry = try XCTUnwrap(try readMovie(matrix: TrackMatrix(a: -1, b: 0, c: 0, d: 1)).geometry)
         XCTAssertEqual(geometry.orientation, .upMirrored)
     }
 
+    // Validates: MM-032
     func testScaledOrSkewedMatrixReportsNoOrientation() throws {
         // A 2x scale has no EXIF equivalent; reporting the nearest one would mislead.
         let scaled = try XCTUnwrap(try readMovie(matrix: TrackMatrix(rawA: 0x0002_0000, b: 0, c: 0, rawD: 0x0002_0000)).geometry)
@@ -63,6 +69,7 @@ final class ConsumerAPITests: XCTestCase {
 
     // MARK: - Media kind
 
+    // Validates: MM-018
     func testVideoTrackMakesAMovie() throws {
         let result = try readMovie(matrix: .identity)
         XCTAssertEqual(result.format.family, .isoBMFF)
@@ -70,6 +77,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertNil(result.camera, "no device identity in this file")
     }
 
+    // Validates: MM-018
     func testSoundOnlyTrackIsAudio() throws {
         let trak = box("trak", payload: trackHeader(matrix: .identity, width: 0, height: 0) + box("mdia", payload: handlerBox("soun")))
         let result = MediaMetadataReader.read(url: try write(ftyp("M4A ") + box("moov", payload: trak), "m4a"))
@@ -77,12 +85,14 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertNil(result.geometry)
     }
 
+    // Validates: MM-018
     func testImageSequenceTrackIsAStill() throws {
         let trak = box("trak", payload: trackHeader(matrix: .identity, width: 640, height: 480) + box("mdia", payload: handlerBox("pict")))
         let result = MediaMetadataReader.read(url: try write(ftyp("msf1") + box("moov", payload: trak), "heics"))
         XCTAssertEqual(result.format.kind, .image)
     }
 
+    // Validates: MM-018
     func testAVIFIsAHEIFStill() throws {
         // AVIF is HEIF with an AV1 codec: same family, and a still, never a movie.
         let meta = box("meta", payload: Data([0, 0, 0, 0]) + box("pitm", payload: Data([0, 0, 0, 0, 0, 1])))
@@ -92,6 +102,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(result.format.kind, .image)
     }
 
+    // Validates: MM-012
     func testIdentifyCannotTellWhatAnISOFileHolds() throws {
         let url = try write(ftyp("isom") + box("free", payload: Data()), "mp4")
         let format = MediaMetadataReader.identify(source: try FileByteSource(url: url), filenameHint: url.lastPathComponent)
@@ -99,6 +110,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(format.kind, .unknown, "identify reads magic only; ISO contents decide the kind")
     }
 
+    // Validates: MM-018
     func testFamilyImpliesKindWhereItCan() {
         XCTAssertEqual(MediaFormat(family: .jpeg, fileExtension: "jpg", detectedByMagic: true).kind, .image)
         XCTAssertEqual(MediaFormat(family: .riffAVI, fileExtension: "avi", detectedByMagic: true).kind, .video)
@@ -108,11 +120,13 @@ final class ConsumerAPITests: XCTestCase {
 
     // MARK: - Orientation and geometry
 
+    // Validates: MM-034
     func testSwapsDimensionsExactlyForQuarterTurns() {
         XCTAssertEqual(Orientation.allCases.filter(\.swapsDimensions), [.leftMirrored, .right, .rightMirrored, .left])
         XCTAssertEqual(Orientation.allCases.filter(\.isMirrored), [.upMirrored, .downMirrored, .leftMirrored, .rightMirrored])
     }
 
+    // Validates: MM-034
     func testGeometryDisplaySizeFollowsOrientation() {
         XCTAssertEqual(PixelGeometry(pixelWidth: 4032, pixelHeight: 3024, orientation: .right).displayPixelWidth, 3024)
         XCTAssertEqual(PixelGeometry(pixelWidth: 4032, pixelHeight: 3024, orientation: .right).displayPixelHeight, 4032)
@@ -122,6 +136,7 @@ final class ConsumerAPITests: XCTestCase {
 
     // MARK: - Roles and sources
 
+    // Validates: MM-025
     func testRolesNameEveryFieldAndRoundTripTheirRawValues() {
         let time = floating(2026, 1, 2, 3, 4, 5)
         let timestamps = CaptureTimestamps(original: time, gps: absolute(1_700_000_000), riffRecording: time)
@@ -135,6 +150,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(CaptureTimestamps.Role.allCases.count, 11, "one role per CaptureTimestamps field")
     }
 
+    // Validates: MM-025
     func testEntriesRoundTripAndTheirSelectionsMatch() {
         let timestamps = CaptureTimestamps(
             original: floating(2026, 4, 25, 14, 51, 34),
@@ -148,6 +164,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(CaptureTimestamps(entries: []), CaptureTimestamps())
     }
 
+    // Validates: MM-025
     func testARoleGivenTwiceKeepsItsFirstEntry() {
         let first = floating(2026, 1, 2, 3, 4, 5)
         let timestamps = CaptureTimestamps(entries: [(.original, first), (.original, absolute(1_700_000_000))])
@@ -155,6 +172,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(timestamps.entries.count, 1)
     }
 
+    // Validates: MM-030
     func testLocationSourcesNameEveryField() {
         let here = GeoLocation(latitude: 60.17, longitude: 24.94)
         let locations = CaptureLocations(exifGPS: nil, quickTime: here, sonyNRTM: nil)
@@ -165,6 +183,7 @@ final class ConsumerAPITests: XCTestCase {
 
     // MARK: - Selections
 
+    // Validates: MM-024
     func testWallClockPrefersTheCameraClockAndInstantSkipsAFloatingOne() throws {
         // A floating Exif original pins the local wall clock but not the instant, which
         // then comes from the next role that has one.
@@ -176,12 +195,14 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertEqual(timestamps.captureInstant?.role, .quickTimeCreation)
     }
 
+    // Validates: MM-024
     func testAbsoluteOnlyTimestampsNeverBecomeAWallClock() {
         let timestamps = CaptureTimestamps(gps: absolute(1_700_000_000), containerCreation: absolute(1_700_000_100))
         XCTAssertNil(timestamps.captureWallClock, "UTC-anchored values say nothing about the capture zone")
         XCTAssertEqual(timestamps.captureInstant?.role, .gps, "GPS qualifies; container creation is excluded")
     }
 
+    // Validates: MM-024
     func testContainerCreationAloneSelectsNothing() {
         let timestamps = CaptureTimestamps(containerCreation: absolute(1_700_000_000))
         XCTAssertNil(timestamps.captureWallClock)
@@ -189,11 +210,13 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertNotNil(timestamps.containerCreation, "still available to a caller that accepts it")
     }
 
+    // Validates: MM-024
     func testTIFFModificationTimeIsNotACaptureTime() {
         let timestamps = CaptureTimestamps(tiffDateTime: floating(2026, 1, 1, 0, 0, 0))
         XCTAssertNil(timestamps.captureWallClock)
     }
 
+    // Validates: MM-024
     func testPrecedenceListsOnlyNameCaptureRoles() {
         XCTAssertFalse(CaptureTimestamps.wallClockPrecedence.contains(.containerCreation))
         XCTAssertFalse(CaptureTimestamps.wallClockPrecedence.contains(.gps))
@@ -203,6 +226,7 @@ final class ConsumerAPITests: XCTestCase {
 
     // MARK: - Codec identifiers and revision
 
+    // Validates: MM-039
     func testCodecIdentifiersAreStableAndRoundTrip() {
         let codecs: [VideoCodec] = [.h264, .hevc, .proRes, .av1, .vp9, .motionJPEG, .other(fourCC: "mp4v")]
         XCTAssertEqual(codecs.map(\.identifier), ["h264", "hevc", "proRes", "av1", "vp9", "motionJPEG", "other:mp4v"])
@@ -211,6 +235,7 @@ final class ConsumerAPITests: XCTestCase {
         XCTAssertNil(VideoCodec(identifier: "betamax"))
     }
 
+    // Validates: MM-046
     func testExtractionRevisionIsPublishedAndPositive() {
         XCTAssertGreaterThanOrEqual(MediaMetadataReader.extractionRevision, 1)
     }

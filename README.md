@@ -413,27 +413,28 @@ clocks, what orientation does to dimensions — the library makes it, names the
 purpose, and shows its working (the chosen role) rather than hiding the evidence.
 
 For the full architecture, product intent, parser design, fixture policy, and
-engineering guardrails, see [ARCHITECTURE.md](ARCHITECTURE.md).
+engineering guardrails, see [docs/architecture.md](docs/architecture.md).
 
 ## Development
 
 ```sh
-Scripts/check-local-fixtures.sh
+script/check-local-fixtures.sh
 swift build
 swift test
+script/verify    # everything CI checks
 ```
 
 Tests use synthetic fixtures for malformed inputs and parser edge cases, plus a
 17-file real-media corpus for ExifTool-backed semantic golden coverage: 14
 committed files, and three large public samples that the golden test skips when
-absent. `Scripts/check-local-fixtures.sh` downloads those three when absent; it
+absent. `script/check-local-fixtures.sh` downloads those three when absent; it
 is a manual step, not a CI bootstrap step. See
 [Tests/Fixtures/README.md](Tests/Fixtures/README.md) for provenance, privacy notes, and golden regeneration instructions.
 
 ## Contributing
 
 Issues, suggestions, and pull requests are welcome. Please keep the existing
-architectural principles in mind; see [ARCHITECTURE.md](ARCHITECTURE.md) for
+architectural principles in mind; see [docs/architecture.md](docs/architecture.md) for
 details.
 
 ## License

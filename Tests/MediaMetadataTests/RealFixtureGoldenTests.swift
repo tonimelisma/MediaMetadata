@@ -3,6 +3,7 @@ import XCTest
 @testable import MediaMetadata
 
 final class RealFixtureGoldenTests: XCTestCase {
+    // Validates: MM-047
     func testAllRealFixturesMatchExifToolDerivedGoldens() throws {
         let corpus = try loadCorpus()
         XCTAssertEqual(corpus.schemaVersion, 4)
@@ -16,10 +17,10 @@ final class RealFixtureGoldenTests: XCTestCase {
     private func assertFixture(_ expected: GoldenFixture) throws {
         let url = Self.fixturesURL.appendingPathComponent(expected.path)
         guard FileManager.default.fileExists(atPath: url.path) else {
-            // Large real camera samples are downloaded (Scripts/bootstrap-fixtures.sh) and
+            // Large real camera samples are downloaded (script/bootstrap-fixtures.sh) and
             // deliberately not committed, so they are absent on a clean checkout such as CI.
             // Skip only those; any other fixture is committed, and its absence is a failure.
-            // Run Scripts/check-local-fixtures.sh to pull the full corpus.
+            // Run script/check-local-fixtures.sh to pull the full corpus.
             if try Self.downloadableFixturePaths().contains(expected.path) {
                 print("warning: skipping absent local fixture \(expected.path)")
             } else {
@@ -196,13 +197,13 @@ final class RealFixtureGoldenTests: XCTestCase {
         return date
     }
 
-    /// Fixture paths, relative to `Tests/Fixtures`, that `Scripts/fixture-bootstrap.tsv`
+    /// Fixture paths, relative to `Tests/Fixtures`, that `script/fixture-bootstrap.tsv`
     /// downloads instead of committing (its `target` column).
     private static func downloadableFixturePaths() throws -> Set<String> {
         let manifestURL = fixturesURL
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-            .appendingPathComponent("Scripts/fixture-bootstrap.tsv")
+            .appendingPathComponent("script/fixture-bootstrap.tsv")
         let prefix = "Tests/Fixtures/"
         let targets = try String(contentsOf: manifestURL, encoding: .utf8)
             .split(separator: "\n")

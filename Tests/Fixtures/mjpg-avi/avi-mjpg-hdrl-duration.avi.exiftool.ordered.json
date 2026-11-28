@@ -11,7 +11,7 @@
     "--ExifTool:all"
   ],
   "exifToolVersion": "13.55",
-  "fixture": "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
+  "fixture": "mjpg-avi/avi-mjpg-hdrl-duration.avi",
   "groups": [
     {
       "name": "RIFF",

@@ -3,9 +3,9 @@
 # SessionStart hook for Claude Code cloud sessions (claude.ai/code).
 #
 # Cloud VMs are Ubuntu 24.04 x86_64 without Swift. This installs the same Swift
-# release CI's Linux job uses (`container: swift:6.0`, i.e. 6.0.3) from the
+# release CI's Linux job uses (`container: swift:6.0.3`) from the
 # swift.org tarball, verifies its signature, and puts it on PATH. Anywhere
-# else (`CLAUDE_CODE_REMOTE` unset, e.g. on Toni's Mac) it exits at once.
+# else (`CLAUDE_CODE_REMOTE` unset, such as a local Mac) it exits at once.
 #
 # Idempotent: a second run finds the toolchain and only re-exports PATH.
 # Override the version with SWIFT_VERSION=x.y.z when CI moves.

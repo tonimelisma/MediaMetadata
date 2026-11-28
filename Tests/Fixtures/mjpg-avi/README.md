@@ -1,7 +1,6 @@
-# Sofian kuvat AVI fixtures
+# Motion-JPEG AVI fixtures
 
-- Source: user-owned family photos under
-  `~/Desktop/OneDrive/Perheen kuvat/Sofian kuvat/`
+- Source: a user-owned Motion-JPEG camera recording
 - Device / format: Motion-JPEG AVI (RIFF), 1440×1080, 30 fps, PCM audio
 - Rights: user-owned; redistributed here only as a header-only extract with no
   video or audio sample payloads (no JPEG frames)
@@ -11,6 +10,6 @@
 - Intended coverage: AVI main-header / stream-header duration, frame rate,
   Motion-JPEG codec (`MJPG`), and pixel dimensions
 
-| Fixture | Origin file | Notes |
-|---|---|---|
-| `avi-mjpg-hdrl-duration.avi` | `2026/05/20260514_195430.avi` | Header-only rebuild of the source `hdrl` (≈11 KiB). Source disk copy was a truncated OneDrive stub; `hdrl` was intact and matches other clips from the same camera. |
+| Fixture | Notes |
+|---|---|
+| `avi-mjpg-hdrl-duration.avi` | Header-only rebuild of the source `hdrl` (≈11 KiB). The source copy was truncated after its header; the `hdrl` was intact and matches other clips from the same camera. |

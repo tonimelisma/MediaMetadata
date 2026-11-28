@@ -19,6 +19,7 @@ final class CaptureLevelTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
+    // Validates: MM-043
     func testABackCameraHeldUprightIsLevelledByItsRoll() throws {
         let leansRight = try read(gravity: (-0.2639, -0.9315, -0.3652), lens: backCamera)
         XCTAssertEqual(try XCTUnwrap(leansRight.levelingTurnDegrees), -15.82, accuracy: 0.01)
@@ -26,6 +27,7 @@ final class CaptureLevelTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(leansLeft.levelingTurnDegrees), 17.05, accuracy: 0.01)
     }
 
+    // Validates: MM-043
     func testABackCameraHeldLandscapeIsLevelledByItsRollLessTheHold() throws {
         let leansLeft = try read(gravity: (-0.9992, -0.1923, -0.0908), lens: backCamera)
         XCTAssertEqual(try XCTUnwrap(leansLeft.levelingTurnDegrees), 10.89, accuracy: 0.01)
@@ -33,23 +35,28 @@ final class CaptureLevelTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(leansRight.levelingTurnDegrees), -15.03, accuracy: 0.01)
     }
 
+    // Validates: MM-043
     func testAFrontCameraPictureLevelsNothingSinceItsMirroringIsUnrecorded() throws {
         XCTAssertNil(try read(gravity: (-0.1917, -0.9704, 0.1705), lens: frontCamera).levelingTurnDegrees)
     }
 
+    // Validates: MM-043
     func testAPictureNotKnownToBeFromABackCameraLevelsNothing() throws {
         XCTAssertNil(try read(gravity: (-0.2639, -0.9315, -0.3652), lens: nil).levelingTurnDegrees)
     }
 
+    // Validates: MM-043
     func testACameraPointingNearStraightDownLevelsNothing() throws {
         XCTAssertNil(try read(gravity: (0.3, -0.5, -0.81), lens: backCamera).levelingTurnDegrees)
     }
 
+    // Validates: MM-043
     func testAMirroredOrientationReversesTheTurn() throws {
         let mirrored = try read(gravity: (-0.2639, -0.9315, -0.3652), lens: backCamera, orientation: 2)
         XCTAssertEqual(try XCTUnwrap(mirrored.levelingTurnDegrees), 15.82, accuracy: 0.01)
     }
 
+    // Validates: MM-043
     func testTheReadingSitsBesideTheMakerNotesOtherValues() throws {
         let burst = "8A1C2B3D-4E5F-6071-8293-A4B5C6D7E8F9"
         let result = try read(gravity: (0.2877, -0.9382, -0.1702), lens: backCamera, burst: burst)
@@ -57,6 +64,7 @@ final class CaptureLevelTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(result.levelingTurnDegrees), 17.05, accuracy: 0.01)
     }
 
+    // Validates: MM-043
     func testAFileWithoutAReadingLevelsNothing() throws {
         let url = try write(jpeg(ifd0: [], exif: [ascii(0xA434, backCamera)]))
         XCTAssertNil(MediaMetadataReader.read(url: url).levelingTurnDegrees)

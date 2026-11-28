@@ -1,8 +1,9 @@
-# MediaMetadata Architecture
+# Architecture
 
 This document is the package design contract: intent, public model principles,
-parser architecture, fixture policy, and engineering guardrails. It is preserved
-here so the README can stay focused on consumers.
+parser architecture, fixture policy, and engineering guardrails, so the README can
+stay focused on consumers. The decisions behind it are recorded as ADRs in
+[adr/](adr/); the behavior it promises is listed in [requirements.md](requirements.md).
 
 ## Product Intent
 
@@ -78,9 +79,9 @@ and `CachingByteSource` is offered for consumers whose transport wants a larger 
 the internal one. But the *chunk size* depends on transport latency the package cannot see,
 so that is a parameter the consumer supplies.
 
-Owning the mechanism and not the number is the correct split. Refusing the mechanism — which
-an earlier draft did, on the grounds that sizing is a transport concern — would have made
-every remote consumer reinvent a buffer for a read pattern they did not choose. `ReadCost`
+Owning the mechanism and not the number is the correct split. Refusing the mechanism, on the
+grounds that sizing is a transport concern, would make every remote consumer reinvent a buffer
+for a read pattern they did not choose ([ADR 0005](adr/0005-mechanism-here-policy-in-the-consumer.md)). `ReadCost`
 reports both counts so the split stays honest: what the parsers asked for, and what the
 source was actually made to do.
 
@@ -93,6 +94,8 @@ that range through its own transport and decodes with whatever it likes. Both No
 hold, the dependency rule holds, and the container knowledge lives where it belongs.
 
 ### The dependency rule that keeps this honest
+
+([ADR 0001](adr/0001-foundation-only-core.md))
 
 The core target imports `Foundation` and nothing else. That is true today — every source
 file, no exceptions — and it is what makes the package usable on Linux, in a CLI, in a
@@ -124,7 +127,8 @@ The package rejects framework-shaped shortcuts:
 
 The central abstraction is evidence. Normalized metadata is derived from
 evidence, not substituted for it. This evidence model is **internal**: the public
-contract is a fixed, fully typed field set derived from it.
+contract is a fixed, fully typed field set derived from it
+([ADR 0002](adr/0002-evidence-first-model-typed-public-projection.md)).
 
 ## Public Model Principles
 
@@ -165,8 +169,8 @@ value or a newly reported field — so a consumer that persists results can find
 re-read may improve instead of writing a migration per parser fix or per new field. A
 new field moves it because a stored row cannot tell "the file has none" from "the
 parser did not look". It is per family because the consumer pays for a re-read in
-transport, not CPU: a single global number made every JPEG look stale for a HEIF fix,
-and for a cloud library a re-read is a download. The library reports when a re-read
+transport, not CPU: a single global number would make every JPEG look stale for a HEIF
+fix, and for a cloud library a re-read is a download. The library reports when a re-read
 would help, and the consumer decides when it is worth the bytes.
 
 `MediaFormat.fileType` names the type from the bytes (an ISO brand, RAW evidence in
@@ -182,7 +186,8 @@ transport round trip per file.
 - `CaptureTime` carries calendar fields, an optional `utcOffsetSeconds`, an
   absolute `instant` when computable, and a `precision`
   (`localWithOffset` / `localFloating` / `absolute`) — expression and meaning
-  preserved separately, never collapsed to a bare `Date`. Every emitted
+  preserved separately, never collapsed to a bare `Date`
+  ([ADR 0003](adr/0003-timestamp-expression-apart-from-instants.md)). Every emitted
   `CaptureTime` has complete `year`…`second` components. Use
   `captureLocalComponents` for capture-local naming; it returns `nil` for
   `absolute` so UTC wall clocks cannot be mistaken for local capture time.
@@ -311,10 +316,5 @@ small examples that would be hard to obtain from real cameras.
 - **A failure must never be reported as definitive.** A read that could not be
   satisfied for reasons outside the file's own structure is `.readFailure`,
   never `.parsed` with empty fields. Consumers cache definitive answers, so
-  misreporting a transport failure corrupts durable state.
-
-## Roadmap
-
-- **EXIF sub-second components** (`SubSecTimeOriginal` / `SubSecTimeDigitized`):
-  exposing fractional seconds would reduce same-second naming collisions for
-  consumers. Deferred; not required for the current capture-local contract.
+  misreporting a transport failure corrupts durable state
+  ([ADR 0004](adr/0004-definitive-versus-transient-outcomes.md)).

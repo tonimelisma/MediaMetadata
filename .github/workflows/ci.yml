@@ -1,36 +1,49 @@
 name: CI
 
 on:
+  pull_request:
+    # `edited`: a description fixed after the push re-runs the checks that read it. Every job runs
+    # on it, so the newest `CI gate` on a commit always reflects all the checks.
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  schedule:
+    # Weekly re-run on main, off the hour: new Xcode images, Swift containers and runner changes
+    # show up here. The release workflow ignores scheduled runs.
+    - cron: "47 5 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  # A newer push or description edit supersedes a PR's older run; runs on main are never
+  # cancelled, because each one decides whether its commit is released.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   macos:
-    name: macOS (build + test)
+    name: macOS (script/verify)
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Swift version
         run: swift --version
-      - name: Build
-        run: swift build
-      - name: Test
-        run: swift test
-      - name: Test with xcodebuild
-        run: xcodebuild -scheme MediaMetadata -destination 'platform=macOS' test
+      # Imports guardrail, swift build, swift test, xcodebuild test, process-check.
+      - name: script/verify
+        run: script/verify
 
   linux:
-    name: Linux (build + test — verifies the Foundation-only core)
+    name: Linux (build + test, the Foundation-only core)
     runs-on: ubuntu-latest
-    container: swift:6.0
+    container: swift:6.0.3
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Swift version
         run: swift --version
       - name: Build
@@ -42,14 +55,36 @@ jobs:
     name: Core target stays platform-neutral
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Reject platform frameworks in the core target
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: script/check-platform-neutral
+        run: script/check-platform-neutral
+
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # pr-check diffs the pull request's base and head
+          persist-credentials: false
+      - name: process-check
+        run: script/process-check
+      - name: pr-check
+        if: github.event_name == 'pull_request'
+        run: script/pr-check
+
+  # The one required status check. It needs every other job and passes only when each of them
+  # succeeded or was skipped, so a cancelled or failed job can never be merged around.
+  gate:
+    name: CI gate
+    if: always()
+    needs: [macos, linux, guardrail, process]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job passed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          # ARCHITECTURE.md: Sources/MediaMetadata must import only Foundation — no
-          # AppKit/UIKit/ImageIO/AVFoundation/CoreGraphics etc. This keeps the parser a
-          # byte-level, framework-neutral library that builds anywhere Swift runs.
-          if grep -rnE '^[[:space:]]*import[[:space:]]+(AppKit|UIKit|Cocoa|ImageIO|AVFoundation|CoreMedia|CoreGraphics|CoreImage|VideoToolbox|Photos|Vision|UniformTypeIdentifiers)' Sources/MediaMetadata/; then
-            echo "::error::core target imports a platform framework; it must stay Foundation-only"
-            exit 1
-          fi
-          echo "OK: core target imports only platform-neutral modules"
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e 'all(.[]; .result == "success" or .result == "skipped")' >/dev/null

@@ -21,11 +21,13 @@ final class ContentIdentifierTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
+    // Validates: MM-041
     func testStillReportsTheAppleMakerNoteIdentifier() throws {
         let url = try write(jpeg(makerNote: appleMakerNote(identifier: identifier)), extension: "jpg")
         XCTAssertEqual(MediaMetadataReader.read(url: url).contentIdentifier, identifier)
     }
 
+    // Validates: MM-041
     func testMovieReportsTheQuickTimeKey() throws {
         let url = try write(
             box("moov", payload: mdtaMetaBox(["com.apple.quicktime.content.identifier": identifier])),
@@ -34,6 +36,7 @@ final class ContentIdentifierTests: XCTestCase {
         XCTAssertEqual(MediaMetadataReader.read(url: url).contentIdentifier, identifier)
     }
 
+    // Validates: MM-041
     func testAnotherVendorsMakerNoteReportsNone() throws {
         var makerNote = appleMakerNote(identifier: identifier)
         makerNote.replaceSubrange(0..<5, with: Data("Nikon".utf8))
@@ -41,6 +44,7 @@ final class ContentIdentifierTests: XCTestCase {
         XCTAssertNil(MediaMetadataReader.read(url: url).contentIdentifier)
     }
 
+    // Validates: MM-041
     func testATruncatedMakerNoteReportsNoneAndStillReadsTheFile() throws {
         let makerNote = appleMakerNote(identifier: identifier).prefix(20)
         let url = try write(jpeg(makerNote: Data(makerNote)), extension: "jpg")
@@ -49,6 +53,7 @@ final class ContentIdentifierTests: XCTestCase {
         XCTAssertEqual(result.outcome, .parsed)
     }
 
+    // Validates: MM-041
     func testAFileWithoutOneReportsNone() throws {
         let url = try write(
             box("moov", payload: mdtaMetaBox(["com.apple.quicktime.make": "Apple"])),

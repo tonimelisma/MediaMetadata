@@ -18,6 +18,7 @@ final class RawAndFileTypeTests: XCTestCase {
 
     // MARK: - TIFF-based RAW, decided from IFD0
 
+    // Validates: MM-015
     func testDNGVersionMakesADNGWhoeverMadeTheCamera() throws {
         let format = try readTIFF(entries: [entry(Tag.dngVersion, type: 1, count: 4, value: 0x0000_0401)], make: "Canon")
         XCTAssertEqual(format.fileType, .dng)
@@ -26,11 +27,13 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertEqual(format.family, .tiff)
     }
 
+    // Validates: MM-015
     func testCR2SignatureMakesACR2() throws {
         let format = try readTIFF(entries: [], make: "Canon", cr2Signature: true)
         XCTAssertEqual(format.fileType, .cr2)
     }
 
+    // Validates: MM-015
     func testColourFilterArrayInIFD0IsRawNamedByVendor() throws {
         let cfa = entry(Tag.photometric, type: 3, count: 1, value: 32803)
         XCTAssertEqual(try readTIFF(entries: [cfa], make: "RICOH IMAGING COMPANY, LTD.  ").fileType, .pef)
@@ -38,12 +41,14 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertEqual(try readTIFF(entries: [cfa], make: nil).fileType, .otherRaw)
     }
 
+    // Validates: MM-015
     func testCameraMakeWithSubIFDsIsRaw() throws {
         let subIFDs = entry(Tag.subIFDs, type: 4, count: 1, value: 0)
         XCTAssertEqual(try readTIFF(entries: [subIFDs], make: "SONY").fileType, .arw)
         XCTAssertEqual(try readTIFF(entries: [subIFDs], make: "NIKON CORPORATION").fileType, .nef)
     }
 
+    // Validates: MM-015
     func testTIFFExportedFromARawKeepsItsMakeButIsNotRaw() throws {
         // An export carries the camera's Make but has an RGB raster and no SubIFDs.
         let rgb = entry(Tag.photometric, type: 3, count: 1, value: 2)
@@ -53,6 +58,7 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertEqual(format.kind, .image)
     }
 
+    // Validates: MM-015
     func testRawClassificationNeverFollowsTheSubIFD() throws {
         // Real ARWs put the raw SubIFD just past the first 128 KB. Point this one at 200 KB
         // and require the parse never to go there: classifying must not cost a round trip.
@@ -66,6 +72,7 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertLessThan(result.readCost.highestOffsetTouched, UInt64(subIFDOffset))
     }
 
+    // Validates: MM-015
     func testEmbeddedExifTIFFIsNeverClassifiedAsRaw() throws {
         // A JPEG's Exif block is a TIFF too; only a top-level TIFF can be a RAW.
         let url = try write(jpegWrapping(tiffBytes(entries: [entry(Tag.subIFDs, type: 4, count: 1, value: 0)], make: "SONY")), extension: "jpg")
@@ -76,6 +83,7 @@ final class RawAndFileTypeTests: XCTestCase {
 
     // MARK: - RAW in other containers
 
+    // Validates: MM-016
     func testCR3IsAStillNotAMovie() throws {
         // CR3 stores its raster, preview and thumbnail as `vide` tracks.
         let trak = box("trak", box("tkhd", Data(repeating: 0, count: 84)) + box("mdia", handler("vide")))
@@ -86,6 +94,7 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertTrue(result.format.isCameraRaw)
     }
 
+    // Validates: MM-016
     func testUnparsedRawFormatsAreRecognisedButStayUnsupported() throws {
         let signatures: [(MediaFileType, Data)] = [
             (.raf, Data("FUJIFILMCCD-RAW 0201".utf8)),
@@ -107,6 +116,7 @@ final class RawAndFileTypeTests: XCTestCase {
         }
     }
 
+    // Validates: MM-012
     func testIdentifySaysOnlyWhatTwelveBytesProve() throws {
         // Without IFD0 a TIFF might be an ARW, so identify names no type…
         let plain = try write(tiffBytes(entries: [], make: "SONY"), extension: "arw")
@@ -118,6 +128,7 @@ final class RawAndFileTypeTests: XCTestCase {
 
     // MARK: - File types
 
+    // Validates: MM-014
     func testBrandNamesTheISOFileType() throws {
         func type(_ brand: String, track handlerType: String = "vide") throws -> MediaFormat {
             let trak = box("trak", box("tkhd", Data(repeating: 0, count: 84)) + box("mdia", handler(handlerType)))
@@ -133,11 +144,13 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertEqual(audio.kind, .audio)
     }
 
+    // Validates: MM-014
     func testBytesWinOverAMisleadingExtension() throws {
         let url = try write(ftyp("qt  ") + box("moov", Data()), extension: "mp4")
         XCTAssertEqual(MediaMetadataReader.read(url: url).format.fileType, .mov)
     }
 
+    // Validates: MM-017
     func testExtensionsFoldIntoOneTypePerFormat() {
         XCTAssertEqual(MediaFileType(fileExtension: "jpg"), .jpeg)
         XCTAssertEqual(MediaFileType(fileExtension: "JPE"), .jpeg)
@@ -155,6 +168,7 @@ final class RawAndFileTypeTests: XCTestCase {
         XCTAssertNil(MediaFileType(fileExtension: ""))
     }
 
+    // Validates: MM-017
     func testDisplayNamesAndRawValuesAreStable() {
         XCTAssertEqual(MediaFileType.jpeg.displayName, "JPEG")
         XCTAssertEqual(MediaFileType.heif.displayName, "HEIF")
@@ -166,6 +180,7 @@ final class RawAndFileTypeTests: XCTestCase {
         }
     }
 
+    // Validates: MM-017
     func testFileTypeKindsAndRawFlags() {
         XCTAssertEqual(MediaFileType.allCases.filter(\.isCameraRaw),
                        [.dng, .arw, .cr2, .cr3, .nef, .orf, .rw2, .raf, .pef, .srw, .otherRaw])
@@ -176,11 +191,13 @@ final class RawAndFileTypeTests: XCTestCase {
 
     // MARK: - Roles and revisions
 
+    // Validates: MM-017
     func testOnlySoundFileRolesAreAudioOnly() {
         XCTAssertEqual(CaptureTimestamps.Role.allCases.filter(\.isAudioOnly), [.id3Recording, .waveOrigination])
         XCTAssertFalse(CaptureTimestamps.Role.riffRecording.isAudioOnly, "RIFF also carries AVI video")
     }
 
+    // Validates: MM-046
     func testRevisionsMoveOnlyForTheFamiliesThatChanged() {
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .tiff), 3, "Continuous-shooting frame (0.9.5)")
         XCTAssertEqual(MediaMetadataReader.extractionRevision(for: .jpeg), 3, "Continuous-shooting frame (0.9.5)")

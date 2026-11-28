@@ -1,0 +1,13 @@
+#!/bin/sh
+# Everything CI checks, in one command: the core target's imports, build, the test suite
+# (xcodebuild too on macOS, as CI's macOS job runs it), and the requirement/doc traceability
+# check. Run before every push. CI runs the same steps on macOS and Linux.
+set -eu
+cd "$(dirname "$0")/.."
+script/check-platform-neutral
+swift build
+swift test
+if [ "$(uname -s)" = Darwin ]; then
+  xcodebuild -scheme MediaMetadata -destination 'platform=macOS' test
+fi
+script/process-check

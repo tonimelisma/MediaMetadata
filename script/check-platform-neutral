@@ -1,0 +1,19 @@
+#!/bin/sh
+# Fails when the core target imports a platform framework. Sources/MediaMetadata imports only
+# Foundation (docs/adr/0001-foundation-only-core.md), so the parser stays a byte-level library
+# that builds anywhere Swift runs.
+# Validates: MM-001
+set -eu
+cd "$(dirname "$0")/.."
+frameworks='AppKit|UIKit|Cocoa|ImageIO|AVFoundation|CoreMedia|CoreGraphics|CoreImage|VideoToolbox|Photos|Vision|UniformTypeIdentifiers|SwiftUI'
+if grep -rnE "^[[:space:]]*import[[:space:]]+(${frameworks})\b" Sources/MediaMetadata/; then
+  echo "::error::the core target imports a platform framework; it must stay Foundation-only"
+  exit 1
+fi
+others=$(grep -rhE '^[[:space:]]*(@[A-Za-z_]+[[:space:]]+)*import[[:space:]]+' Sources/MediaMetadata/ |
+  sed -E 's/.*import[[:space:]]+([A-Za-z_]+).*/\1/' | sort -u | grep -vx Foundation || true)
+if [ -n "$others" ]; then
+  echo "::error::the core target imports modules other than Foundation: $others"
+  exit 1
+fi
+echo "OK: the core target imports only Foundation"

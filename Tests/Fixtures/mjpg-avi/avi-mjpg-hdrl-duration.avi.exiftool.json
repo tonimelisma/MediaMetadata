@@ -9,7 +9,7 @@
     "--ExifTool:all"
   ],
   "exifToolVersion": "13.55",
-  "fixture": "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
+  "fixture": "mjpg-avi/avi-mjpg-hdrl-duration.avi",
   "records": [
     {
       "Composite:Duration": 10.799892,
@@ -36,7 +36,7 @@
       "RIFF:VideoCodec": "MJPG",
       "RIFF:VideoFrameCount": 324,
       "RIFF:VideoFrameRate": 30.000000003,
-      "SourceFile": "Tests/Fixtures/sofian-kuvat/avi-mjpg-hdrl-duration.avi"
+      "SourceFile": "Tests/Fixtures/mjpg-avi/avi-mjpg-hdrl-duration.avi"
     }
   ],
   "schemaVersion": 1
