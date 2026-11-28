@@ -23,39 +23,47 @@ final class HEIFOrientationTests: XCTestCase {
 
     // MARK: - irot alone
 
+    // Validates: MM-033
     func testIrotAngle0ReportsUp() throws {
         try assertOrientation(.up, forTransformOnly: [irotBox(angle: 0)])
     }
 
+    // Validates: MM-033
     func testIrotAngle1ReportsLeft() throws {
         try assertOrientation(.left, forTransformOnly: [irotBox(angle: 1)])
     }
 
+    // Validates: MM-033
     func testIrotAngle2ReportsDown() throws {
         try assertOrientation(.down, forTransformOnly: [irotBox(angle: 2)])
     }
 
+    // Validates: MM-033
     func testIrotAngle3ReportsRight() throws {
         try assertOrientation(.right, forTransformOnly: [irotBox(angle: 3)])
     }
 
     // MARK: - imir alone (axis semantics pinned to ImageIO / ISO/IEC 23008-12:2022)
 
+    // Validates: MM-033
     func testImirAxis0ReportsDownMirrored() throws {
         try assertOrientation(.downMirrored, forTransformOnly: [imirBox(axis: 0)])
     }
 
+    // Validates: MM-033
     func testImirAxis1ReportsUpMirrored() throws {
         try assertOrientation(.upMirrored, forTransformOnly: [imirBox(axis: 1)])
     }
 
     // MARK: - imir combined with irot, in ipma order
 
+    // Validates: MM-033
     func testMirrorAxis0ThenRotate3ReportsLeftMirrored() throws {
         // Applied in ipma order: imir axis 0, then irot angle 3 → EXIF 5 (ImageIO-verified).
         try assertOrientation(.leftMirrored, forTransformOnly: [imirBox(axis: 0), irotBox(angle: 3)])
     }
 
+    // Validates: MM-033
     func testMirrorAxis1ThenRotate3ReportsRightMirrored() throws {
         // Applied in ipma order: imir axis 1, then irot angle 3 → EXIF 7 (ImageIO-verified).
         // Also exercises the 15-bit (large) property-index association form.
@@ -68,6 +76,7 @@ final class HEIFOrientationTests: XCTestCase {
 
     // MARK: - Precedence against the Exif Orientation tag
 
+    // Validates: MM-033
     func testTransformWinsOverConflictingExifOrientation() throws {
         // Primary item has irot angle 3 (→ right / 6) and an Exif Orientation of 1.
         // The transform decides; the Exif tag is ignored. Identity fields survive.
@@ -84,6 +93,7 @@ final class HEIFOrientationTests: XCTestCase {
         XCTAssertEqual(result.camera?.make, "ACME")
     }
 
+    // Validates: MM-033
     func testExifOrientationKeptWhenNoTransformProperty() throws {
         // No irot/imir on the primary item: today's Exif behaviour is preserved,
         // including iPhone HEICs that carry Orientation 6 in Exif.
@@ -101,6 +111,7 @@ final class HEIFOrientationTests: XCTestCase {
 
     // MARK: - Scoping and robustness
 
+    // Validates: MM-033
     func testTransformOnNonPrimaryItemIsIgnored() throws {
         // Primary item 1 carries only an ispe; the irot is associated with item 2.
         // A transform on a non-primary item must not set the orientation.
@@ -117,6 +128,7 @@ final class HEIFOrientationTests: XCTestCase {
         XCTAssertNil(result.geometry?.orientation)
     }
 
+    // Validates: MM-033
     func testTruncatedIrotBoxProducesNoOrientationAndNoCrash() throws {
         // An irot box whose declared size (9) overruns its ipco container, with the
         // payload byte missing. The box is dropped; no orientation, no crash.
@@ -136,6 +148,7 @@ final class HEIFOrientationTests: XCTestCase {
 
     // MARK: - AVIF uses the same container
 
+    // Validates: MM-033
     func testAVIFIrotIsRead() throws {
         // AVIF reuses the ISO BMFF meta/iprp machinery, so the same code path applies.
         let fixture = heifFixture(
@@ -152,6 +165,7 @@ final class HEIFOrientationTests: XCTestCase {
 
     // MARK: - Stored dimensions from ispe
 
+    // Validates: MM-034
     func testPrimaryIspeProvidesStoredDimensionsWithoutExif() throws {
         // A HEIF with no embedded Exif still has stored dimensions in the primary ispe.
         let fixture = heifFixture(
@@ -166,6 +180,7 @@ final class HEIFOrientationTests: XCTestCase {
         XCTAssertEqual(result.geometry?.pixelHeight, 4128)
     }
 
+    // Validates: MM-034
     func testAVIFIspeProvidesStoredDimensions() throws {
         let fixture = heifFixture(
             majorBrand: "avif",
@@ -179,6 +194,7 @@ final class HEIFOrientationTests: XCTestCase {
         XCTAssertEqual(result.geometry?.pixelHeight, 1080)
     }
 
+    // Validates: MM-034
     func testIspeOnNonPrimaryItemIsIgnored() throws {
         // ispe at property index 1 is associated only with item 2; the primary (item 1)
         // has no properties, so no stored dimensions are reported.
@@ -195,6 +211,7 @@ final class HEIFOrientationTests: XCTestCase {
         XCTAssertNil(result.geometry?.pixelHeight)
     }
 
+    // Validates: MM-034
     func testRotatedHeifWithoutExifHasOrientationAndStoredDimensions() throws {
         // The Sony ILCE-6700 shape: irot but no Exif Orientation. Orientation comes from
         // the transform; dimensions come from ispe, kept as stored (unrotated).
@@ -211,6 +228,7 @@ final class HEIFOrientationTests: XCTestCase {
         XCTAssertEqual(result.geometry?.pixelHeight, 4128)
     }
 
+    // Validates: MM-034
     func testExifPixelDimensionsPreferredOverIspe() throws {
         // When both are present the Exif PixelXDimension wins, so files with embedded Exif
         // are unchanged; ispe only fills the gap when Exif carries no dimensions.

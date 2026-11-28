@@ -8,16 +8,19 @@ final class StillImageFormatTests: XCTestCase {
 
     // MARK: - Detection and size
 
+    // Validates: MM-035
     func testPNGIsIdentifiedAndReadFromItsBytes() {
         let bytes = Fixtures.png(width: 640, height: 480)
         assertStill(bytes, family: .png, fileType: .png, width: 640, height: 480)
     }
 
+    // Validates: MM-035
     func testGIFIsIdentifiedAndReadFromItsBytes() {
         assertStill(Fixtures.gif(width: 320, height: 200), family: .gif, fileType: .gif, width: 320, height: 200)
         assertStill(Fixtures.gif(width: 7, height: 9, version: "87a"), family: .gif, fileType: .gif, width: 7, height: 9)
     }
 
+    // Validates: MM-035
     func testWebPSizeComesFromEachBitstreamHeader() {
         // Lossy: 14-bit fields; the top two (scaling) bits must not leak into the size.
         assertStill(Fixtures.webpLossy(width: 0xC000 | 1024, height: 0x4000 | 768), family: .webp, fileType: .webp, width: 1024, height: 768)
@@ -28,6 +31,7 @@ final class StillImageFormatTests: XCTestCase {
         assertStill(Fixtures.webpExtended(width: 1 << 24, height: 1), family: .webp, fileType: .webp, width: 1 << 24, height: 1)
     }
 
+    // Validates: MM-035
     func testStillsCarryNoTimestampsWithoutExif() {
         for bytes in [Fixtures.png(width: 2, height: 2), Fixtures.gif(width: 2, height: 2), Fixtures.webpLossy(width: 2, height: 2)] {
             let result = read(bytes)
@@ -39,21 +43,25 @@ final class StillImageFormatTests: XCTestCase {
 
     // MARK: - Exif
 
+    // Validates: MM-036
     func testPNGExifGivesOrientationTimestampsAndCamera() {
         assertStandardExif(read(Fixtures.png(width: 400, height: 300, exif: Fixtures.standardExif())), width: 400, height: 300)
     }
 
+    // Validates: MM-036
     func testPNGExifWrittenWithAJPEGStylePrefixIsStillRead() {
         let bytes = Fixtures.png(width: 400, height: 300, exif: Fixtures.exifPrefix + Fixtures.standardExif())
         assertStandardExif(read(bytes), width: 400, height: 300)
     }
 
+    // Validates: MM-036
     func testWebPExifGivesOrientationTimestampsAndCamera() {
         assertStandardExif(read(Fixtures.webpExtended(width: 400, height: 300, exif: Fixtures.standardExif())), width: 400, height: 300)
         let prefixed = Fixtures.webpExtended(width: 400, height: 300, exif: Fixtures.exifPrefix + Fixtures.standardExif())
         assertStandardExif(read(prefixed), width: 400, height: 300)
     }
 
+    // Validates: MM-035
     func testTheContainerHeaderSizeWinsOverExifDimensions() {
         // Exif dimensions are carried over from the original and go stale on a resize.
         let exif = Fixtures.standardExif(extraExifEntries: [
@@ -66,6 +74,7 @@ final class StillImageFormatTests: XCTestCase {
         }
     }
 
+    // Validates: MM-036
     func testExifEvidenceIDsStillPointAtTheirFindings() {
         let parsed = MediaMetadataReader.extract(
             source: StillImageMemorySource(bytes: Fixtures.png(width: 4, height: 4, exif: Fixtures.standardExif())),
@@ -77,6 +86,7 @@ final class StillImageFormatTests: XCTestCase {
         XCTAssertEqual(parsed.findings.map(\.id), Array(parsed.findings.indices))
     }
 
+    // Validates: MM-036
     func testPNGExifAfterImageDataIsNotRead() {
         // The specification puts eXIf before IDAT; reaching a late one means walking past
         // all the image data, so the parse stops at the first IDAT and never gets there.
@@ -91,6 +101,7 @@ final class StillImageFormatTests: XCTestCase {
         XCTAssertLessThanOrEqual(result.readCost.highestOffsetTouched, idatHeaderEnd, "IDAT payload must not be read")
     }
 
+    // Validates: MM-036
     func testWebPStopsOnceTheCanvasSaysThereIsNoExif() {
         // A VP8X without the EXIF flag settles everything; the bitstream behind it is not visited.
         let bytes = Fixtures.webpExtended(width: 10, height: 10)
@@ -101,6 +112,7 @@ final class StillImageFormatTests: XCTestCase {
 
     // MARK: - RIFF form types
 
+    // Validates: MM-013
     func testRIFFFormTypeDecidesTheFamily() {
         let avi = Fixtures.riff(Fixtures.riffChunk("JUNK", Data(count: 4)), formType: "AVI ")
         let wav = Fixtures.riff(Fixtures.riffChunk("fmt ", Data(count: 16)), formType: "WAVE")
@@ -124,6 +136,7 @@ final class StillImageFormatTests: XCTestCase {
 
     // MARK: - Malformed input
 
+    // Validates: MM-037
     func testTruncatedAndMalformedFilesKeepTheirFamilyWithoutASize() {
         let png = Fixtures.png(width: 64, height: 48)
         let pngSignature = png.prefix(8)
@@ -152,6 +165,7 @@ final class StillImageFormatTests: XCTestCase {
         }
     }
 
+    // Validates: MM-037
     func testUnreadableExifKeepsTheSize() {
         let garbage = Data("not a tiff at all".utf8)
         for (bytes, code) in [
@@ -167,6 +181,7 @@ final class StillImageFormatTests: XCTestCase {
         }
     }
 
+    // Validates: MM-037
     func testABrokenTIFFInsideExifKeepsTheContainerFamily() {
         // A TIFF header whose IFD0 points past the end: the TIFF parser gives up, the PNG does not.
         let brokenTIFF = Data("II".utf8) + Fixtures.le16(42) + Fixtures.le32(0x00FF_FFFF)
@@ -178,6 +193,7 @@ final class StillImageFormatTests: XCTestCase {
 
     // MARK: - Families and revisions
 
+    // Validates: MM-018
     func testNewFamiliesAreStills() {
         for family in [MediaFormat.Family.png, .webp, .gif] {
             XCTAssertEqual(MediaFormat.Kind(family: family), .image)

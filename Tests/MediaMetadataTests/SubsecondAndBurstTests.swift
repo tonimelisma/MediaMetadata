@@ -17,6 +17,7 @@ final class SubsecondAndBurstTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
+    // Validates: MM-026
     func testOriginalReportsItsOwnSubsecondDigits() throws {
         let url = try write(jpeg(exifEntries: [
             ascii(0x9003, "2026:09:22 11:55:06"),
@@ -27,12 +28,14 @@ final class SubsecondAndBurstTests: XCTestCase {
         XCTAssertEqual(original.fractionalSecondDigits, "387")
     }
 
+    // Validates: MM-026
     func testPaddingIsDroppedAndAValueWithoutDigitsSaysNothing() throws {
         XCTAssertEqual(TIFFMetadataParser.fractionalSecondDigits(from: "60  \0"), "60")
         XCTAssertNil(TIFFMetadataParser.fractionalSecondDigits(from: "   "))
         XCTAssertNil(TIFFMetadataParser.fractionalSecondDigits(from: ""))
     }
 
+    // Validates: MM-026
     func testNoTagLendsItsFractionToAnotherRole() throws {
         let url = try write(jpeg(exifEntries: [
             ascii(0x9003, "2026:09:22 11:55:06"),
@@ -44,6 +47,7 @@ final class SubsecondAndBurstTests: XCTestCase {
         XCTAssertEqual(timestamps.digitized?.fractionalSecondDigits, "604")
     }
 
+    // Validates: MM-026
     func testAHEIFReportsTheSubsecondsOfItsExifItem() throws {
         let file = StillImageFixtures.heif(exifItem: StillImageFixtures.exifPrefix + subsecondExif)
         let original = try XCTUnwrap(read(file, extension: "heic").timestamps.original)
@@ -51,22 +55,26 @@ final class SubsecondAndBurstTests: XCTestCase {
         XCTAssertEqual(original.fractionalSecondDigits, "639")
     }
 
+    // Validates: MM-026
     func testAPNGReportsTheSubsecondsOfItsExifChunk() throws {
         let file = StillImageFixtures.png(width: 4, height: 4, exif: subsecondExif)
         XCTAssertEqual(try XCTUnwrap(read(file, extension: "png").timestamps.original).fractionalSecondDigits, "639")
     }
 
+    // Validates: MM-026
     func testAFileWithoutSubsecondsReportsNone() throws {
         let url = try write(jpeg(exifEntries: [ascii(0x9003, "2026:09:22 11:55:06")]))
         XCTAssertNil(MediaMetadataReader.read(url: url).timestamps.original?.fractionalSecondDigits)
     }
 
+    // Validates: MM-042
     func testABurstFrameReportsItsBurstIdentifier() throws {
         let burst = "8A1C2B3D-4E5F-6071-8293-A4B5C6D7E8F9"
         let url = try write(jpeg(exifEntries: [undefined(0x927C, appleMakerNote(burst: burst))]))
         XCTAssertEqual(MediaMetadataReader.read(url: url).burstIdentifier, burst)
     }
 
+    // Validates: MM-042
     func testAStillOutsideABurstReportsNone() throws {
         let url = try write(jpeg(exifEntries: [ascii(0x9003, "2026:09:22 11:55:06")]))
         XCTAssertNil(MediaMetadataReader.read(url: url).burstIdentifier)

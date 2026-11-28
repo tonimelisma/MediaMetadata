@@ -16,6 +16,7 @@ final class ExposureTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
+    // Validates: MM-040
     func testEveryExposureTagIsReported() throws {
         let exposure = try XCTUnwrap(read(jpeg(exifEntries: [
             rational(0x829A, 1, 250),
@@ -42,21 +43,25 @@ final class ExposureTests: XCTestCase {
         XCTAssertEqual(exposure.focalLengthIn35mmFilmMillimeters, 52)
     }
 
+    // Validates: MM-040
     func testAShutterTimeKeepsTheFractionTheCameraWrote() throws {
         let exposure = try XCTUnwrap(read(jpeg(exifEntries: [rational(0x829A, 10, 2500)])).exposure)
         XCTAssertEqual(exposure.exposureTime, ExposureTime(numerator: 10, denominator: 2500))
     }
 
+    // Validates: MM-040
     func testASaturatedSensitivityReadsTheTagSensitivityTypeNames() throws {
         let exposure = try XCTUnwrap(read(jpeg(exifEntries: [short(0x8827, 65535), long(0x8833, 102_400)])).exposure)
         XCTAssertEqual(exposure.isoSensitivity, 102_400)
     }
 
+    // Validates: MM-040
     func testASaturatedSensitivityAloneIsNotReported() throws {
         let exposure = read(jpeg(exifEntries: [short(0x8827, 65535), short(0x9209, 0x10)])).exposure
         XCTAssertNil(exposure?.isoSensitivity)
     }
 
+    // Validates: MM-040
     func testUnknownValuesAreNotReported() throws {
         let exposure = read(jpeg(exifEntries: [
             short(0x8822, 0),
@@ -68,6 +73,7 @@ final class ExposureTests: XCTestCase {
         XCTAssertNil(exposure)
     }
 
+    // Validates: MM-040
     func testAFlashThatDidNotFireIsReported() throws {
         let flash = try XCTUnwrap(read(jpeg(exifEntries: [short(0x9209, 0x10)])).exposure?.flash)
         XCTAssertEqual(flash, Flash(fired: false, mode: .off))
@@ -75,10 +81,12 @@ final class ExposureTests: XCTestCase {
         XCTAssertEqual(Flash(exifValue: 0x41).redEyeReduction, true)
     }
 
+    // Validates: MM-040
     func testAStillWithoutExposureTagsReportsNone() throws {
         XCTAssertNil(read(jpeg(exifEntries: [ascii(0x9003, "2026:09:22 11:55:06")])).exposure)
     }
 
+    // Validates: MM-040
     func testAHEIFReportsTheExposureOfItsExifItem() throws {
         let file = StillImageFixtures.heif(exifItem: StillImageFixtures.exifPrefix + embeddedExif)
         let exposure = try XCTUnwrap(read(file, extension: "heic").exposure)
@@ -86,12 +94,14 @@ final class ExposureTests: XCTestCase {
         XCTAssertEqual(exposure.exposureTime, ExposureTime(numerator: 1, denominator: 120))
     }
 
+    // Validates: MM-040
     func testAPNGReportsTheExposureOfItsExifChunk() throws {
         let file = StillImageFixtures.png(width: 4, height: 4, exif: embeddedExif)
         XCTAssertEqual(read(file, extension: "png").exposure?.isoSensitivity, 64)
     }
 
     /// Two real camera files, checked against what Spotlight's Image I/O importer reads.
+    // Validates: MM-040
     func testRealFilesReportWhatImageIOReads() throws {
         let media = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent()

@@ -8,7 +8,7 @@ private let fixturePaths = [
     "otos-catalog-state-robustness/Media/jpeg-exif-offset-date.jpg",
     "otos-catalog-state-robustness/Media/mov-no-embedded-capture-date.mov",
     "otos-catalog-state-robustness/Media/mp4-no-embedded-capture-date.mp4",
-    "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
+    "mjpg-avi/avi-mjpg-hdrl-duration.avi",
     "videometa/IMG_5179.MOV",
     "videometa/dji_inspire3_car_4k120_rec709.mov",
     "videometa/dji_ronin4d_4k_prores4444_25fps.mov",

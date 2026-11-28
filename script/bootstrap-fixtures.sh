@@ -114,7 +114,7 @@ if [[ "${1-}" == "--list" ]]; then
   awk -F '\t' 'NR > 1 { printf "%-34s %s\n", $1, $9 }' "${manifest}"
   exit 0
 fi
-[[ $# -eq 0 ]] || die "usage: Scripts/bootstrap-fixtures.sh [--list]"
+[[ $# -eq 0 ]] || die "usage: script/bootstrap-fixtures.sh [--list]"
 
 while IFS=$'\t' read -r id target kind locator source_page content_type size sha256 description; do
   [[ "${id}" == "id" ]] && continue

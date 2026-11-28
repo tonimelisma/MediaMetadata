@@ -1,7 +1,7 @@
 # Real-Media Fixtures
 
 This directory consolidates fixtures from three user-owned repositories, one
-user-owned photo collection, and one permissively licensed third-party project.
+user-owned camera recording, and one permissively licensed third-party project.
 The source-specific subdirectories preserve provenance, while byte-identical
 copies are stored only once.
 
@@ -37,7 +37,7 @@ Do not treat these fixtures as anonymized media.
 
 The three local-only media files are ignored by Git here, matching their source
 repository policy, and have public download records in
-`Scripts/fixture-bootstrap.tsv`.
+`script/fixture-bootstrap.tsv`.
 
 The source repository also has a legacy `apple.mov` whose origin is not
 documented well enough to redistribute it. It is not part of this corpus;
@@ -86,12 +86,11 @@ metadata.
   and its location is a public scenic area. The file is already published in
   the source repository.
 
-### `sofian-kuvat/`
+### `mjpg-avi/`
 
-- Source: user-owned family photos under
-  `~/Desktop/OneDrive/Perheen kuvat/Sofian kuvat/`
+- Source: a user-owned Motion-JPEG camera recording
 - Contents: a header-only Motion-JPEG AVI extract used to lock AVI duration,
-  frame rate, codec, and dimensions. See `sofian-kuvat/README.md` for the
+  frame rate, codec, and dimensions. See `mjpg-avi/README.md` for the
   privacy and provenance record.
 
 ## Privacy and Licensing Record
@@ -113,19 +112,19 @@ the parser behavior it is intended to cover.
 The golden corpus has 17 canonical media files: 14 committed and three public
 DJI/GoPro samples too large to commit. The golden test checks every file that
 is present. It skips an absent download (one listed in
-`Scripts/fixture-bootstrap.tsv`) with a `warning: skipping absent local
+`script/fixture-bootstrap.tsv`) with a `warning: skipping absent local
 fixture` line, and fails on any other absent file, so a clean checkout (CI, a
 cloud session) checks the 14 committed files. Fetch the other three for full coverage with:
 
 ```sh
-Scripts/check-local-fixtures.sh
+script/check-local-fixtures.sh
 ```
 
 That command verifies the 14 committed fixtures and downloads and SHA-256
 verifies the three public DJI/GoPro fixtures when absent. CI must not download or
 bootstrap these files implicitly.
 
-Use `Scripts/bootstrap-fixtures.sh --list` to inspect the public download set.
+Use `script/bootstrap-fixtures.sh --list` to inspect the public download set.
 The downloads reach `terra-1-g.djicdn.com` (DJI), `api.gopro.com` (resolves
 the GoPro share) and `media-cdn-vod-us-west-2.gopro.com` (serves the GoPro
 file); a network allowlist must include all three.
@@ -146,8 +145,8 @@ ExifTool field.
 Regenerate the raw evidence records with ExifTool installed:
 
 ```sh
-Scripts/check-local-fixtures.sh
-Scripts/generate-fixture-goldens.swift
+script/check-local-fixtures.sh
+script/generate-fixture-goldens.swift
 ```
 
 The generator fixes locale and timezone, records the ExifTool version and exact

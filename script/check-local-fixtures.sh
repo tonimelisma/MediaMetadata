@@ -11,7 +11,7 @@ required_committed=(
   "otos-catalog-state-robustness/Media/jpeg-exif-offset-date.jpg"
   "otos-catalog-state-robustness/Media/mov-no-embedded-capture-date.mov"
   "otos-catalog-state-robustness/Media/mp4-no-embedded-capture-date.mp4"
-  "sofian-kuvat/avi-mjpg-hdrl-duration.avi"
+  "mjpg-avi/avi-mjpg-hdrl-duration.avi"
   "videometa/IMG_5179.MOV"
   "videometa/exiftool_quicktime.mov"
   "videometa/google.mp4"
@@ -26,6 +26,6 @@ for fixture in "${required_committed[@]}"; do
   [[ -f "${fixtures}/${fixture}" ]] || { printf 'error: missing committed fixture %s\n' "${fixture}" >&2; exit 1; }
 done
 
-"${repo_root}/Scripts/bootstrap-fixtures.sh"
+"${repo_root}/script/bootstrap-fixtures.sh"
 
 printf 'All 17 required local fixtures are present.\n'

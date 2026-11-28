@@ -19,14 +19,17 @@ final class ContinuousShootingTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
+    // Validates: MM-044
     func testAContinuousFrameReportsItsNumber() throws {
         XCTAssertEqual(try read(make: "SONY", releaseMode: 2, sequence: 3), 3)
     }
 
+    // Validates: MM-044
     func testASonyHeaderBeforeTheDirectoryIsSkipped() throws {
         XCTAssertEqual(try read(make: "SONY", releaseMode: 2, sequence: 1, header: true), 1)
     }
 
+    // Validates: MM-044
     func testASingleShotABracketAndANotApplicableNumberReportNone() throws {
         XCTAssertNil(try read(make: "SONY", releaseMode: 0, sequence: 0))
         XCTAssertNil(try read(make: "SONY", releaseMode: 5, sequence: 2))
@@ -34,6 +37,7 @@ final class ContinuousShootingTests: XCTestCase {
         XCTAssertNil(try read(make: "SONY", releaseMode: 2, sequence: 0))
     }
 
+    // Validates: MM-044
     func testAnotherMakersMakerNoteIsNotReadAsSonys() throws {
         XCTAssertNil(try read(make: "NIKON CORPORATION", releaseMode: 2, sequence: 3))
     }

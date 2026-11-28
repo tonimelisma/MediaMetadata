@@ -12,6 +12,7 @@ final class ParserRobustnessTests: XCTestCase {
     /// The documented single-read safety cap (also asserted by `RealFixtureGoldenTests`).
     private let maxReadLength = 1_048_576
 
+    // Validates: MM-006
     func testRandomBytesNeverCrashParsers() {
         var rng = SplitMix64(seed: 0xC0FFEE_1234_5678)
         for _ in 0..<3000 {
@@ -24,6 +25,7 @@ final class ParserRobustnessTests: XCTestCase {
         }
     }
 
+    // Validates: MM-006
     func testMalformedISOBoxStreamsNeverCrashParsers() {
         var rng = SplitMix64(seed: 0xBAD_F00D_0BAD_CAFE)
         for _ in 0..<3000 {
@@ -41,6 +43,7 @@ final class ParserRobustnessTests: XCTestCase {
         }
     }
 
+    // Validates: MM-006
     func testMutatedAndTruncatedFixturesNeverCrashParsers() throws {
         var rng = SplitMix64(seed: 0x5EED_0F_FACADE_01)
         let seeds = try smallCommittedFixtures()
@@ -61,6 +64,7 @@ final class ParserRobustnessTests: XCTestCase {
         }
     }
 
+    // Validates: MM-006
     func testMutatedAndTruncatedStillImagesNeverCrashParsers() {
         var rng = SplitMix64(seed: 0x9E3_79B9_7F4A_7C15)
         let exif = StillImageFixtures.standardExif()

@@ -14,6 +14,7 @@ final class MediaMetadataTests: XCTestCase {
         try? FileManager.default.removeItem(at: tempDirectoryURL)
     }
 
+    // Validates: MM-019
     func testRead_ReturnsDateTimeOriginalAndOffsetTimeOriginalFromLittleEndianTIFF() throws {
         let url = try writeFixture(
             rawTIFFCaptureDateFixture(
@@ -32,6 +33,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertTrue(result.diagnostics.isEmpty)
     }
 
+    // Validates: MM-019
     func testRead_ParsesOffsetTimestampToAbsoluteInstant() throws {
         let url = try writeFixture(
             rawTIFFCaptureDateFixture(
@@ -51,6 +53,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.evidenceIDs.count, 2)
     }
 
+    // Validates: MM-006
     func testRead_TruncatedTIFFReturnsDiagnosticsWithoutCrashing() throws {
         let url = try writeFixture(Data([0x49, 0x49, 0x2A]), extension: "arw")
 
@@ -62,6 +65,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.diagnostics.first?.code, "truncatedHeader")
     }
 
+    // Validates: MM-020
     func testRead_TimestampWithoutOffsetHasNoAbsoluteInstant() throws {
         let url = try writeFixture(
             rawTIFFCaptureDateFixture(
@@ -79,6 +83,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.authority, .localWithoutOffset)
     }
 
+    // Validates: MM-019
     func testRead_ParsesJPEGEXIFDateTimeOriginal() throws {
         let url = try writeFixture(
             jpegEXIFFixture(
@@ -97,6 +102,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.authority, .localWithoutOffset)
     }
 
+    // Validates: MM-008
     func testRead_ReportsReadTimingAndByteMetrics() throws {
         let fixture = jpegEXIFFixture(
             timestamp: "2026:04:27 08:45:43",
@@ -122,6 +128,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertGreaterThan(result.readMetrics.readCoveragePermille, 0)
     }
 
+    // Validates: MM-009
     func testRead_JPEGEXIFBatchesTIFFIFDEntryReads() throws {
         let fixture = jpegEXIFFixture(
             timestamp: "2026:04:27 08:45:43",
@@ -141,6 +148,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertLessThan(result.readMetrics.uniqueByteReadCount, result.readMetrics.fileSizeBytes)
     }
 
+    // Validates: MM-027
     func testRead_ParsesAVIRiffInfoDateChunk() throws {
         let url = try writeFixture(
             aviRIFFInfoFixture(key: "ICRD", value: "2026:04:26 19:33:52"),
@@ -157,6 +165,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.authority, .localWithoutOffset)
     }
 
+    // Validates: MM-027
     func testRead_ParsesAVIRiffInfoDateChunkNestedInHeaderList() throws {
         let url = try writeFixture(
             aviRIFFNestedInfoFixture(key: "ICRD", value: "2026:04:26 19:33:52"),
@@ -173,6 +182,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.authority, .localWithoutOffset)
     }
 
+    // Validates: MM-006
     func testRead_AVIContinuesParsingSiblingMetadataAfterOverDeepRIFFList() throws {
         let url = try writeFixture(
             aviRIFFOverDeepListThenInfoFixture(key: "ICRD", value: "2026:04:26 19:33:52"),
@@ -187,6 +197,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 52))
     }
 
+    // Validates: MM-027
     func testRead_AVIWithoutDateEmitsDiagnostic() throws {
         let url = try writeFixture(emptyAVIRIFFFixture(), extension: "avi")
 
@@ -197,6 +208,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.diagnostics.first { $0.code == "aviMissingEmbeddedDate" }?.severity, .info)
     }
 
+    // Validates: MM-038
     func testRead_ParsesAVIDurationFrameRateAndCodecFromHeader() throws {
         let url = try writeFixture(aviHeaderVideoFixture(), extension: "avi")
 
@@ -212,6 +224,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertNil(publicResult.timestamps.riffRecording)
     }
 
+    // Validates: MM-038
     func testRead_AVIParsesVideoFactsEvenWhenINFODateAppearsFirst() throws {
         let url = try writeFixture(
             aviInfoThenHeaderVideoFixture(key: "ICRD", value: "2026:04:26 19:33:52"),
@@ -227,6 +240,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(video.codec, .motionJPEG)
     }
 
+    // Validates: MM-013
     func testRead_WAVIgnoresAVINamedChunks() throws {
         let url = try writeFixture(wavWithAVINamedChunksFixture(), extension: "wav")
 
@@ -237,6 +251,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertNil(result.camera)
     }
 
+    // Validates: MM-038
     func testRead_AVIIgnoresEmptyStreamHandlerFourCC() throws {
         let url = try writeFixture(
             aviHeaderVideoFixture(handler: Data([0, 0, 0, 0])),
@@ -252,6 +267,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertNil(MediaMetadataReader.extract(url: url).findings.first { $0.key == "VideoCodec" })
     }
 
+    // Validates: MM-011
     func testRead_AVISkipsMediaPayloadListChunks() throws {
         let fixture = aviRIFFMoviPayloadFixture()
         let url = try writeFixture(fixture, extension: "avi")
@@ -270,6 +286,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertLessThan(result.readMetrics.largestReadLength, 64)
     }
 
+    // Validates: MM-011
     func testRead_AVISkipsIrrelevantInfoPayloadsAndStopsAfterDate() throws {
         let fixture = aviRIFFInfoFixture(chunks: [
             (key: "INAM", payload: Data(repeating: 0x49, count: 4096)),
@@ -289,6 +306,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertLessThan(result.readMetrics.largestReadLength, 64)
     }
 
+    // Validates: MM-027
     func testRead_AVIContinuesAfterMalformedInfoDateUntilParseableTimestamp() throws {
         let fixture = aviRIFFInfoFixture(chunks: [
             (key: "ICRD", payload: nullTerminatedASCII("not a timestamp")),
@@ -305,6 +323,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 52))
     }
 
+    // Validates: MM-029
     func testRead_ParsesQuickTimeMetadataDateAndLocation() throws {
         let url = try writeFixture(
             box(
@@ -328,6 +347,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(location.longitude, -122.0437, accuracy: 0.0001)
     }
 
+    // Validates: MM-029
     func testRead_ParsesISOBMFFWhenSkipBoxPrecedesMetadata() throws {
         var data = box("skip", payload: Data([0x00, 0x01, 0x02, 0x03]))
         data.append(
@@ -347,6 +367,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.instant, makeUTCDate(year: 2026, month: 3, day: 5, hour: 0, minute: 46, second: 2))
     }
 
+    // Validates: MM-029
     func testRead_ParsesISOBMFFWhenUUIDBoxPrecedesMetadata() throws {
         var uuidPayload = Data(repeating: 0x00, count: 16)
         uuidPayload.append(Data([0x01, 0x02, 0x03, 0x04]))
@@ -368,6 +389,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.instant, makeUTCDate(year: 2026, month: 3, day: 5, hour: 0, minute: 46, second: 2))
     }
 
+    // Validates: MM-029
     func testRead_ParsesISOBMFFWhenJunkBoxPrecedesMetadata() throws {
         var data = box("junk", payload: Data([0x00, 0x01, 0x02, 0x03]))
         data.append(
@@ -387,6 +409,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.instant, makeUTCDate(year: 2026, month: 3, day: 5, hour: 0, minute: 46, second: 2))
     }
 
+    // Validates: MM-011
     func testRead_ISOBMFFSkipsIrrelevantMdtaPayloads() throws {
         let fixture = box(
             "moov",
@@ -407,6 +430,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertLessThan(result.readMetrics.largestReadLength, 128)
     }
 
+    // Validates: MM-006
     func testRead_MalformedHEIFItemLocationOffsetOverflowEmitsDiagnostic() throws {
         let url = try writeFixture(
             metaBox(children: [
@@ -427,6 +451,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.diagnostics.first { $0.code == "isoItemLocationExtentOverflow" }?.severity, .warning)
     }
 
+    // Validates: MM-006
     func testRead_MalformedHEIFUnreadableExtentRangeOverflowEmitsDiagnostic() throws {
         let url = try writeFixture(
             metaBox(children: [
@@ -447,6 +472,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.diagnostics.first { $0.code == "heifExifItemUnreadable" }?.severity, .warning)
     }
 
+    // Validates: MM-028
     func testRead_ParsesID3RecordingDate() throws {
         let url = try writeFixture(
             id3Fixture(frameID: "TDRC", value: "2026-04-26T19:33:52"),
@@ -461,6 +487,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.authority, .localWithoutOffset)
     }
 
+    // Validates: MM-028
     func testRead_ParsesID3RecordingDateWithTimeZoneSuffixSeconds() throws {
         let url = try writeFixture(
             id3Fixture(frameID: "TDRC", value: "2026-04-26T19:33:52+02:00"),
@@ -474,6 +501,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.authority, .localWithoutOffset)
     }
 
+    // Validates: MM-028
     func testRead_RejectsMalformedDelimiterOnlyID3RecordingDateWithoutCrash() throws {
         let url = try writeFixture(
             id3Fixture(frameID: "TDRC", value: "-"),
@@ -487,6 +515,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.findings.first { $0.key == "TDRC" }?.rawValue, "-")
     }
 
+    // Validates: MM-028
     func testRead_ID3ContinuesAfterMalformedRecordingDateToOriginalReleaseDate() throws {
         let fixture = id3Fixture(frames: [
             id3TextFrame(frameID: "TDRC", value: "-"),
@@ -503,6 +532,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 52))
     }
 
+    // Validates: MM-028
     func testRead_ID3ContinuesAfterMalformedRecordingDateToLegacyDateFrames() throws {
         let fixture = id3Fixture(frames: [
             id3TextFrame(frameID: "TDRC", value: "-"),
@@ -521,6 +551,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(timestamp.dateComponents, CaptureDateComponents(year: 2026, month: 4, day: 26, hour: 19, minute: 33, second: 0))
     }
 
+    // Validates: MM-011
     func testRead_ID3SkipsIrrelevantPayloadsAndStopsAtRecordingDate() throws {
         let fixture = id3Fixture(frames: [
             id3Frame(frameID: "APIC", payload: Data(repeating: 0xAA, count: 4096)),
@@ -540,6 +571,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertLessThan(result.readMetrics.largestReadLength, 64)
     }
 
+    // Validates: MM-027
     func testRead_ParsesWAVInfoDate() throws {
         let url = try writeFixture(
             wavRIFFInfoFixture(key: "ICRD", value: "2026:04:26 19:33:52"),
@@ -556,6 +588,7 @@ final class MediaMetadataTests: XCTestCase {
 
     // MARK: - Public typed contract
 
+    // Validates: MM-019
     func testPublicRead_TIFFExposesTypedOriginalTimestamp() throws {
         let url = try writeFixture(
             rawTIFFCaptureDateFixture(timestamp: "2026:04:26 14:57:35", offset: "-07:00"),
@@ -579,6 +612,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.timestamps.all.count, 3)
     }
 
+    // Validates: MM-031
     func testPublicRead_JPEGExposesTypedCamera() throws {
         let url = try writeFixture(
             jpegEXIFFixture(timestamp: "2026:04:26 14:57:35", offset: "-07:00"),
@@ -592,6 +626,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertNotNil(result.timestamps.original?.instant)
     }
 
+    // Validates: MM-002
     func testPublicRead_MissingFileIsTransientReadFailure() {
         let url = tempDirectoryURL.appendingPathComponent("does-not-exist.arw")
 
@@ -603,6 +638,7 @@ final class MediaMetadataTests: XCTestCase {
         XCTAssertEqual(result.format.family, .unknown)
     }
 
+    // Validates: MM-004
     func testPublicRead_UnknownSignatureIsDefinitiveUnsupported() throws {
         let url = try writeFixture(Data("not a media file at all".utf8), extension: "bin")
 

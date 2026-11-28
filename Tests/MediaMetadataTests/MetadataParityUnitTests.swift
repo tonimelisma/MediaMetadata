@@ -14,6 +14,7 @@ final class MetadataParityUnitTests: XCTestCase {
         try? FileManager.default.removeItem(at: temporaryDirectory)
     }
 
+    // Validates: MM-006
     func testRead_EmptyISOKeysBoxDoesNotCrash() throws {
         let keysPayload = Data(repeating: 0, count: 8)
         let fixture = box("moov", payload: metaBox(children: [
@@ -28,6 +29,7 @@ final class MetadataParityUnitTests: XCTestCase {
         XCTAssertTrue(result.diagnostics.isEmpty)
     }
 
+    // Validates: MM-031
     func testRead_ParsesQuickTimeCameraKeysAndTrackDimensions() throws {
         let metadata = metaBox(values: [
             "com.apple.quicktime.camera.lens_model": "Prime Lens",
@@ -47,6 +49,7 @@ final class MetadataParityUnitTests: XCTestCase {
         XCTAssertEqual(result.camera?.pixelHeight, 1_080)
     }
 
+    // Validates: MM-030
     func testRead_ParsesTIFFCameraGPSAndFractionalGPSTimestamp() throws {
         let result = MediaMetadataReader.extract(url: try write(tiffCameraGPSFixture(), extension: "tiff"))
 
@@ -69,6 +72,7 @@ final class MetadataParityUnitTests: XCTestCase {
         XCTAssertEqual(result.provenance.first?.status, .parsed)
     }
 
+    // Validates: MM-006
     func testRead_MalformedGoProGPMFReturnsDiagnostic() throws {
         var malformed = Data("CDAT".utf8)
         malformed.append(contentsOf: [0x4A, 8, 0, 2])
@@ -81,6 +85,7 @@ final class MetadataParityUnitTests: XCTestCase {
         XCTAssertTrue(result.timestamps.isEmpty)
     }
 
+    // Validates: MM-031
     func testSonyNRTMParserExtractsDeviceIdentity() {
         let metadata = ISOBMFFMetadataParser.parseSonyNRTMXML(
             #"<NonRealTimeMeta><Device manufacturer="Sony" modelName="ILCE-6700" serialNo="12345"/></NonRealTimeMeta>"#

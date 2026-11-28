@@ -213,7 +213,7 @@
       "video": {"durationSeconds": 1.0, "frameRate": 25.0, "codec": "h264"}
     },
     {
-      "path": "sofian-kuvat/avi-mjpg-hdrl-duration.avi",
+      "path": "mjpg-avi/avi-mjpg-hdrl-duration.avi",
       "outcome": "parsed",
       "format": {"family": "riffAVI", "extension": "avi", "brand": "AVI ", "detectedByMagic": true, "kind": "video", "fileType": "avi", "isCameraRaw": false},
       "timestamps": {},

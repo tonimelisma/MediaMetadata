@@ -17,6 +17,7 @@ final class CaptureLocalContractTests: XCTestCase {
 
     // MARK: - Item 1: wall-clock completeness
 
+    // Validates: MM-020
     func testContract_FloatingEXIFHasCompleteLocalComponents() throws {
         let result = MediaMetadataReader.read(url: try write(
             tiffCaptureDate(timestamp: "2026:04:26 14:57:35", offset: nil),
@@ -34,6 +35,7 @@ final class CaptureLocalContractTests: XCTestCase {
         )
     }
 
+    // Validates: MM-019
     func testContract_OffsetBearingEXIFHasCompleteLocalComponents() throws {
         let result = MediaMetadataReader.read(url: try write(
             tiffCaptureDate(timestamp: "2026:04:26 14:57:35", offset: "-07:00"),
@@ -51,6 +53,7 @@ final class CaptureLocalContractTests: XCTestCase {
         )
     }
 
+    // Validates: MM-021
     func testContract_GPSAnchoredIsAbsoluteWithCompleteUTCComponents() throws {
         let result = MediaMetadataReader.read(url: try write(tiffCameraGPSFixture(), extension: "tiff"))
         let gps = try XCTUnwrap(result.timestamps.gps)
@@ -62,6 +65,7 @@ final class CaptureLocalContractTests: XCTestCase {
         XCTAssertNil(gps.captureLocalComponents)
     }
 
+    // Validates: MM-021
     func testContract_QuickTimeUTCEpochIsAbsolute() throws {
         let result = MediaMetadataReader.read(url: try write(
             box("moov", payload: mdtaMetaBox([
@@ -77,6 +81,7 @@ final class CaptureLocalContractTests: XCTestCase {
         XCTAssertNil(creation.captureLocalComponents)
     }
 
+    // Validates: MM-021
     func testContract_ExplicitPlusZeroOffsetRemainsLocalWithOffset() throws {
         let result = MediaMetadataReader.read(url: try write(
             box("moov", payload: mdtaMetaBox([
@@ -96,6 +101,7 @@ final class CaptureLocalContractTests: XCTestCase {
 
     // MARK: - Item 2: captureLocalComponents accessor
 
+    // Validates: MM-021
     func testCaptureLocalComponents_NilForAbsolute_PresentForLocal() {
         let absolute = CaptureTime(
             year: 2023, month: 8, day: 30, hour: 13, minute: 0, second: 31,
@@ -123,6 +129,7 @@ final class CaptureLocalContractTests: XCTestCase {
 
     // MARK: - Item 3: local-preferring role selection
 
+    // Validates: MM-022
     func testRoleSelection_PrefersLocalAuthorityOverEarlierAbsolute() throws {
         // GPMF absolute epoch is recorded before the Apple offset-bearing key.
         var udta = Data()
@@ -153,6 +160,7 @@ final class CaptureLocalContractTests: XCTestCase {
 
     // MARK: - Item 4: GPMF UTC + TimeZone → derived localWithOffset
 
+    // Validates: MM-023
     func testGoProGPMF_DerivesLocalWithOffsetFromEpochAndTimeZone() throws {
         let epoch: UInt64 = 1_693_400_431 // 2023-08-30 13:00:31 UTC
         let minutes = 330 // +05:30
@@ -185,6 +193,7 @@ final class CaptureLocalContractTests: XCTestCase {
         XCTAssertEqual(publicCreation.instant, Date(timeIntervalSince1970: TimeInterval(epoch)))
     }
 
+    // Validates: MM-023
     func testGoProGPMF_EpochAloneStaysAbsolute() throws {
         let result = MediaMetadataReader.read(url: try write(
             box("moov", payload: box("udta", payload: box("GPMF", payload: gpmfRecords([

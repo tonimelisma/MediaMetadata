@@ -97,6 +97,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     // MARK: - R2: the two entry points agree
 
+    // Validates: MM-007
     func testSourceEntryPointMatchesURLEntryPoint() throws {
         let bytes = Self.tiffFixture()
         let url = try write(bytes, extension: "arw")
@@ -113,6 +114,7 @@ final class MediaByteSourceTests: XCTestCase {
         XCTAssertEqual(viaSource.camera, viaURL.camera)
     }
 
+    // Validates: MM-007
     func testFilenameHintIsOptionalAndOnlyReportsAnExtension() {
         let bytes = Self.tiffFixture()
         let named = MediaMetadataReader.read(
@@ -131,6 +133,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     // MARK: - R8: results do not depend on read granularity
 
+    // Validates: MM-005
     func testParsingIsIndependentOfReadGranularity() {
         let bytes = Self.tiffFixture()
         let exact = MediaMetadataReader.read(
@@ -151,6 +154,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     /// The same guarantee for the still-image families, whose answers are a size and the
     /// Exif inside a chunk.
+    // Validates: MM-005
     func testStillImageParsingIsIndependentOfReadGranularity() {
         let fixtures: [(hint: String, bytes: Data)] = [
             ("a.png", StillImageFixtures.png(width: 640, height: 480, exif: StillImageFixtures.standardExif())),
@@ -181,6 +185,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     // MARK: - R3: the cache collapses reads without changing answers
 
+    // Validates: MM-010
     func testCachingSourceCollapsesReadsIntoFewerFetches() {
         let bytes = Self.tiffFixture()
         let counting = CountingByteSource(bytes: bytes)
@@ -196,6 +201,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     // MARK: - R6/R7: a transport failure is never a definitive answer
 
+    // Validates: MM-002
     func testAReadFailureMidParseYieldsReadFailureNotAbsence() {
         let bytes = Self.tiffFixture()
         let clean = MediaMetadataReader.read(
@@ -227,6 +233,7 @@ final class MediaByteSourceTests: XCTestCase {
     /// there. That means a new parser is absence-shaped by default, and only the latch above
     /// it makes a transport fault distinguishable. Asserting it per family is what would
     /// catch a parser that ever read around the metered source.
+    // Validates: MM-002
     func testEveryContainerFamilyReportsATransportFailureAsTransient() {
         let families: [(name: String, hint: String, bytes: Data)] = [
             ("tiff", "a.arw", Self.tiffFixture()),
@@ -256,6 +263,7 @@ final class MediaByteSourceTests: XCTestCase {
         }
     }
 
+    // Validates: MM-003
     func testASilentlyShortReadIsATransportFailureNotEndOfFile() {
         let result = MediaMetadataReader.read(
             source: SilentlyShortByteSource(bytes: Self.tiffFixture()), filenameHint: "a.arw"
@@ -267,6 +275,7 @@ final class MediaByteSourceTests: XCTestCase {
         )
     }
 
+    // Validates: MM-003
     func testFileByteSourceReturnsNilPastTheEndAndThrowsOnAShortInBoundsRead() throws {
         let url = try write(Data(repeating: 0xAB, count: 32), extension: "bin")
         let source = try FileByteSource(url: url)
@@ -278,6 +287,7 @@ final class MediaByteSourceTests: XCTestCase {
         XCTAssertNil(try source.data(offset: 99, length: 1), "a range beyond the end is a structural nil")
     }
 
+    // Validates: MM-003
     func testAZeroLengthReadIsSatisfiedRatherThanReportedAsAFailure() throws {
         let url = try write(Data(), extension: "jpg")
         let source = try FileByteSource(url: url)
@@ -289,6 +299,7 @@ final class MediaByteSourceTests: XCTestCase {
     /// An empty file's first probe asks for `min(size, 12)` = 0 bytes. Treating that as a
     /// short read made the whole file `.readFailure` — a retryable outcome for a file whose
     /// emptiness is a permanent, knowable fact.
+    // Validates: MM-004
     func testAnEmptyFileIsDefinitivelyUnsupportedNotATransientFailure() throws {
         let url = try write(Data(), extension: "jpg")
 
@@ -303,6 +314,7 @@ final class MediaByteSourceTests: XCTestCase {
     /// The package's read pattern is fine-grained by nature — an index, then fields inside
     /// it. That is free on a local file and is the entire cost on anything remote, so the
     /// buffer is now internal rather than something every remote consumer reinvents.
+    // Validates: MM-009
     func testAParseCollapsesManySmallReadsIntoFewTransportReads() {
         let counting = CountingByteSource(bytes: Self.tiffFixture())
         let result = MediaMetadataReader.read(source: counting, filenameHint: "a.arw")
@@ -317,6 +329,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     /// Coalescing must not change answers. This is the same invariant R8 asserts across
     /// consumer-supplied chunk sizes, now also across the buffer the package added itself.
+    // Validates: MM-005
     func testInternalCoalescingDoesNotChangeResults() {
         let bytes = Self.tiffFixture()
         let direct = MediaMetadataReader.read(
@@ -335,6 +348,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     // MARK: - R5: cost is reported for any source, not just files
 
+    // Validates: MM-008
     func testReadCostIsReportedForACustomSource() {
         let bytes = Self.tiffFixture()
         let result = MediaMetadataReader.read(
@@ -352,6 +366,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     // MARK: - R10: identify without parsing
 
+    // Validates: MM-012
     func testIdentifyAgreesWithAFullParseAndCostsAlmostNothing() {
         let bytes = Self.tiffFixture()
         let counting = CountingByteSource(bytes: bytes)
@@ -366,6 +381,7 @@ final class MediaByteSourceTests: XCTestCase {
         XCTAssertLessThanOrEqual(counting.upstreamReads, 2, "identification must not read the container")
     }
 
+    // Validates: MM-012
     func testIdentifyReportsUnknownForBytesItDoesNotRecognise() {
         let source = PatternedByteSource(bytes: Data(repeating: 0x5A, count: 64), pattern: .exact)
         let format = MediaMetadataReader.identify(source: source, filenameHint: "mystery.arw")
@@ -379,6 +395,7 @@ final class MediaByteSourceTests: XCTestCase {
 
     // MARK: - R11: embedded previews are located, verified, and never decoded
 
+    // Validates: MM-045
     func testAnEmbeddedPreviewIsReportedWithItsRangeAndDimensions() {
         let bytes = Self.tiffFixtureWithPreview()
         let result = MediaMetadataReader.read(
@@ -410,6 +427,7 @@ final class MediaByteSourceTests: XCTestCase {
     ///
     /// So the range is bounds-checked (free) and otherwise trusted. A descriptor that does
     /// not decode is a case every consumer already handles.
+    // Validates: MM-045
     func testADeclaredPreviewIsReportedWithoutReadingItsBytes() {
         let counting = CountingByteSource(bytes: Self.tiffFixtureWithPreview(
             previewBytes: Data(repeating: 0x00, count: 16)
@@ -424,6 +442,7 @@ final class MediaByteSourceTests: XCTestCase {
         )
     }
 
+    // Validates: MM-045
     func testAPreviewDeclaredOutsideTheFileIsNotReported() {
         let bytes = Self.tiffFixtureWithPreview(previewOffsetOverride: 4_000_000)
         let result = MediaMetadataReader.read(
@@ -433,6 +452,7 @@ final class MediaByteSourceTests: XCTestCase {
         XCTAssertTrue(result.previews.isEmpty)
     }
 
+    // Validates: MM-045
     func testAFileWithNoEmbeddedPreviewReportsNone() {
         let result = MediaMetadataReader.read(
             source: PatternedByteSource(bytes: Self.tiffFixture(), pattern: .exact), filenameHint: "a.arw"
